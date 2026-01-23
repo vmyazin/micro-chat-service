@@ -8,6 +8,8 @@
 - Use snake_case for database column names, but TypeScript interfaces use snake_case to match SQL
 - Server package uses `types: ["@cloudflare/workers-types"]` in tsconfig for globals (crypto, TextEncoder)
 - Hono router composition: `app.route('', childRouter)` mounts child router at app root
+- Hono cookies: `import { setCookie, getCookie } from 'hono/cookie'` for httpOnly session cookies
+- Store binary data (like WebAuthn public keys) as base64 strings in D1 TEXT columns
 
 ---
 
@@ -126,4 +128,20 @@ Thread: https://ampcode.com/threads/T-019be93d-4d15-745b-8078-c5816a04acdc
   - Uint8Array from TextEncoder needs explicit cast for simplewebauthn: `new Uint8Array(bytes.buffer.slice(0)) as Uint8Array<ArrayBuffer>`
   - Hono router composition uses `app.route('', router)` to mount child routers
   - AuthEnv interface defines bindings needed by auth routes (DB, CHALLENGE_STORE, RP_* config)
+---
+
+## 2026-01-23 - US-010
+Thread: https://ampcode.com/threads/T-019be93f-721d-727c-9b25-e7e53a609a8b
+- Implemented POST /api/auth/register/verify endpoint for WebAuthn registration verification
+- Uses verifyRegistrationResponse from @simplewebauthn/server to validate credential
+- Creates user record in database with displayName
+- Stores credential public key as base64-encoded string in credentials table
+- Creates session with 30-day expiry and returns as httpOnly cookie using Hono's setCookie
+- Files changed: packages/server/src/routes/auth.ts
+- **Learnings for future iterations:**
+  - Hono cookie helper: `import { setCookie } from 'hono/cookie'` then `setCookie(c, name, value, options)`
+  - verifyRegistrationResponse returns { verified, registrationInfo } - check both for success
+  - registrationInfo.credential contains { id, publicKey (Uint8Array), counter, transports }
+  - Store public key as base64 encoded string for database compatibility
+  - Challenge must be passed from client and looked up in CHALLENGE_STORE
 ---
