@@ -302,3 +302,17 @@ Thread: https://ampcode.com/threads/T-019be967-3913-751f-bdee-a9ca6f50f865
   - Use navigator.credentials.get() for authentication vs navigator.credentials.create() for registration
   - getLoginOptions() returns allowCredentials as optional (empty for discoverable credentials)
 ---
+
+## 2026-01-23 - US-038
+Thread: https://ampcode.com/threads/T-019be968-2eae-76de-b2b3-8a432740d244
+- Created apps/web/app/(chat)/layout.tsx with responsive sidebar layout
+- Sidebar is 300px wide on desktop, hidden on mobile with hamburger toggle
+- Uses brutal-border design system for consistent styling
+- Mobile overlay closes sidebar when tapped
+- Updated chat/page.tsx to work with new layout (removed inline sidebar)
+- Files changed: apps/web/app/(chat)/layout.tsx, apps/web/app/(chat)/chat/page.tsx
+- **Learnings for future iterations:**
+  - Chat layout uses 'use client' for useState-based sidebar toggle
+  - Use `lg:` breakpoint for desktop sidebar visibility (1024px)
+  - Use CSS transform for sidebar slide animation on mobile
+---

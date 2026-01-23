@@ -1,13 +1,23 @@
 'use client';
 
 import { useState } from 'react';
+import { useParams } from 'next/navigation';
+import GroupList from '@/components/GroupList';
 
 export default function ChatLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const params = useParams();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showNewGroupDialog, setShowNewGroupDialog] = useState(false);
+
+  const selectedGroupId = params?.groupId as string | undefined;
+
+  function handleNewGroup() {
+    setShowNewGroupDialog(true);
+  }
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -42,11 +52,12 @@ export default function ChatLayout({
             </button>
           </div>
 
-          {/* Sidebar content - placeholder for GroupList */}
+          {/* Sidebar content */}
           <div className="flex-1 overflow-y-auto p-4">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Group list coming soon
-            </p>
+            <GroupList
+              onNewGroup={handleNewGroup}
+              selectedGroupId={selectedGroupId}
+            />
           </div>
         </div>
       </aside>
