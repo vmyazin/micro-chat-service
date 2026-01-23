@@ -1,13 +1,21 @@
 import { Hono } from 'hono';
 import { setCookie } from 'hono/cookie';
-import { generateRegistrationOptions, verifyRegistrationResponse } from '@simplewebauthn/server';
+import { generateRegistrationOptions, verifyRegistrationResponse, generateAuthenticationOptions } from '@simplewebauthn/server';
 import type { RegistrationResponseJSON } from '@simplewebauthn/server';
 import type { UserId } from '@microchat/shared';
 import { Database } from '../db/client';
 
+export interface ChallengeData {
+  challenge: string;
+  userId?: string;
+  displayName?: string;
+  expiresAt: number;
+  type: 'registration' | 'authentication';
+}
+
 export interface AuthEnv {
   DB: import('../db/client').D1Database;
-  CHALLENGE_STORE: Map<string, { challenge: string; userId: string; displayName: string; expiresAt: number }>;
+  CHALLENGE_STORE: Map<string, ChallengeData>;
   RP_ID: string;
   RP_NAME: string;
   RP_ORIGIN: string;
@@ -79,6 +87,7 @@ authRouter.post('/api/auth/register/options', async (c) => {
     userId,
     displayName: body.displayName,
     expiresAt: Date.now() + 5 * 60 * 1000,
+    type: 'registration',
   });
 
   return c.json(options);
@@ -157,6 +166,47 @@ authRouter.post('/api/auth/register/verify', async (c) => {
     const message = error instanceof Error ? error.message : 'Verification failed';
     return c.json({ error: message }, 400);
   }
+});
+
+authRouter.post('/api/auth/login/options', async (c) => {
+  const body = await c.req.json<{ username?: string }>().catch(() => ({ username: undefined }));
+  
+  const db = new Database(c.env.DB);
+  
+  let allowCredentials: { id: string; type: 'public-key' }[] = [];
+  
+  if (body.username) {
+    const users = await db.query<{ id: string }>(
+      'SELECT id FROM users WHERE display_name = ?',
+      [body.username]
+    );
+    
+    if (users.length > 0) {
+      const credentials = await db.query<{ credential_id: string }>(
+        'SELECT credential_id FROM credentials WHERE user_id = ?',
+        [users[0].id]
+      );
+      
+      allowCredentials = credentials.map((cred) => ({
+        id: cred.credential_id,
+        type: 'public-key' as const,
+      }));
+    }
+  }
+
+  const options = await generateAuthenticationOptions({
+    rpID: c.env.RP_ID || 'localhost',
+    userVerification: 'preferred',
+    allowCredentials,
+  });
+
+  c.env.CHALLENGE_STORE.set(options.challenge, {
+    challenge: options.challenge,
+    expiresAt: Date.now() + 5 * 60 * 1000,
+    type: 'authentication',
+  });
+
+  return c.json(options);
 });
 
 export { authRouter };

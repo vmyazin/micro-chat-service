@@ -62,6 +62,7 @@ authRouter.post('/api/auth/register/options', async (c) => {
         userId,
         displayName: body.displayName,
         expiresAt: Date.now() + 5 * 60 * 1000,
+        type: 'registration',
     });
     return c.json(options);
 });
@@ -115,5 +116,31 @@ authRouter.post('/api/auth/register/verify', async (c) => {
         const message = error instanceof Error ? error.message : 'Verification failed';
         return c.json({ error: message }, 400);
     }
+});
+authRouter.post('/api/auth/login/options', async (c) => {
+    const body = await c.req.json().catch(() => ({ username: undefined }));
+    const db = new client_1.Database(c.env.DB);
+    let allowCredentials = [];
+    if (body.username) {
+        const users = await db.query('SELECT id FROM users WHERE display_name = ?', [body.username]);
+        if (users.length > 0) {
+            const credentials = await db.query('SELECT credential_id FROM credentials WHERE user_id = ?', [users[0].id]);
+            allowCredentials = credentials.map((cred) => ({
+                id: cred.credential_id,
+                type: 'public-key',
+            }));
+        }
+    }
+    const options = await (0, server_1.generateAuthenticationOptions)({
+        rpID: c.env.RP_ID || 'localhost',
+        userVerification: 'preferred',
+        allowCredentials,
+    });
+    c.env.CHALLENGE_STORE.set(options.challenge, {
+        challenge: options.challenge,
+        expiresAt: Date.now() + 5 * 60 * 1000,
+        type: 'authentication',
+    });
+    return c.json(options);
 });
 //# sourceMappingURL=auth.js.map
