@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import GroupList from '@/components/GroupList';
+import NewGroupDialog from '@/components/NewGroupDialog';
 
 export default function ChatLayout({
   children,
@@ -81,6 +82,12 @@ export default function ChatLayout({
           {children}
         </div>
       </main>
+
+      {/* New Group Dialog */}
+      <NewGroupDialog
+        open={showNewGroupDialog}
+        onClose={() => setShowNewGroupDialog(false)}
+      />
     </div>
   );
 }

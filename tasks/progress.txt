@@ -316,3 +316,19 @@ Thread: https://ampcode.com/threads/T-019be968-2eae-76de-b2b3-8a432740d244
   - Use `lg:` breakpoint for desktop sidebar visibility (1024px)
   - Use CSS transform for sidebar slide animation on mobile
 ---
+
+## 2026-01-23 - US-039
+Thread: https://ampcode.com/threads/T-019be969-5720-766b-85a3-b851a8b870ab
+- Created apps/web/components/GroupList.tsx component
+- Fetches groups using MicroChatClient.listGroups()
+- Displays group name and member count with brutalist styling
+- New Group button at top triggers onNewGroup callback
+- Click on group navigates to /chat/{groupId}
+- Shows loading spinner, error with retry, and empty state
+- Integrated into chat layout with selectedGroupId highlight
+- Files changed: apps/web/components/GroupList.tsx, apps/web/app/(chat)/layout.tsx
+- **Learnings for future iterations:**
+  - Use @/components alias for importing components in Next.js
+  - GroupListItem type from @microchat/client has groupId, encryptedName, memberCount, lastActivity
+  - useParams() from next/navigation gets route params in client components
+---
