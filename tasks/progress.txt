@@ -159,3 +159,18 @@ Thread: https://ampcode.com/threads/T-019be941-fb68-71c1-a66c-08a5b4376e89
   - generateAuthenticationOptions returns options with challenge for client-side WebAuthn
   - ChallengeData interface now unified with `type: 'registration' | 'authentication'`
 ---
+
+## 2026-01-23 - US-012
+Thread: https://ampcode.com/threads/T-019be943-71ff-761b-8586-e1777e67cc5a
+- Implemented POST /api/auth/login/verify endpoint for WebAuthn authentication verification
+- Added verifyAuthenticationResponse import from @simplewebauthn/server
+- Added base64ToUint8Array helper for decoding stored public keys
+- Endpoint looks up credential by response.id, verifies assertion against stored public key
+- Creates new session with 30-day expiry and returns as httpOnly cookie
+- Updates credential last_used_at timestamp after successful verification
+- Files changed: packages/server/src/routes/auth.ts
+- **Learnings for future iterations:**
+  - Use same buffer casting pattern for authentication as registration: `new Uint8Array(bytes.buffer.slice(0)) as Uint8Array<ArrayBuffer>`
+  - verifyAuthenticationResponse requires credential object with id, publicKey, and counter
+  - Counter tracking is set to 0 for now (would need to persist and check for replay attacks in production)
+---
