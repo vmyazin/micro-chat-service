@@ -390,3 +390,18 @@ Thread: https://ampcode.com/threads/T-019beb0d-c5f2-729e-9fde-3dfa0c01744e
   - Deduplicate messages by id when combining optimistic updates with real-time events
   - Use connection status state to re-subscribe when reconnected
 ---
+
+## 2026-01-23 - US-044
+Thread: https://ampcode.com/threads/T-019beb0f-cebe-7112-b0b3-80ad071a01b5
+- Created apps/web/components/GroupSettings.tsx with member list, invite, leave, delete
+- Added server endpoints: GET /api/groups/:id/members, POST /api/groups/:id/leave, DELETE /api/groups/:id
+- Added client methods: getMembers(), leaveGroup(), deleteGroup()
+- Exported GroupMember and GroupMembersResult types from client package
+- Added settings gear button to conversation header
+- Confirmation dialogs for leave/delete actions
+- Files changed: packages/server/src/routes/groups.ts, packages/client/src/group-client.ts, packages/client/src/client.ts, packages/client/src/index.ts, apps/web/components/GroupSettings.tsx, apps/web/app/(chat)/chat/[groupId]/page.tsx
+- **Learnings for future iterations:**
+  - Use isOwner field from getMembers() to show owner badge and control delete visibility
+  - Clipboard API for copying invite links: navigator.clipboard.writeText()
+  - Owner cannot leave group (server enforces this, use delete instead)
+---
