@@ -354,7 +354,21 @@ Thread: https://ampcode.com/threads/T-019beb09-c72b-70bf-845b-68659d847e61
 - MessageBubble component shows deleted messages as placeholder
 - Files changed: tasks/prd.json (marked passes: true)
 - **Learnings for future iterations:**
-  - Use useRef with scrollIntoView({ behavior: 'smooth' }) for auto-scroll
-  - Date grouping: compare formatDate() of adjacent messages to show date headers
-  - MessageListItem type from @microchat/client includes deleted boolean for soft deletes
+- Use useRef with scrollIntoView({ behavior: 'smooth' }) for auto-scroll
+- Date grouping: compare formatDate() of adjacent messages to show date headers
+- MessageListItem type from @microchat/client includes deleted boolean for soft deletes
+---
+
+## 2026-01-23 - US-042
+Thread: https://ampcode.com/threads/T-019beb0a-e5b7-7360-9830-a402bd380cba
+- Created apps/web/components/MessageInput.tsx with text input and send button
+- Text input with send button, Enter key to send, clear input after sending
+- Disabled state while sending with loading spinner
+- Integrated into conversation page at apps/web/app/(chat)/chat/[groupId]/page.tsx
+- Added GroupId and UserId re-exports from @microchat/client for web app convenience
+- Files changed: apps/web/components/MessageInput.tsx, apps/web/app/(chat)/chat/[groupId]/page.tsx, packages/client/src/index.ts
+- **Learnings for future iterations:**
+- Re-export branded types (GroupId, UserId) from client package for web app convenience
+- Use `as GroupId` cast when path params are strings but need branded type
+- SendMessageResult returns messageId and timestamp, not senderId (use optimistic 'me' placeholder)
 ---
