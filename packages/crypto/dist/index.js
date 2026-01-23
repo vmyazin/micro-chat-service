@@ -19,4 +19,5 @@ __exportStar(require("./mls-client"), exports);
 __exportStar(require("./key-management"), exports);
 __exportStar(require("./key-store"), exports);
 __exportStar(require("./memory-key-store"), exports);
+__exportStar(require("./crypto-erasure"), exports);
 //# sourceMappingURL=index.js.map
