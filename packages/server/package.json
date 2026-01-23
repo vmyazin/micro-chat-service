@@ -10,6 +10,7 @@
   "dependencies": {
     "@microchat/crypto": "workspace:*",
     "@microchat/shared": "workspace:*",
+    "@simplewebauthn/server": "^13.2.2",
     "hono": "^4.11.5"
   },
   "devDependencies": {

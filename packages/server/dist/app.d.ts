@@ -1,4 +1,9 @@
 import { Hono } from 'hono';
-declare const app: Hono<import("hono/types").BlankEnv, import("hono/types").BlankSchema, "/">;
+import { type AuthEnv } from './routes/auth';
+export interface AppEnv extends AuthEnv {
+}
+declare const app: Hono<{
+    Bindings: AppEnv;
+}, import("hono/types").BlankSchema, "/">;
 export { app };
 //# sourceMappingURL=app.d.ts.map
