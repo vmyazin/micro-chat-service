@@ -230,3 +230,15 @@ Thread: https://ampcode.com/threads/T-019be948-9dbb-739d-a7e1-6219d14d6b5b
     - Check existing membership before adding user to group to prevent duplicates
     - Use db.execute() for UPDATE statements (same as INSERT/DELETE)
   ---
+
+## 2026-01-23 - US-018
+Thread: https://ampcode.com/threads/T-019be94d-f93c-71bf-900d-437825f5c137
+- Implemented DELETE /api/groups/:id/members/:userId endpoint for removing group members
+- Only group owner can remove members (returns 403 otherwise)
+- Cannot remove self (returns 400, suggests using leave endpoint)
+- Validates group exists and target user is a member
+- Files changed: packages/server/src/routes/groups.ts
+- **Learnings for future iterations:**
+  - Use DELETE HTTP method for member removal endpoints
+  - Check ownership via groups.owner_id before allowing destructive operations
+---
