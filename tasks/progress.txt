@@ -10,6 +10,7 @@
 - Hono router composition: `app.route('', childRouter)` mounts child router at app root
 - Hono cookies: `import { setCookie, getCookie } from 'hono/cookie'` for httpOnly session cookies
 - Store binary data (like WebAuthn public keys) as base64 strings in D1 TEXT columns
+- Hono middleware: use `Context<{ Bindings: Env; Variables: Vars }>` type, set context with `c.set()`, access with `c.get()`
 
 ---
 
@@ -173,4 +174,20 @@ Thread: https://ampcode.com/threads/T-019be943-71ff-761b-8586-e1777e67cc5a
   - Use same buffer casting pattern for authentication as registration: `new Uint8Array(bytes.buffer.slice(0)) as Uint8Array<ArrayBuffer>`
   - verifyAuthenticationResponse requires credential object with id, publicKey, and counter
   - Counter tracking is set to 0 for now (would need to persist and check for replay attacks in production)
+---
+
+## 2026-01-23 - US-013
+Thread: https://ampcode.com/threads/T-019be945-12cb-7032-ab54-2b768560bbf7
+- Created packages/server/src/middleware/auth.ts with requireAuth middleware
+- Middleware extracts session token from 'session' httpOnly cookie using Hono's getCookie
+- Validates session exists in database and is not expired
+- Deletes expired sessions from database when detected
+- Attaches AuthUser (id, displayName) to Hono context via c.set('user', ...)
+- Returns 401 JSON response for missing/invalid/expired session
+- Created index.ts barrel export for middleware module
+- Files changed: packages/server/src/middleware/auth.ts, packages/server/src/middleware/index.ts
+- **Learnings for future iterations:**
+  - Use Hono Variables type for context data: `Context<{ Bindings: Env; Variables: AuthVariables }>`
+  - Access context variables with `c.get('user')` and set with `c.set('user', value)`
+  - Middleware returns Response for errors, or calls `await next()` to continue chain
 ---
