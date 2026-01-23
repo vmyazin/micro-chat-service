@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { type AuthEnv } from './routes/auth';
-export interface AppEnv extends AuthEnv {
+import { type GroupsEnv } from './routes/groups';
+export interface AppEnv extends AuthEnv, GroupsEnv {
 }
 declare const app: Hono<{
     Bindings: AppEnv;
