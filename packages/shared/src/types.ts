@@ -44,3 +44,23 @@ export interface WebAuthnCredential {
   userId: UserId;
   createdAt: Date;
 }
+
+export interface GroupInvite {
+  id: string;
+  groupId: GroupId;
+  createdBy: UserId;
+  expiresAt: Date;
+  used: boolean;
+}
+
+export interface DeletedMessage {
+  id: string;
+  groupId: GroupId;
+  deletedAt: Date;
+  deletedBy: UserId;
+}
+
+export const InviteConfig = {
+  MAX_AGE_DAYS: 7,
+  SINGLE_USE: true,
+} as const;

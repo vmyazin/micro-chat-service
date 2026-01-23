@@ -1,0 +1,16 @@
+## Codebase Patterns
+- Types in packages/shared/src/types.ts are auto-exported via `export * from './types'` in index.ts
+- Use branded types (e.g., `UserId`, `GroupId`) from shared package for type-safe IDs
+
+---
+
+## 2026-01-23 - US-001
+Thread: https://ampcode.com/threads/T-019be931-c2f5-759b-8eab-1ddb6d7550ae
+- Added User, Session, and WebAuthnCredential types to packages/shared/src/types.ts
+- Types are automatically exported via existing barrel export in index.ts
+- Files changed: packages/shared/src/types.ts
+- **Learnings for future iterations:**
+  - Shared package uses barrel exports - no need to update index.ts when adding to types.ts
+  - Use existing branded types (UserId) for foreign key references
+  - pnpm build runs tsc on all packages and validates types
+---
