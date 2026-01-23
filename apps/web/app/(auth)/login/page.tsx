@@ -1,12 +1,156 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { AuthClient } from '@microchat/client';
+
+type LoginState = 'idle' | 'loading' | 'unsupported';
+
 export default function LoginPage() {
+  const router = useRouter();
+  const [state, setState] = useState<LoginState>('idle');
+  const [error, setError] = useState<string | null>(null);
+
+  const isWebAuthnSupported =
+    typeof window !== 'undefined' &&
+    window.PublicKeyCredential !== undefined;
+
+  async function handleLogin() {
+    if (!isWebAuthnSupported) {
+      setState('unsupported');
+      return;
+    }
+
+    setError(null);
+    setState('loading');
+
+    try {
+      const authClient = new AuthClient(
+        process.env.NEXT_PUBLIC_API_URL || ''
+      );
+
+      const options = await authClient.getLoginOptions();
+
+      const publicKeyOptions: PublicKeyCredentialRequestOptions = {
+        challenge: base64urlToBuffer(options.challenge),
+        rpId: options.rpId,
+        timeout: options.timeout,
+        userVerification: (options.userVerification as UserVerificationRequirement) || 'preferred',
+        allowCredentials: options.allowCredentials?.map((cred) => ({
+          id: base64urlToBuffer(cred.id),
+          type: cred.type,
+        })),
+      };
+
+      const credential = await navigator.credentials.get({
+        publicKey: publicKeyOptions,
+      });
+
+      if (!credential) {
+        throw new Error('No credential returned');
+      }
+
+      await authClient.verifyLogin(
+        credential as PublicKeyCredential,
+        options.challenge
+      );
+
+      router.push('/chat');
+    } catch (err) {
+      setState('idle');
+      setError(err instanceof Error ? err.message : 'Authentication failed');
+    }
+  }
+
+  if (!isWebAuthnSupported && typeof window !== 'undefined') {
+    return (
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="brutal-card w-full max-w-md text-center">
+          <h1 className="text-2xl font-bold mb-4">Browser Not Supported</h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Your browser does not support passkeys (WebAuthn). Please use a
+            modern browser like Chrome, Firefox, Safari, or Edge.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="w-full max-w-md p-8">
+    <div className="flex min-h-screen items-center justify-center p-4">
+      <div className="brutal-card w-full max-w-md">
         <h1 className="text-2xl font-bold text-center mb-8">Sign In</h1>
-        <p className="text-center text-gray-600">
-          Login page placeholder - WebAuthn authentication coming soon
-        </p>
+
+        <div className="space-y-6">
+          {error && (
+            <div className="p-3 brutal-border bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm">
+              {error}
+            </div>
+          )}
+
+          <button
+            onClick={handleLogin}
+            disabled={state === 'loading'}
+            className="w-full brutal-btn flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {state === 'loading' ? (
+              <>
+                <LoadingSpinner />
+                Authenticating...
+              </>
+            ) : (
+              'Sign in with Passkey'
+            )}
+          </button>
+
+          <p className="text-center text-sm text-gray-600 dark:text-gray-400">
+            Don&apos;t have an account?{' '}
+            <Link
+              href="/register"
+              className="font-semibold text-primary hover:underline"
+            >
+              Create one
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
+}
+
+function LoadingSpinner() {
+  return (
+    <svg
+      className="animate-spin h-5 w-5"
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+    >
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+      />
+    </svg>
+  );
+}
+
+function base64urlToBuffer(base64url: string): ArrayBuffer {
+  const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
+  const padding = '='.repeat((4 - (base64.length % 4)) % 4);
+  const binary = atob(base64 + padding);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes.buffer;
 }
