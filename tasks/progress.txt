@@ -203,3 +203,17 @@ Thread: https://ampcode.com/threads/T-019be947-ae86-72f6-beed-6b516d4cf9df
   - Use subquery `(SELECT COUNT(*) FROM ... WHERE ...)` for aggregate counts in SELECT
   - D1/SQLite supports INNER JOIN and subqueries in SELECT clause
 ---
+
+## 2026-01-23 - US-016
+Thread: https://ampcode.com/threads/T-019be948-9dbb-739d-a7e1-6219d14d6b5b
+- Implemented POST /api/groups/:id/invites endpoint for creating group invites
+- Added generateInviteCode() helper for random 24-char hex codes
+- Endpoint validates membership before allowing invite creation
+- Uses InviteConfig.MAX_AGE_DAYS (7) to calculate expiry
+- Returns { code, expiresAt } on success
+- Files changed: packages/server/src/routes/groups.ts
+- **Learnings for future iterations:**
+  - Import InviteConfig from @microchat/shared for consistent invite settings
+  - Use `c.req.param('id') as GroupId` for typed path parameters in Hono
+  - Invites stored with `used: 0` (INTEGER for boolean in D1)
+---

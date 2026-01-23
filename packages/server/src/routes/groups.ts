@@ -129,4 +129,70 @@ groupsRouter.post('/api/groups/:id/invites', requireAuth, async (c) => {
   });
 });
 
+groupsRouter.post('/api/invites/:code/accept', requireAuth, async (c) => {
+  const code = c.req.param('code');
+  const user = c.get('user');
+  const db = new Database(c.env.DB);
+  const now = new Date().toISOString();
+
+  const invites = await db.query<{
+    id: string;
+    group_id: GroupId;
+    expires_at: string;
+    used: number;
+  }>('SELECT id, group_id, expires_at, used FROM invites WHERE id = ?', [code]);
+
+  if (invites.length === 0) {
+    return c.json({ error: 'Invite not found' }, 404);
+  }
+
+  const invite = invites[0];
+
+  if (invite.used !== 0) {
+    return c.json({ error: 'Invite has already been used' }, 400);
+  }
+
+  if (new Date(invite.expires_at) < new Date()) {
+    return c.json({ error: 'Invite has expired' }, 400);
+  }
+
+  const existingMembership = await db.query<{ id: string }>(
+    'SELECT id FROM group_members WHERE group_id = ? AND user_id = ?',
+    [invite.group_id, user.id]
+  );
+
+  if (existingMembership.length > 0) {
+    return c.json({ error: 'Already a member of this group' }, 400);
+  }
+
+  const memberId = generateMemberId();
+
+  await db.execute('UPDATE invites SET used = 1, used_by = ?, used_at = ? WHERE id = ?', [
+    user.id,
+    now,
+    code,
+  ]);
+
+  await db.execute('INSERT INTO group_members (id, group_id, user_id, joined_at) VALUES (?, ?, ?, ?)', [
+    memberId,
+    invite.group_id,
+    user.id,
+    now,
+  ]);
+
+  const groups = await db.query<{
+    id: GroupId;
+    encrypted_name: string;
+    owner_id: UserId;
+  }>('SELECT id, encrypted_name, owner_id FROM groups WHERE id = ?', [invite.group_id]);
+
+  const group = groups[0];
+
+  return c.json({
+    groupId: group.id,
+    encryptedName: group.encrypted_name,
+    ownerId: group.owner_id,
+  });
+});
+
 export { groupsRouter };
