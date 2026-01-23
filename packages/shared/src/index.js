@@ -14,8 +14,6 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-// MLS wrapper - will integrate with openmls/mls-rs
-__exportStar(require("./mls-client"), exports);
-__exportStar(require("./key-management"), exports);
-__exportStar(require("./key-store"), exports);
+__exportStar(require("./types"), exports);
+__exportStar(require("./constants"), exports);
 //# sourceMappingURL=index.js.map

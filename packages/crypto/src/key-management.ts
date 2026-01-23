@@ -1,7 +1,2 @@
 // Key management with crypto-erasure support
-
-export interface KeyStore {
-  storeGroupKey(groupId: string, epoch: number, key: Uint8Array): Promise<void>;
-  getGroupKey(groupId: string, epoch: number): Promise<Uint8Array | null>;
-  eraseGroupKeys(groupId: string): Promise<void>;
-}
+// Legacy interface - see key-store.ts for the new KeyStore interface

@@ -14,3 +14,13 @@ Thread: https://ampcode.com/threads/T-019be931-c2f5-759b-8eab-1ddb6d7550ae
   - Use existing branded types (UserId) for foreign key references
   - pnpm build runs tsc on all packages and validates types
 ---
+
+## 2026-01-23 - US-002
+Thread: https://ampcode.com/threads/T-019be932-e0ce-7282-bac0-025d3e6cdaec
+- Added GroupInvite and DeletedMessage types to packages/shared/src/types.ts
+- Added InviteConfig constants (MAX_AGE_DAYS=7, SINGLE_USE=true)
+- Files changed: packages/shared/src/types.ts
+- **Learnings for future iterations:**
+  - Use `as const` for config objects to get literal types
+  - Types auto-exported via `export * from './types'` in index.ts
+---
