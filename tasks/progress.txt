@@ -15,6 +15,7 @@
 - Next.js route groups: (auth), (chat) organize routes without affecting URL structure - /login not /(auth)/login
 - Use useRef for MicroChatClient in React components to persist across re-renders and share WebSocket connection
 - Use GET /api/auth/me to get current authenticated user (userId, displayName)
+- Cloudflare scheduled handlers: export default `{ fetch, scheduled }` object, use ctx.waitUntil() for async work
 
 ---
 
@@ -451,4 +452,20 @@ Thread: https://ampcode.com/threads/T-019beb17-30ec-72e8-af98-a3e6d45b8e2b
   - Cloudflare Workers require a default export from the main module
   - Use `pnpm/action-setup@v4` for pnpm in GitHub Actions with version parameter
   - wrangler.toml uses `compatibility_flags = ["nodejs_compat"]` for Node.js-like APIs
+---
+
+## 2026-01-23 - US-048
+Thread: https://ampcode.com/threads/T-019beb5a-621c-7631-b455-f3d8b030f3ea
+- Created packages/server/src/jobs/retention.ts with runRetentionCleanup and handleScheduled functions
+- Added delivery_receipts table via 002_delivery_receipts.sql migration
+- Added DeliveryReceiptsTable interface to db/schema.ts
+- Updated packages/server/src/index.ts to export scheduled handler for Cloudflare Cron Trigger
+- Added cron trigger config to wrangler.toml: `crons = ["0 3 * * *"]` (runs daily at 3 AM UTC)
+- Retention policy deletes delivery receipts older than 30 days
+- Files changed: packages/server/src/jobs/retention.ts, packages/server/src/db/migrations/002_delivery_receipts.sql, packages/server/src/db/schema.ts, packages/server/src/index.ts, packages/server/wrangler.toml
+- **Learnings for future iterations:**
+  - Cloudflare Workers scheduled handler: `async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext)`
+  - Use ctx.waitUntil() to ensure async work completes before worker terminates
+  - Cron syntax in wrangler.toml: `[triggers]` section with `crons = ["cron expression"]`
+  - D1 execute result uses `result.meta?.changes` for affected row count
 ---
