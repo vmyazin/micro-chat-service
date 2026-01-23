@@ -1,5 +1,5 @@
 import type { GroupId, UserId } from '@microchat/shared';
-import { AuthClient, type RegisterOptions, type LoginOptions, type AuthResult } from './auth-client';
+import { AuthClient, type RegisterOptions, type LoginOptions, type AuthResult, type CurrentUser } from './auth-client';
 import {
   GroupClient,
   type GroupListItem,
@@ -52,6 +52,10 @@ export class MicroChatClient {
 
   verifyLogin(response: PublicKeyCredential, challenge: string): Promise<AuthResult> {
     return this.authClient.verifyLogin(response, challenge);
+  }
+
+  getCurrentUser(): Promise<CurrentUser> {
+    return this.authClient.getCurrentUser();
   }
 
   // Group methods

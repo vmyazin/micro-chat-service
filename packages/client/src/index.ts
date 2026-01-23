@@ -1,4 +1,4 @@
-export { AuthClient, type RegisterOptions, type LoginOptions, type AuthResult } from './auth-client';
+export { AuthClient, type RegisterOptions, type LoginOptions, type AuthResult, type CurrentUser } from './auth-client';
 export {
   GroupClient,
   type GroupListItem,

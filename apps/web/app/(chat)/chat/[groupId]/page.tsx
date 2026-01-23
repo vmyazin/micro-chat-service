@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams } from 'next/navigation';
-import { MicroChatClient, type MessageListItem, type GroupId, type UserId, type WebSocketEvent } from '@microchat/client';
+import { MicroChatClient, type MessageListItem, type GroupId, type UserId, type WebSocketEvent, type CurrentUser } from '@microchat/client';
 import { MessageInput } from '@/components/MessageInput';
 import GroupSettings from '@/components/GroupSettings';
 
@@ -15,6 +15,9 @@ export default function ConversationPage() {
   const [error, setError] = useState<string | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'reconnecting'>('disconnected');
   const [showSettings, setShowSettings] = useState(false);
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const clientRef = useRef<MicroChatClient | null>(null);
 
@@ -30,8 +33,19 @@ export default function ConversationPage() {
   useEffect(() => {
     if (groupId) {
       fetchMessages();
+      fetchCurrentUser();
     }
   }, [groupId]);
+
+  async function fetchCurrentUser() {
+    try {
+      const client = getClient();
+      const user = await client.getCurrentUser();
+      setCurrentUser(user);
+    } catch (err) {
+      console.error('Failed to get current user:', err);
+    }
+  }
 
   useEffect(() => {
     scrollToBottom();
@@ -180,6 +194,34 @@ export default function ConversationPage() {
     });
   }
 
+  async function handleDeleteMessage(messageId: string) {
+    if (!groupId) return;
+    
+    try {
+      setDeleting(true);
+      const client = getClient();
+      await client.deleteMessage(groupId as GroupId, messageId);
+      // Optimistic update - mark as deleted locally
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === messageId ? { ...m, deleted: true } : m
+        )
+      );
+      setDeleteConfirmId(null);
+    } catch (err) {
+      console.error('Failed to delete message:', err);
+      alert('Failed to delete message');
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  function isOwnMessage(message: MessageListItem): boolean {
+    if (!currentUser) return false;
+    // Check both actual user ID and optimistic 'me' placeholder
+    return message.senderId === currentUser.userId || message.senderId === ('me' as UserId);
+  }
+
   function formatTime(dateStr: string): string {
     const date = new Date(dateStr);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -280,6 +322,12 @@ export default function ConversationPage() {
                   <MessageBubble
                     message={message}
                     formatTime={formatTime}
+                    isOwn={isOwnMessage(message)}
+                    showDeleteConfirm={deleteConfirmId === message.id}
+                    onRequestDelete={() => setDeleteConfirmId(message.id)}
+                    onConfirmDelete={() => handleDeleteMessage(message.id)}
+                    onCancelDelete={() => setDeleteConfirmId(null)}
+                    deleting={deleting && deleteConfirmId === message.id}
                   />
                 </div>
               );
@@ -301,9 +349,24 @@ export default function ConversationPage() {
 interface MessageBubbleProps {
   message: MessageListItem;
   formatTime: (date: string) => string;
+  isOwn: boolean;
+  showDeleteConfirm: boolean;
+  onRequestDelete: () => void;
+  onConfirmDelete: () => void;
+  onCancelDelete: () => void;
+  deleting: boolean;
 }
 
-function MessageBubble({ message, formatTime }: MessageBubbleProps) {
+function MessageBubble({ 
+  message, 
+  formatTime, 
+  isOwn, 
+  showDeleteConfirm, 
+  onRequestDelete, 
+  onConfirmDelete, 
+  onCancelDelete,
+  deleting 
+}: MessageBubbleProps) {
   if (message.deleted) {
     return (
       <div className="flex justify-start">
@@ -317,17 +380,51 @@ function MessageBubble({ message, formatTime }: MessageBubbleProps) {
   }
 
   return (
-    <div className="flex justify-start">
-      <div className="max-w-[70%] p-3 brutal-border bg-white dark:bg-gray-900">
+    <div className="flex justify-start group">
+      <div className="max-w-[70%] p-3 brutal-border bg-white dark:bg-gray-900 relative">
         <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
           {message.senderId}
         </div>
         <p className="text-sm break-words">
           {decodeContent(message.encryptedContent)}
         </p>
-        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 text-right">
-          {formatTime(message.createdAt)}
+        <div className="flex items-center justify-between mt-1">
+          <div className="text-xs text-gray-500 dark:text-gray-400">
+            {formatTime(message.createdAt)}
+          </div>
+          {isOwn && !showDeleteConfirm && (
+            <button
+              onClick={onRequestDelete}
+              className="opacity-0 group-hover:opacity-100 transition-opacity ml-2 p-1 text-gray-400 hover:text-red-500"
+              aria-label="Delete message"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          )}
         </div>
+        {showDeleteConfirm && (
+          <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+            <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">Delete this message?</p>
+            <div className="flex gap-2">
+              <button
+                onClick={onConfirmDelete}
+                disabled={deleting}
+                className="flex-1 text-xs px-2 py-1 brutal-border bg-red-500 text-white hover:bg-red-600 disabled:opacity-50"
+              >
+                {deleting ? 'Deleting...' : 'Delete'}
+              </button>
+              <button
+                onClick={onCancelDelete}
+                disabled={deleting}
+                className="flex-1 text-xs px-2 py-1 brutal-border bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

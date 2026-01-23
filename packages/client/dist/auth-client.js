@@ -88,6 +88,17 @@ class AuthClient {
         }
         return res.json();
     }
+    async getCurrentUser() {
+        const response = await fetch(`${this.baseUrl}/api/auth/me`, {
+            method: 'GET',
+            credentials: 'include',
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to get current user');
+        }
+        return response.json();
+    }
     bufferToBase64url(buffer) {
         const bytes = new Uint8Array(buffer);
         let binary = '';

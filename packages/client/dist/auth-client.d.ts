@@ -35,6 +35,10 @@ export interface AuthResult {
     verified: boolean;
     userId: UserId;
 }
+export interface CurrentUser {
+    userId: UserId;
+    displayName: string;
+}
 export declare class AuthClient {
     private baseUrl;
     constructor(baseUrl: string);
@@ -42,6 +46,7 @@ export declare class AuthClient {
     verifyRegistration(response: PublicKeyCredential, challenge: string): Promise<AuthResult>;
     getLoginOptions(username?: string): Promise<LoginOptions>;
     verifyLogin(response: PublicKeyCredential, challenge: string): Promise<AuthResult>;
+    getCurrentUser(): Promise<CurrentUser>;
     private bufferToBase64url;
 }
 //# sourceMappingURL=auth-client.d.ts.map

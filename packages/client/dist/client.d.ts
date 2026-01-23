@@ -1,5 +1,5 @@
 import type { GroupId, UserId } from '@microchat/shared';
-import { type RegisterOptions, type LoginOptions, type AuthResult } from './auth-client';
+import { type RegisterOptions, type LoginOptions, type AuthResult, type CurrentUser } from './auth-client';
 import { type GroupListItem, type CreateGroupResult, type InviteResult, type AcceptInviteResult, type GroupMembersResult } from './group-client';
 import { type SendMessageResult, type MessageListItem } from './message-client';
 import { type WebSocketEventHandler } from './websocket-client';
@@ -16,6 +16,7 @@ export declare class MicroChatClient {
     verifyRegistration(response: PublicKeyCredential, challenge: string): Promise<AuthResult>;
     getLoginOptions(username?: string): Promise<LoginOptions>;
     verifyLogin(response: PublicKeyCredential, challenge: string): Promise<AuthResult>;
+    getCurrentUser(): Promise<CurrentUser>;
     listGroups(): Promise<GroupListItem[]>;
     createGroup(encryptedName: string): Promise<CreateGroupResult>;
     createInvite(groupId: GroupId): Promise<InviteResult>;

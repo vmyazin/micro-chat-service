@@ -29,6 +29,9 @@ class MicroChatClient {
     verifyLogin(response, challenge) {
         return this.authClient.verifyLogin(response, challenge);
     }
+    getCurrentUser() {
+        return this.authClient.getCurrentUser();
+    }
     // Group methods
     listGroups() {
         return this.groupClient.listGroups();

@@ -218,6 +218,49 @@ authRouter.post('/api/auth/login/options', async (c) => {
   return c.json(options);
 });
 
+authRouter.get('/api/auth/me', async (c) => {
+  const sessionId = await import('hono/cookie').then(m => m.getCookie(c, 'session'));
+  
+  if (!sessionId) {
+    return c.json({ error: 'Not authenticated' }, 401);
+  }
+
+  const db = new Database(c.env.DB);
+
+  const sessions = await db.query<{ user_id: string; expires_at: string }>(
+    'SELECT user_id, expires_at FROM sessions WHERE id = ?',
+    [sessionId]
+  );
+
+  if (sessions.length === 0) {
+    return c.json({ error: 'Invalid session' }, 401);
+  }
+
+  const session = sessions[0];
+  const now = new Date();
+  const expiresAt = new Date(session.expires_at);
+
+  if (expiresAt < now) {
+    await db.execute('DELETE FROM sessions WHERE id = ?', [sessionId]);
+    return c.json({ error: 'Session expired' }, 401);
+  }
+
+  const users = await db.query<{ id: string; display_name: string }>(
+    'SELECT id, display_name FROM users WHERE id = ?',
+    [session.user_id]
+  );
+
+  if (users.length === 0) {
+    return c.json({ error: 'User not found' }, 401);
+  }
+
+  const user = users[0];
+  return c.json({
+    userId: user.id as UserId,
+    displayName: user.display_name,
+  });
+});
+
 authRouter.post('/api/auth/login/verify', async (c) => {
   const body = await c.req.json<{ response: AuthenticationResponseJSON; challenge: string }>();
   
