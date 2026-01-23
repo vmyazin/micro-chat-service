@@ -11,6 +11,7 @@
 - Hono cookies: `import { setCookie, getCookie } from 'hono/cookie'` for httpOnly session cookies
 - Store binary data (like WebAuthn public keys) as base64 strings in D1 TEXT columns
 - Hono middleware: use `Context<{ Bindings: Env; Variables: Vars }>` type, set context with `c.set()`, access with `c.get()`
+- Client package needs `lib: ["ES2022", "DOM"]` in tsconfig for browser types (WebSocket, PublicKeyCredential)
 
 ---
 
@@ -241,4 +242,18 @@ Thread: https://ampcode.com/threads/T-019be94d-f93c-71bf-900d-437825f5c137
 - **Learnings for future iterations:**
   - Use DELETE HTTP method for member removal endpoints
   - Check ownership via groups.owner_id before allowing destructive operations
+---
+
+## 2026-01-23 - US-034
+Thread: https://ampcode.com/threads/T-019be962-586a-7273-b266-e412e1dec199
+- Created MicroChatClient class in packages/client/src/client.ts
+- Implemented AuthClient (register/login with WebAuthn), GroupClient (CRUD + invites), MessageClient (send/get/delete), WebSocketClient (real-time with reconnect)
+- Single connect()/disconnect() for WebSocket, with auto-reconnect and subscription management
+- All methods exposed through unified API
+- Exported as default from packages/client/src/index.ts
+- Files changed: packages/client/src/auth-client.ts, packages/client/src/group-client.ts, packages/client/src/message-client.ts, packages/client/src/websocket-client.ts, packages/client/src/client.ts, packages/client/src/index.ts, packages/client/tsconfig.json
+- **Learnings for future iterations:**
+  - Client package needs `lib: ["ES2022", "DOM"]` in tsconfig for browser types (WebSocket, PublicKeyCredential)
+  - Use `credentials: 'include'` on fetch calls for httpOnly session cookies
+  - WebAuthn credentials need base64url encoding (replace +/= with -/_/)
 ---
