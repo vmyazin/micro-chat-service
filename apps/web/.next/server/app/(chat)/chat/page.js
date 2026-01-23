@@ -1,7 +1,7 @@
 var R=require("../../../chunks/ssr/[turbopack]_runtime.js")("server/app/(chat)/chat/page.js")
 R.c("server/chunks/ssr/dev_@playground_micro-chat-service_502bbdf8._.js")
 R.c("server/chunks/ssr/[root-of-the-server]__7879c6fa._.js")
-R.c("server/chunks/ssr/dev_@playground_micro-chat-service_d007e7b0._.js")
+R.c("server/chunks/ssr/dev_@playground_micro-chat-service_022c1de2._.js")
 R.c("server/chunks/ssr/[root-of-the-server]__75ec474b._.js")
 R.c("server/chunks/ssr/[root-of-the-server]__78220a6d._.js")
 R.c("server/chunks/ssr/[root-of-the-server]__546750f3._.js")
@@ -10,6 +10,7 @@ R.c("server/chunks/ssr/[root-of-the-server]__008f65a0._.js")
 R.c("server/chunks/ssr/944ca_next_dist_client_components_a9a4d935._.js")
 R.c("server/chunks/ssr/944ca_next_dist_client_components_builtin_forbidden_d537d1cb.js")
 R.c("server/chunks/ssr/944ca_next_dist_client_components_builtin_unauthorized_167575c1.js")
+R.c("server/chunks/ssr/dev_@playground_micro-chat-service_apps_web_app_(chat)_layout_tsx_6abae236._.js")
 R.c("server/chunks/ssr/b0019_apps_web__next-internal_server_app_(chat)_chat_page_actions_d7003d3a.js")
-R.m(7441)
-module.exports=R.m(7441).exports
+R.m(14137)
+module.exports=R.m(14137).exports

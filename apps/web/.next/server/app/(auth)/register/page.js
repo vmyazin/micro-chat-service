@@ -1,5 +1,5 @@
 var R=require("../../../chunks/ssr/[turbopack]_runtime.js")("server/app/(auth)/register/page.js")
-R.c("server/chunks/ssr/dev_@playground_micro-chat-service_10cd03dc._.js")
+R.c("server/chunks/ssr/dev_@playground_micro-chat-service_395e28d3._.js")
 R.c("server/chunks/ssr/[root-of-the-server]__7879c6fa._.js")
 R.c("server/chunks/ssr/dev_@playground_micro-chat-service_bc54e329._.js")
 R.c("server/chunks/ssr/[root-of-the-server]__75ec474b._.js")
