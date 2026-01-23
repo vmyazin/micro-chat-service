@@ -12,3 +12,6 @@ RP_ORIGIN = "https://microchat.example.com"
 binding = "DB"
 database_name = "microchat-db"
 database_id = "placeholder-replace-with-actual-id"
+
+[triggers]
+crons = ["0 3 * * *"]

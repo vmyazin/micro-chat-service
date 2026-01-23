@@ -59,6 +59,14 @@ export interface InvitesTable {
   used_at: string | null;
 }
 
+export interface DeliveryReceiptsTable {
+  id: string;
+  message_id: string;
+  user_id: UserId;
+  delivered_at: string;
+  read_at: string | null;
+}
+
 export interface DatabaseSchema {
   users: UsersTable;
   sessions: SessionsTable;
@@ -67,4 +75,5 @@ export interface DatabaseSchema {
   group_members: GroupMembersTable;
   messages: MessagesTable;
   invites: InvitesTable;
+  delivery_receipts: DeliveryReceiptsTable;
 }

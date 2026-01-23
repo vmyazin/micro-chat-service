@@ -1,6 +1,14 @@
 // MicroChat Server Entry Point
 export { app } from './app';
 
-import { app } from './app';
+import { app, type AppEnv } from './app';
+import { handleScheduled, type RetentionEnv } from './jobs/retention';
 
-export default app;
+type Env = AppEnv & RetentionEnv;
+
+export default {
+  fetch: app.fetch,
+  async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+    ctx.waitUntil(handleScheduled(env));
+  },
+};

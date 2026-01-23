@@ -51,6 +51,13 @@ export interface InvitesTable {
     used_by: UserId | null;
     used_at: string | null;
 }
+export interface DeliveryReceiptsTable {
+    id: string;
+    message_id: string;
+    user_id: UserId;
+    delivered_at: string;
+    read_at: string | null;
+}
 export interface DatabaseSchema {
     users: UsersTable;
     sessions: SessionsTable;
@@ -59,5 +66,6 @@ export interface DatabaseSchema {
     group_members: GroupMembersTable;
     messages: MessagesTable;
     invites: InvitesTable;
+    delivery_receipts: DeliveryReceiptsTable;
 }
 //# sourceMappingURL=schema.d.ts.map
