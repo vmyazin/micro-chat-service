@@ -1,0 +1,3 @@
+module.exports=[19610,a=>{a.n(a.i(49948))},55981,a=>{a.n(a.i(33555))},12463,a=>{a.n(a.i(38930))},9662,a=>{a.n(a.i(83986))},97928,a=>{a.n(a.i(33817))},43249,a=>{"use strict";var b=a.i(35490);function c(){return(0,b.jsx)("div",{className:"flex min-h-screen items-center justify-center",children:(0,b.jsxs)("div",{className:"w-full max-w-md p-8",children:[(0,b.jsx)("h1",{className:"text-2xl font-bold text-center mb-8",children:"Create Account"}),(0,b.jsx)("p",{className:"text-center text-gray-600",children:"Registration page placeholder - WebAuthn passkey creation coming soon"})]})})}a.s(["default",()=>c])}];
+
+//# sourceMappingURL=dev_%40playground_micro-chat-service_10cd03dc._.js.map

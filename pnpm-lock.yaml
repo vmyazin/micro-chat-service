@@ -14,6 +14,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@microchat/client':
+        specifier: workspace:*
+        version: link:../../packages/client
       clsx:
         specifier: ^2.1.1
         version: 2.1.1

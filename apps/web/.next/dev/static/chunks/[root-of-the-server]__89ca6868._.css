@@ -308,6 +308,7 @@
     --color-black: #000;
     --color-white: #fff;
     --spacing: .25rem;
+    --container-md: 28rem;
     --container-xl: 36rem;
     --container-2xl: 42rem;
     --container-4xl: 56rem;
@@ -750,6 +751,10 @@
     height: calc(var(--spacing) * 96);
   }
 
+  .h-screen {
+    height: 100vh;
+  }
+
   .min-h-screen {
     min-height: 100vh;
   }
@@ -782,6 +787,10 @@
     width: calc(var(--spacing) * 14);
   }
 
+  .w-72 {
+    width: calc(var(--spacing) * 72);
+  }
+
   .w-96 {
     width: calc(var(--spacing) * 96);
   }
@@ -806,8 +815,16 @@
     max-width: var(--container-7xl);
   }
 
+  .max-w-md {
+    max-width: var(--container-md);
+  }
+
   .max-w-xl {
     max-width: var(--container-xl);
+  }
+
+  .flex-1 {
+    flex: 1;
   }
 
   .shrink-0 {
@@ -915,6 +932,11 @@
     border-top-width: 1px;
   }
 
+  .border-r {
+    border-right-style: var(--tw-border-style);
+    border-right-width: 1px;
+  }
+
   .border-b {
     border-bottom-style: var(--tw-border-style);
     border-bottom-width: 1px;
@@ -1006,6 +1028,10 @@
     .bg-white\/70 {
       background-color: color-mix(in oklab, var(--color-white) 70%, transparent);
     }
+  }
+
+  .p-4 {
+    padding: calc(var(--spacing) * 4);
   }
 
   .p-8 {
