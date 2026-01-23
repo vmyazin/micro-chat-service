@@ -6,6 +6,8 @@ import {
   type CreateGroupResult,
   type InviteResult,
   type AcceptInviteResult,
+  type GroupMember,
+  type GroupMembersResult,
 } from './group-client';
 import {
   MessageClient,
@@ -71,6 +73,18 @@ export class MicroChatClient {
 
   removeMember(groupId: GroupId, userId: UserId): Promise<void> {
     return this.groupClient.removeMember(groupId, userId);
+  }
+
+  getMembers(groupId: GroupId): Promise<GroupMembersResult> {
+    return this.groupClient.getMembers(groupId);
+  }
+
+  leaveGroup(groupId: GroupId): Promise<void> {
+    return this.groupClient.leaveGroup(groupId);
+  }
+
+  deleteGroup(groupId: GroupId): Promise<void> {
+    return this.groupClient.deleteGroup(groupId);
   }
 
   // Message methods

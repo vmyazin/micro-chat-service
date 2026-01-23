@@ -1,6 +1,6 @@
 import type { GroupId, UserId } from '@microchat/shared';
 import { type RegisterOptions, type LoginOptions, type AuthResult } from './auth-client';
-import { type GroupListItem, type CreateGroupResult, type InviteResult, type AcceptInviteResult } from './group-client';
+import { type GroupListItem, type CreateGroupResult, type InviteResult, type AcceptInviteResult, type GroupMembersResult } from './group-client';
 import { type SendMessageResult, type MessageListItem } from './message-client';
 import { type WebSocketEventHandler } from './websocket-client';
 export interface MicroChatClientOptions {
@@ -21,6 +21,9 @@ export declare class MicroChatClient {
     createInvite(groupId: GroupId): Promise<InviteResult>;
     acceptInvite(code: string): Promise<AcceptInviteResult>;
     removeMember(groupId: GroupId, userId: UserId): Promise<void>;
+    getMembers(groupId: GroupId): Promise<GroupMembersResult>;
+    leaveGroup(groupId: GroupId): Promise<void>;
+    deleteGroup(groupId: GroupId): Promise<void>;
     getMessages(groupId: GroupId, limit?: number, before?: string): Promise<MessageListItem[]>;
     sendMessage(groupId: GroupId, encryptedContent: string): Promise<SendMessageResult>;
     deleteMessage(groupId: GroupId, messageId: string): Promise<void>;

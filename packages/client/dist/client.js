@@ -45,6 +45,15 @@ class MicroChatClient {
     removeMember(groupId, userId) {
         return this.groupClient.removeMember(groupId, userId);
     }
+    getMembers(groupId) {
+        return this.groupClient.getMembers(groupId);
+    }
+    leaveGroup(groupId) {
+        return this.groupClient.leaveGroup(groupId);
+    }
+    deleteGroup(groupId) {
+        return this.groupClient.deleteGroup(groupId);
+    }
     // Message methods
     getMessages(groupId, limit, before) {
         return this.messageClient.getMessages(groupId, limit, before);

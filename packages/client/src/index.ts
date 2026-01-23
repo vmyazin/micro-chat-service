@@ -5,6 +5,8 @@ export {
   type CreateGroupResult,
   type InviteResult,
   type AcceptInviteResult,
+  type GroupMember,
+  type GroupMembersResult,
 } from './group-client';
 export {
   MessageClient,

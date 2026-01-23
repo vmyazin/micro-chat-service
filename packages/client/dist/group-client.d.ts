@@ -18,6 +18,16 @@ export interface AcceptInviteResult {
     encryptedName: string;
     ownerId: UserId;
 }
+export interface GroupMember {
+    userId: UserId;
+    displayName: string;
+    joinedAt: string;
+    isOwner: boolean;
+}
+export interface GroupMembersResult {
+    members: GroupMember[];
+    ownerId: UserId;
+}
 export declare class GroupClient {
     private baseUrl;
     constructor(baseUrl: string);
@@ -26,5 +36,8 @@ export declare class GroupClient {
     createInvite(groupId: GroupId): Promise<InviteResult>;
     acceptInvite(code: string): Promise<AcceptInviteResult>;
     removeMember(groupId: GroupId, userId: UserId): Promise<void>;
+    getMembers(groupId: GroupId): Promise<GroupMembersResult>;
+    leaveGroup(groupId: GroupId): Promise<void>;
+    deleteGroup(groupId: GroupId): Promise<void>;
 }
 //# sourceMappingURL=group-client.d.ts.map

@@ -62,6 +62,37 @@ class GroupClient {
             throw new Error(error.error || 'Failed to remove member');
         }
     }
+    async getMembers(groupId) {
+        const response = await fetch(`${this.baseUrl}/api/groups/${groupId}/members`, {
+            method: 'GET',
+            credentials: 'include',
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to get members');
+        }
+        return response.json();
+    }
+    async leaveGroup(groupId) {
+        const response = await fetch(`${this.baseUrl}/api/groups/${groupId}/leave`, {
+            method: 'POST',
+            credentials: 'include',
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to leave group');
+        }
+    }
+    async deleteGroup(groupId) {
+        const response = await fetch(`${this.baseUrl}/api/groups/${groupId}`, {
+            method: 'DELETE',
+            credentials: 'include',
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to delete group');
+        }
+    }
 }
 exports.GroupClient = GroupClient;
 //# sourceMappingURL=group-client.js.map

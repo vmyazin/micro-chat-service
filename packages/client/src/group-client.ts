@@ -23,6 +23,18 @@ export interface AcceptInviteResult {
   ownerId: UserId;
 }
 
+export interface GroupMember {
+  userId: UserId;
+  displayName: string;
+  joinedAt: string;
+  isOwner: boolean;
+}
+
+export interface GroupMembersResult {
+  members: GroupMember[];
+  ownerId: UserId;
+}
+
 export class GroupClient {
   constructor(private baseUrl: string) {}
 
@@ -93,6 +105,44 @@ export class GroupClient {
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error || 'Failed to remove member');
+    }
+  }
+
+  async getMembers(groupId: GroupId): Promise<GroupMembersResult> {
+    const response = await fetch(`${this.baseUrl}/api/groups/${groupId}/members`, {
+      method: 'GET',
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to get members');
+    }
+
+    return response.json();
+  }
+
+  async leaveGroup(groupId: GroupId): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/api/groups/${groupId}/leave`, {
+      method: 'POST',
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to leave group');
+    }
+  }
+
+  async deleteGroup(groupId: GroupId): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/api/groups/${groupId}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to delete group');
     }
   }
 }

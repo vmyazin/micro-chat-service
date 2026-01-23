@@ -235,4 +235,108 @@ groupsRouter.delete('/api/groups/:id/members/:userId', requireAuth, async (c) =>
   return c.json({ success: true });
 });
 
+groupsRouter.get('/api/groups/:id/members', requireAuth, async (c) => {
+  const groupId = c.req.param('id') as GroupId;
+  const user = c.get('user');
+  const db = new Database(c.env.DB);
+
+  const membership = await db.query<{ id: string }>(
+    'SELECT id FROM group_members WHERE group_id = ? AND user_id = ?',
+    [groupId, user.id]
+  );
+
+  if (membership.length === 0) {
+    return c.json({ error: 'Not a member of this group' }, 403);
+  }
+
+  const members = await db.query<{
+    user_id: UserId;
+    display_name: string;
+    joined_at: string;
+  }>(
+    `SELECT gm.user_id, u.display_name, gm.joined_at
+     FROM group_members gm
+     INNER JOIN users u ON u.id = gm.user_id
+     WHERE gm.group_id = ?
+     ORDER BY gm.joined_at ASC`,
+    [groupId]
+  );
+
+  const group = await db.query<{ owner_id: UserId }>(
+    'SELECT owner_id FROM groups WHERE id = ?',
+    [groupId]
+  );
+
+  return c.json({
+    members: members.map((m) => ({
+      userId: m.user_id,
+      displayName: m.display_name,
+      joinedAt: m.joined_at,
+      isOwner: group[0]?.owner_id === m.user_id,
+    })),
+    ownerId: group[0]?.owner_id,
+  });
+});
+
+groupsRouter.post('/api/groups/:id/leave', requireAuth, async (c) => {
+  const groupId = c.req.param('id') as GroupId;
+  const user = c.get('user');
+  const db = new Database(c.env.DB);
+
+  const groups = await db.query<{ owner_id: UserId }>(
+    'SELECT owner_id FROM groups WHERE id = ?',
+    [groupId]
+  );
+
+  if (groups.length === 0) {
+    return c.json({ error: 'Group not found' }, 404);
+  }
+
+  if (groups[0].owner_id === user.id) {
+    return c.json({ error: 'Owner cannot leave. Transfer ownership or delete the group.' }, 400);
+  }
+
+  const membership = await db.query<{ id: string }>(
+    'SELECT id FROM group_members WHERE group_id = ? AND user_id = ?',
+    [groupId, user.id]
+  );
+
+  if (membership.length === 0) {
+    return c.json({ error: 'Not a member of this group' }, 404);
+  }
+
+  await db.execute('DELETE FROM group_members WHERE group_id = ? AND user_id = ?', [
+    groupId,
+    user.id,
+  ]);
+
+  return c.json({ success: true });
+});
+
+groupsRouter.delete('/api/groups/:id', requireAuth, async (c) => {
+  const groupId = c.req.param('id') as GroupId;
+  const user = c.get('user');
+  const db = new Database(c.env.DB);
+
+  const groups = await db.query<{ owner_id: UserId }>(
+    'SELECT owner_id FROM groups WHERE id = ?',
+    [groupId]
+  );
+
+  if (groups.length === 0) {
+    return c.json({ error: 'Group not found' }, 404);
+  }
+
+  if (groups[0].owner_id !== user.id) {
+    return c.json({ error: 'Only the group owner can delete the group' }, 403);
+  }
+
+  await db.execute('DELETE FROM messages WHERE group_id = ?', [groupId]);
+  await db.execute('DELETE FROM invites WHERE group_id = ?', [groupId]);
+  await db.execute('DELETE FROM group_members WHERE group_id = ?', [groupId]);
+  await db.execute('DELETE FROM groups WHERE id = ?', [groupId]);
+
+  return c.json({ success: true });
+});
+
 export { groupsRouter };

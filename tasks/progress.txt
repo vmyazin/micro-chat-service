@@ -13,6 +13,7 @@
 - Hono middleware: use `Context<{ Bindings: Env; Variables: Vars }>` type, set context with `c.set()`, access with `c.get()`
 - Client package needs `lib: ["ES2022", "DOM"]` in tsconfig for browser types (WebSocket, PublicKeyCredential)
 - Next.js route groups: (auth), (chat) organize routes without affecting URL structure - /login not /(auth)/login
+- Use useRef for MicroChatClient in React components to persist across re-renders and share WebSocket connection
 
 ---
 
@@ -371,4 +372,21 @@ Thread: https://ampcode.com/threads/T-019beb0a-e5b7-7360-9830-a402bd380cba
 - Re-export branded types (GroupId, UserId) from client package for web app convenience
 - Use `as GroupId` cast when path params are strings but need branded type
 - SendMessageResult returns messageId and timestamp, not senderId (use optimistic 'me' placeholder)
+---
+
+## 2026-01-23 - US-043
+Thread: https://ampcode.com/threads/T-019beb0d-c5f2-729e-9fde-3dfa0c01744e
+- Implemented real-time message updates in conversation page using WebSocket
+- Connected WebSocket on page mount with shared MicroChatClient instance (via useRef)
+- Subscribes to group messages when connected, unsubscribes on unmount
+- Handles message, messageDeleted, memberJoined, memberLeft events
+- Added connection status indicator showing "Reconnecting..." when disconnected
+- Deduplicates messages by id (handles optimistic updates + WebSocket updates)
+- Added system messages for member join/leave events
+- Files changed: apps/web/app/(chat)/chat/[groupId]/page.tsx, tasks/prd.json
+- **Learnings for future iterations:**
+  - Use useRef for client instance to avoid recreating on re-renders
+  - WebSocketEvent type from @microchat/client provides type-safe event handling
+  - Deduplicate messages by id when combining optimistic updates with real-time events
+  - Use connection status state to re-subscribe when reconnected
 ---
