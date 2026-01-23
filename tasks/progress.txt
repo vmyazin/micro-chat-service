@@ -272,3 +272,18 @@ Thread: https://ampcode.com/threads/T-019be964-cbcf-767c-ac2e-5b4b44d63dbd
   - Use `workspace:*` for internal package dependencies in pnpm workspaces
   - Next.js 16 automatically detects routes in subdirectories with page.tsx files
 ---
+
+## 2026-01-23 - US-036
+Thread: https://ampcode.com/threads/T-019be966-1c3b-70bc-92dd-e7c48f06228a
+- Implemented web app registration page with WebAuthn passkey creation
+- Display name input with validation
+- Loading state during registration
+- Unsupported browser detection and error message
+- Redirect to /chat on success, link to /login page
+- Uses brutalist design system (brutal-card, brutal-btn, brutal-border)
+- Files changed: apps/web/app/(auth)/register/page.tsx
+- **Learnings for future iterations:**
+  - Use 'use client' directive for pages with useState/useRouter hooks
+  - WebAuthn options need base64url decoding to ArrayBuffer for navigator.credentials.create
+  - AuthClient from @microchat/client handles WebAuthn flow with getRegisterOptions and verifyRegistration
+---
