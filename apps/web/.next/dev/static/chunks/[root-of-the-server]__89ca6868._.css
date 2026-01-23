@@ -315,6 +315,7 @@
     --color-gray-400: #99a1af;
     --color-gray-500: #6a7282;
     --color-gray-600: #4a5565;
+    --color-gray-700: #364153;
     --color-gray-800: #1e2939;
     --color-gray-900: #101828;
     --color-black: #000;
@@ -393,6 +394,7 @@
       --color-gray-400: lab(65.9269% -.832707 -8.17473);
       --color-gray-500: lab(47.7841% -.393182 -10.0268);
       --color-gray-600: lab(35.6337% -1.58697 -10.8425);
+      --color-gray-700: lab(27.1134% -.956401 -12.3224);
       --color-gray-800: lab(16.1051% -1.18239 -11.7533);
       --color-gray-900: lab(8.11897% .811279 -12.254);
     }
@@ -1061,6 +1063,11 @@
     border-top-width: 1px;
   }
 
+  .border-t-2 {
+    border-top-style: var(--tw-border-style);
+    border-top-width: 2px;
+  }
+
   .border-r {
     border-right-style: var(--tw-border-style);
     border-right-width: 1px;
@@ -1083,6 +1090,10 @@
 
   .border-\[var\(--border-color\)\] {
     border-color: var(--border-color);
+  }
+
+  .border-black {
+    border-color: var(--color-black);
   }
 
   .border-blue-100 {
@@ -1121,6 +1132,10 @@
 
   .bg-background {
     background-color: var(--color-background);
+  }
+
+  .bg-black {
+    background-color: var(--color-black);
   }
 
   .bg-black\/50 {
@@ -1694,6 +1709,10 @@
     box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
 
+  .focus\:ring-black:focus {
+    --tw-ring-color: var(--color-black);
+  }
+
   .focus\:ring-primary:focus {
     --tw-ring-color: var(--color-primary);
   }
@@ -1827,6 +1846,12 @@
   }
 
   @media (prefers-color-scheme: dark) {
+    .dark\:border-gray-700 {
+      border-color: var(--color-gray-700);
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
     .dark\:bg-gray-800 {
       background-color: var(--color-gray-800);
     }
@@ -1851,6 +1876,18 @@
   }
 
   @media (prefers-color-scheme: dark) {
+    .dark\:bg-white {
+      background-color: var(--color-white);
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .dark\:text-black {
+      color: var(--color-black);
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
     .dark\:text-gray-400 {
       color: var(--color-gray-400);
     }
@@ -1867,6 +1904,12 @@
       .dark\:hover\:bg-gray-800:hover {
         background-color: var(--color-gray-800);
       }
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .dark\:focus\:ring-white:focus {
+      --tw-ring-color: var(--color-white);
     }
   }
 }

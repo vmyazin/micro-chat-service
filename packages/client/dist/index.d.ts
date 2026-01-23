@@ -4,4 +4,5 @@ export { MessageClient, type SendMessageResult, type MessageListItem, } from './
 export { WebSocketClient, type WebSocketEvent, type WebSocketEventHandler, } from './websocket-client';
 export { MicroChatClient, type MicroChatClientOptions } from './client';
 export { MicroChatClient as default } from './client';
+export type { GroupId, UserId } from '@microchat/shared';
 //# sourceMappingURL=index.d.ts.map

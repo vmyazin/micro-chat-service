@@ -1,0 +1,9 @@
+{
+  "/(auth)/login/page": "/login",
+  "/(auth)/register/page": "/register",
+  "/(chat)/chat/[groupId]/page": "/chat/[groupId]",
+  "/(chat)/chat/page": "/chat",
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/page": "/"
+}

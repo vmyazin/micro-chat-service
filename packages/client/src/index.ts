@@ -19,3 +19,6 @@ export {
 export { MicroChatClient, type MicroChatClientOptions } from './client';
 
 export { MicroChatClient as default } from './client';
+
+// Re-export shared types for convenience
+export type { GroupId, UserId } from '@microchat/shared';

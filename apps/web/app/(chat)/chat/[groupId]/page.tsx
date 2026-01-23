@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'next/navigation';
-import { MicroChatClient, type MessageListItem } from '@microchat/client';
+import { MicroChatClient, type MessageListItem, type GroupId, type UserId } from '@microchat/client';
+import { MessageInput } from '@/components/MessageInput';
 
 export default function ConversationPage() {
   const params = useParams();
@@ -32,7 +33,7 @@ export default function ConversationPage() {
       const client = new MicroChatClient({
         baseUrl: process.env.NEXT_PUBLIC_API_URL || '',
       });
-      const result = await client.getMessages(groupId);
+      const result = await client.getMessages(groupId as GroupId);
       setMessages(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load messages');
@@ -43,6 +44,27 @@ export default function ConversationPage() {
 
   function scrollToBottom() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  async function handleSendMessage(content: string) {
+    if (!groupId) return;
+    
+    const client = new MicroChatClient({
+      baseUrl: process.env.NEXT_PUBLIC_API_URL || '',
+    });
+    const result = await client.sendMessage(groupId as GroupId, content);
+    
+    // Add the new message to the list optimistically
+    // The senderId will be updated when the message comes back via WebSocket
+    const newMessage: MessageListItem = {
+      id: result.messageId,
+      groupId: groupId as GroupId,
+      senderId: 'me' as UserId,
+      encryptedContent: content,
+      createdAt: result.timestamp,
+      deleted: false,
+    };
+    setMessages((prev) => [...prev, newMessage]);
   }
 
   function formatTime(dateStr: string): string {
@@ -135,6 +157,7 @@ export default function ConversationPage() {
           </>
         )}
       </div>
+      <MessageInput onSend={handleSendMessage} disabled={loading} />
     </div>
   );
 }
