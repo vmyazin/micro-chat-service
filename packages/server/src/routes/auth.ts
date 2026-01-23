@@ -13,9 +13,11 @@ export interface ChallengeData {
   type: 'registration' | 'authentication';
 }
 
+// In-memory challenge store (for development - use KV in production)
+const CHALLENGE_STORE = new Map<string, ChallengeData>();
+
 export interface AuthEnv {
   DB: import('../db/client').D1Database;
-  CHALLENGE_STORE: Map<string, ChallengeData>;
   RP_ID: string;
   RP_NAME: string;
   RP_ORIGIN: string;
@@ -91,7 +93,7 @@ authRouter.post('/api/auth/register/options', async (c) => {
     supportedAlgorithmIDs: [-7, -257],
   });
 
-  c.env.CHALLENGE_STORE.set(options.challenge, {
+  CHALLENGE_STORE.set(options.challenge, {
     challenge: options.challenge,
     userId,
     displayName: body.displayName,
@@ -109,14 +111,14 @@ authRouter.post('/api/auth/register/verify', async (c) => {
     return c.json({ error: 'response and challenge are required' }, 400);
   }
 
-  const storedChallenge = c.env.CHALLENGE_STORE.get(body.challenge);
+  const storedChallenge = CHALLENGE_STORE.get(body.challenge);
   
   if (!storedChallenge) {
     return c.json({ error: 'Challenge not found or expired' }, 400);
   }
 
   if (storedChallenge.expiresAt < Date.now()) {
-    c.env.CHALLENGE_STORE.delete(body.challenge);
+    CHALLENGE_STORE.delete(body.challenge);
     return c.json({ error: 'Challenge expired' }, 400);
   }
 
@@ -132,7 +134,7 @@ authRouter.post('/api/auth/register/verify', async (c) => {
       return c.json({ error: 'Registration verification failed' }, 400);
     }
 
-    c.env.CHALLENGE_STORE.delete(body.challenge);
+    CHALLENGE_STORE.delete(body.challenge);
 
     const db = new Database(c.env.DB);
     const now = new Date().toISOString();
@@ -209,7 +211,7 @@ authRouter.post('/api/auth/login/options', async (c) => {
     allowCredentials,
   });
 
-  c.env.CHALLENGE_STORE.set(options.challenge, {
+  CHALLENGE_STORE.set(options.challenge, {
     challenge: options.challenge,
     expiresAt: Date.now() + 5 * 60 * 1000,
     type: 'authentication',
@@ -268,7 +270,7 @@ authRouter.post('/api/auth/login/verify', async (c) => {
     return c.json({ error: 'response and challenge are required' }, 400);
   }
 
-  const storedChallenge = c.env.CHALLENGE_STORE.get(body.challenge);
+  const storedChallenge = CHALLENGE_STORE.get(body.challenge);
   
   if (!storedChallenge) {
     return c.json({ error: 'Challenge not found or expired' }, 400);
@@ -279,7 +281,7 @@ authRouter.post('/api/auth/login/verify', async (c) => {
   }
 
   if (storedChallenge.expiresAt < Date.now()) {
-    c.env.CHALLENGE_STORE.delete(body.challenge);
+    CHALLENGE_STORE.delete(body.challenge);
     return c.json({ error: 'Challenge expired' }, 400);
   }
 
@@ -315,7 +317,7 @@ authRouter.post('/api/auth/login/verify', async (c) => {
       return c.json({ error: 'Authentication verification failed' }, 400);
     }
 
-    c.env.CHALLENGE_STORE.delete(body.challenge);
+    CHALLENGE_STORE.delete(body.challenge);
 
     const now = new Date().toISOString();
     const userId = credential.user_id as UserId;

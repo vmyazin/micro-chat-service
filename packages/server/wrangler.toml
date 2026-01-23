@@ -1,9 +1,14 @@
 name = "microchat-api"
-main = "dist/index.js"
-compatibility_date = "2024-01-01"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 
 [vars]
+RP_ID = "localhost"
+RP_NAME = "MicroChat"
+RP_ORIGIN = "http://localhost:3000"
+
+[env.production.vars]
 RP_ID = "microchat.example.com"
 RP_NAME = "MicroChat"
 RP_ORIGIN = "https://microchat.example.com"

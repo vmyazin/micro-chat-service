@@ -1,14 +1,17 @@
+// apps/web/app/(auth)/register/page.tsx
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { AuthClient } from '@microchat/client';
 
 type RegistrationState = 'idle' | 'loading' | 'unsupported';
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || '/chat';
   const [displayName, setDisplayName] = useState('');
   const [state, setState] = useState<RegistrationState>('idle');
   const [error, setError] = useState<string | null>(null);
@@ -70,7 +73,7 @@ export default function RegisterPage() {
         options.challenge
       );
 
-      router.push('/chat');
+      router.push(redirectTo);
     } catch (err) {
       setState('idle');
       setError(err instanceof Error ? err.message : 'Registration failed');
@@ -142,12 +145,34 @@ export default function RegisterPage() {
           <p className="text-center text-sm text-gray-600 dark:text-gray-400">
             Already have an account?{' '}
             <Link
-              href="/login"
+              href={redirectTo !== '/chat' ? `/login?redirect=${encodeURIComponent(redirectTo)}` : '/login'}
               className="font-semibold text-primary hover:underline"
             >
               Sign in
             </Link>
           </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<RegisterPageSkeleton />}>
+      <RegisterForm />
+    </Suspense>
+  );
+}
+
+function RegisterPageSkeleton() {
+  return (
+    <div className="flex min-h-screen items-center justify-center p-4">
+      <div className="brutal-card w-full max-w-md">
+        <h1 className="text-2xl font-bold text-center mb-8">Create Account</h1>
+        <div className="space-y-6">
+          <div className="h-12 bg-gray-200 dark:bg-gray-700 animate-pulse rounded" />
+          <div className="h-12 bg-gray-200 dark:bg-gray-700 animate-pulse rounded" />
         </div>
       </div>
     </div>

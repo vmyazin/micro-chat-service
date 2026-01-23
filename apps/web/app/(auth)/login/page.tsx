@@ -1,14 +1,17 @@
+// apps/web/app/(auth)/login/page.tsx
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { AuthClient } from '@microchat/client';
 
 type LoginState = 'idle' | 'loading' | 'unsupported';
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || '/chat';
   const [state, setState] = useState<LoginState>('idle');
   const [error, setError] = useState<string | null>(null);
 
@@ -56,7 +59,7 @@ export default function LoginPage() {
         options.challenge
       );
 
-      router.push('/chat');
+      router.push(redirectTo);
     } catch (err) {
       setState('idle');
       setError(err instanceof Error ? err.message : 'Authentication failed');
@@ -107,12 +110,33 @@ export default function LoginPage() {
           <p className="text-center text-sm text-gray-600 dark:text-gray-400">
             Don&apos;t have an account?{' '}
             <Link
-              href="/register"
+              href={redirectTo !== '/chat' ? `/register?redirect=${encodeURIComponent(redirectTo)}` : '/register'}
               className="font-semibold text-primary hover:underline"
             >
               Create one
             </Link>
           </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginPageSkeleton />}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginPageSkeleton() {
+  return (
+    <div className="flex min-h-screen items-center justify-center p-4">
+      <div className="brutal-card w-full max-w-md">
+        <h1 className="text-2xl font-bold text-center mb-8">Sign In</h1>
+        <div className="space-y-6">
+          <div className="h-12 bg-gray-200 dark:bg-gray-700 animate-pulse rounded" />
         </div>
       </div>
     </div>

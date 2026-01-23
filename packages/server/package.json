@@ -6,6 +6,7 @@
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist",
+    "dev": "wrangler dev --port 8787",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -16,6 +17,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260123.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "wrangler": "^4.60.0"
   }
 }
