@@ -5,12 +5,16 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@microchat/shared": "workspace:*"
   },
   "devDependencies": {
-    "typescript": "^5.0.0"
+    "@types/node": "^22.10.0",
+    "typescript": "^5.0.0",
+    "vitest": "^4.0.18"
   }
 }

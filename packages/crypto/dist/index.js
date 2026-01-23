@@ -18,4 +18,5 @@ Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./mls-client"), exports);
 __exportStar(require("./key-management"), exports);
 __exportStar(require("./key-store"), exports);
+__exportStar(require("./memory-key-store"), exports);
 //# sourceMappingURL=index.js.map
