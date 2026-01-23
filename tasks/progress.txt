@@ -145,3 +145,17 @@ Thread: https://ampcode.com/threads/T-019be93f-721d-727c-9b25-e7e53a609a8b
   - Store public key as base64 encoded string for database compatibility
   - Challenge must be passed from client and looked up in CHALLENGE_STORE
 ---
+
+## 2026-01-23 - US-011
+Thread: https://ampcode.com/threads/T-019be941-fb68-71c1-a66c-08a5b4376e89
+- Implemented POST /api/auth/login/options endpoint for WebAuthn authentication options
+- Added generateAuthenticationOptions from @simplewebauthn/server
+- Updated CHALLENGE_STORE to support both registration and authentication challenges with `type` field
+- Supports discoverable credentials (empty allowCredentials) when no username provided
+- Looks up user credentials when username hint is provided
+- Files changed: packages/server/src/routes/auth.ts
+- **Learnings for future iterations:**
+  - Use `.catch(() => ({ username: undefined }))` instead of `.catch(() => ({}))` for proper TypeScript narrowing
+  - generateAuthenticationOptions returns options with challenge for client-side WebAuthn
+  - ChallengeData interface now unified with `type: 'registration' | 'authentication'`
+---
