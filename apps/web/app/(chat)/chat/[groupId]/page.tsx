@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams } from 'next/navigation';
-import { MicroChatClient, type MessageListItem, type GroupId, type UserId } from '@microchat/client';
+import { MicroChatClient, type MessageListItem, type GroupId, type UserId, type WebSocketEvent } from '@microchat/client';
 import { MessageInput } from '@/components/MessageInput';
 
 export default function ConversationPage() {
@@ -12,7 +12,18 @@ export default function ConversationPage() {
   const [messages, setMessages] = useState<MessageListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'reconnecting'>('disconnected');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const clientRef = useRef<MicroChatClient | null>(null);
+
+  const getClient = useCallback(() => {
+    if (!clientRef.current) {
+      clientRef.current = new MicroChatClient({
+        baseUrl: process.env.NEXT_PUBLIC_API_URL || '',
+      });
+    }
+    return clientRef.current;
+  }, []);
 
   useEffect(() => {
     if (groupId) {
@@ -24,15 +35,113 @@ export default function ConversationPage() {
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    if (!groupId) return;
+
+    const client = getClient();
+    
+    const handleEvent = (event: WebSocketEvent) => {
+      switch (event.type) {
+        case 'connected':
+          setConnectionStatus('connected');
+          client.subscribe(groupId as GroupId);
+          break;
+        
+        case 'disconnected':
+          setConnectionStatus('reconnecting');
+          break;
+        
+        case 'message':
+          if (event.groupId === groupId) {
+            const newMessage: MessageListItem = {
+              id: event.messageId,
+              groupId: event.groupId,
+              senderId: event.senderId,
+              encryptedContent: event.encryptedContent,
+              createdAt: event.timestamp,
+              deleted: false,
+            };
+            setMessages((prev) => {
+              const exists = prev.some((m) => m.id === event.messageId);
+              if (exists) return prev;
+              return [...prev, newMessage];
+            });
+          }
+          break;
+        
+        case 'messageDeleted':
+          if (event.groupId === groupId) {
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === event.messageId ? { ...m, deleted: true } : m
+              )
+            );
+          }
+          break;
+        
+        case 'memberJoined':
+          if (event.groupId === groupId) {
+            const systemMessage: MessageListItem = {
+              id: `system-join-${event.userId}-${Date.now()}`,
+              groupId: event.groupId,
+              senderId: 'system' as UserId,
+              encryptedContent: `${event.displayName} joined the group`,
+              createdAt: new Date().toISOString(),
+              deleted: false,
+            };
+            setMessages((prev) => [...prev, systemMessage]);
+          }
+          break;
+        
+        case 'memberLeft':
+          if (event.groupId === groupId) {
+            const systemMessage: MessageListItem = {
+              id: `system-left-${event.userId}-${Date.now()}`,
+              groupId: event.groupId,
+              senderId: 'system' as UserId,
+              encryptedContent: `User ${event.userId} left the group`,
+              createdAt: new Date().toISOString(),
+              deleted: false,
+            };
+            setMessages((prev) => [...prev, systemMessage]);
+          }
+          break;
+        
+        case 'error':
+          console.error('WebSocket error:', event.error);
+          break;
+      }
+    };
+
+    const unsubscribe = client.onEvent(handleEvent);
+    client.connect();
+    
+    if (connectionStatus === 'connected') {
+      client.subscribe(groupId as GroupId);
+    }
+
+    return () => {
+      unsubscribe();
+      client.unsubscribe(groupId as GroupId);
+    };
+  }, [groupId, getClient, connectionStatus]);
+
+  useEffect(() => {
+    return () => {
+      if (clientRef.current) {
+        clientRef.current.disconnect();
+        clientRef.current = null;
+      }
+    };
+  }, []);
+
   async function fetchMessages() {
     if (!groupId) return;
     
     try {
       setLoading(true);
       setError(null);
-      const client = new MicroChatClient({
-        baseUrl: process.env.NEXT_PUBLIC_API_URL || '',
-      });
+      const client = getClient();
       const result = await client.getMessages(groupId as GroupId);
       setMessages(result);
     } catch (err) {
@@ -49,13 +158,11 @@ export default function ConversationPage() {
   async function handleSendMessage(content: string) {
     if (!groupId) return;
     
-    const client = new MicroChatClient({
-      baseUrl: process.env.NEXT_PUBLIC_API_URL || '',
-    });
+    const client = getClient();
     const result = await client.sendMessage(groupId as GroupId, content);
     
     // Add the new message to the list optimistically
-    // The senderId will be updated when the message comes back via WebSocket
+    // The real-time WebSocket update will deduplicate by messageId
     const newMessage: MessageListItem = {
       id: result.messageId,
       groupId: groupId as GroupId,
@@ -64,7 +171,11 @@ export default function ConversationPage() {
       createdAt: result.timestamp,
       deleted: false,
     };
-    setMessages((prev) => [...prev, newMessage]);
+    setMessages((prev) => {
+      const exists = prev.some((m) => m.id === result.messageId);
+      if (exists) return prev;
+      return [...prev, newMessage];
+    });
   }
 
   function formatTime(dateStr: string): string {
@@ -122,6 +233,11 @@ export default function ConversationPage() {
 
   return (
     <div className="flex flex-col h-full">
+      {connectionStatus === 'reconnecting' && (
+        <div className="px-4 py-2 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 text-sm text-center">
+          Reconnecting to real-time updates...
+        </div>
+      )}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
