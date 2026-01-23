@@ -332,3 +332,29 @@ Thread: https://ampcode.com/threads/T-019be969-5720-766b-85a3-b851a8b870ab
   - GroupListItem type from @microchat/client has groupId, encryptedName, memberCount, lastActivity
   - useParams() from next/navigation gets route params in client components
 ---
+
+## 2026-01-23 - US-040
+Thread: https://ampcode.com/threads/T-019be96a-ff11-734a-b08f-bcba956818eb
+- Created apps/web/components/NewGroupDialog.tsx with modal dialog
+- Dialog has group name input, Create/Cancel buttons, loading and error states
+- Uses MicroChatClient.createGroup() to create groups
+- Closes dialog and navigates to new group on success
+- Integrated into chat layout via showNewGroupDialog state
+- Files changed: apps/web/components/NewGroupDialog.tsx, apps/web/app/(chat)/layout.tsx
+- **Learnings for future iterations:**
+  - Modal dialogs use fixed positioning with z-50 for overlay
+  - Backdrop click to close is common UX pattern (check loading state first)
+  - Reuse LoadingSpinner pattern from other components
+---
+
+## 2026-01-23 - US-041
+Thread: https://ampcode.com/threads/T-019beb09-c72b-70bf-845b-68659d847e61
+- Verified conversation view already implemented at apps/web/app/(chat)/chat/[groupId]/page.tsx
+- Features: message fetch with MicroChatClient, sender/content/time display, auto-scroll, loading state, date headers
+- MessageBubble component shows deleted messages as placeholder
+- Files changed: tasks/prd.json (marked passes: true)
+- **Learnings for future iterations:**
+  - Use useRef with scrollIntoView({ behavior: 'smooth' }) for auto-scroll
+  - Date grouping: compare formatDate() of adjacent messages to show date headers
+  - MessageListItem type from @microchat/client includes deleted boolean for soft deletes
+---

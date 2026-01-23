@@ -1,3 +1,0 @@
-module.exports=[19610,a=>{a.n(a.i(49948))},55981,a=>{a.n(a.i(33555))},12463,a=>{a.n(a.i(38930))},9662,a=>{a.n(a.i(83986))},97928,a=>{a.n(a.i(33817))},5571,a=>{"use strict";var b=a.i(35490);function c(){return(0,b.jsxs)("div",{className:"flex flex-col items-center justify-center h-full p-4",children:[(0,b.jsx)("h1",{className:"text-xl font-bold mb-4",children:"Welcome to MicroChat"}),(0,b.jsxs)("p",{className:"text-gray-600 dark:text-gray-400 text-center",children:["Select a group from the sidebar to start chatting,",(0,b.jsx)("br",{}),"or create a new group to get started."]})]})}a.s(["default",()=>c])}];
-
-//# sourceMappingURL=dev_%40playground_micro-chat-service_502bbdf8._.js.map
