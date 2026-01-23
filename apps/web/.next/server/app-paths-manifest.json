@@ -1,9 +1,0 @@
-{
-  "/(auth)/login/page": "app/(auth)/login/page.js",
-  "/(auth)/register/page": "app/(auth)/register/page.js",
-  "/(chat)/chat/[groupId]/page": "app/(chat)/chat/[groupId]/page.js",
-  "/(chat)/chat/page": "app/(chat)/chat/page.js",
-  "/_global-error/page": "app/_global-error/page.js",
-  "/_not-found/page": "app/_not-found/page.js",
-  "/page": "app/page.js"
-}

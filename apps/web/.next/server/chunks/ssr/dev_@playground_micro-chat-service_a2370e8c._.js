@@ -1,3 +1,0 @@
-module.exports=[19610,a=>{a.n(a.i(49948))},55981,a=>{a.n(a.i(33555))},12463,a=>{a.n(a.i(38930))},9662,a=>{a.n(a.i(83986))},79292,a=>{a.n(a.i(33817))},83986,(a,b,c)=>{"use strict";Object.defineProperty(c,"__esModule",{value:!0}),Object.defineProperty(c,"default",{enumerable:!0,get:function(){return f}});let d=a.r(35490),e=a.r(28916);function f(){return(0,d.jsx)(e.HTTPAccessErrorFallback,{status:401,message:"You're not authorized to access this page."})}("function"==typeof c.default||"object"==typeof c.default&&null!==c.default)&&void 0===c.default.__esModule&&(Object.defineProperty(c.default,"__esModule",{value:!0}),Object.assign(c.default,c),b.exports=c.default)}];
-
-//# sourceMappingURL=dev_%40playground_micro-chat-service_a2370e8c._.js.map

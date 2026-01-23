@@ -421,3 +421,34 @@ Thread: https://ampcode.com/threads/T-019beb13-063d-70ba-ab7b-cc0109aab43d
   - Use `isOwn` check to compare senderId against currentUser.userId OR 'me' (optimistic placeholder)
   - Use CSS group-hover pattern for showing delete button only on hover
 ---
+
+## 2026-01-23 - US-046
+Thread: https://ampcode.com/threads/T-019beb16-4fb9-7580-9c48-3ebaf8cdf505
+- Created apps/web/middleware.ts for Next.js route protection
+- Redirects /chat/* to /login if no session cookie present
+- Redirects /login and /register to /chat if session cookie exists
+- Matcher excludes static assets, images, favicon, and api routes
+- Preserves original path in redirect query param for post-login navigation
+- Files changed: apps/web/middleware.ts
+- **Learnings for future iterations:**
+  - Next.js middleware uses `request.cookies.get('name')` for cookie access
+  - Use `matcher` config to limit middleware scope and avoid unnecessary runs
+  - Auth check is cookie-based (session httpOnly cookie set by server)
+---
+
+## 2026-01-23 - US-047
+Thread: https://ampcode.com/threads/T-019beb17-30ec-72e8-af98-a3e6d45b8e2b
+- Created .github/workflows/deploy.yml with complete CI/CD pipeline
+- Three jobs: check (typecheck + test), deploy-server, deploy-web (parallel after check)
+- Server deployment uses wrangler-action with workingDirectory for packages/server
+- Web app deployment uses pages deploy with Cloudflare Pages
+- Created packages/server/wrangler.toml with D1 database binding
+- Added default export to packages/server/src/index.ts for Cloudflare Workers
+- Fixed .gitignore to exclude .next/ from all directories (removed leading /)
+- Files changed: .github/workflows/deploy.yml, packages/server/wrangler.toml, packages/server/src/index.ts, .gitignore
+- **Learnings for future iterations:**
+  - Use wrangler-action@v3 for Cloudflare deployments with workingDirectory parameter
+  - Cloudflare Workers require a default export from the main module
+  - Use `pnpm/action-setup@v4` for pnpm in GitHub Actions with version parameter
+  - wrangler.toml uses `compatibility_flags = ["nodejs_compat"]` for Node.js-like APIs
+---
