@@ -4,6 +4,8 @@
 - Cross-package imports require `composite: true` in tsconfig and project references to the dependency package
 - Use vitest for testing with config to exclude dist/ directory
 - Add `@types/node` and `types: ["node"]` in tsconfig for Node.js globals like console
+- D1/SQLite uses TEXT for dates (ISO format) and INTEGER for booleans (0/1)
+- Use snake_case for database column names, but TypeScript interfaces use snake_case to match SQL
 
 ---
 
@@ -78,4 +80,18 @@ Thread: https://ampcode.com/threads/T-019be939-425a-77db-b4c3-0a55e33331ad
 - **Learnings for future iterations:**
   - Hono uses `c.json()` to return JSON responses
   - Server package already has project references set up for @microchat/shared and @microchat/crypto
+---
+
+## 2026-01-23 - US-007
+Thread: https://ampcode.com/threads/T-019be93a-6805-714f-a16d-c51a1fdb9ba1
+- Created packages/server/src/db/schema.ts with TypeScript table type definitions
+- Created packages/server/src/db/migrations/001_initial.sql with CREATE TABLE statements
+- Defined 7 tables: users, sessions, credentials, groups, group_members, messages, invites
+- Added indexes for userId, groupId, expiresAt, credential_id, created_at columns
+- Updated server tsconfig.json to add composite: true and project reference to ../shared
+- Files changed: packages/server/src/db/schema.ts, packages/server/src/db/migrations/001_initial.sql, packages/server/tsconfig.json
+- **Learnings for future iterations:**
+  - Server package was missing composite: true and references - needed same pattern as crypto package
+  - D1 uses TEXT for storing dates as ISO strings, INTEGER for booleans (0/1)
+  - Use IF NOT EXISTS for tables and indexes to make migrations idempotent
 ---
