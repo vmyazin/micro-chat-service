@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import type { GroupId, UserId } from '@microchat/shared';
+import { InviteConfig } from '@microchat/shared';
 import { Database, type D1Database } from '../db/client';
 import { requireAuth, type AuthVariables, type AuthEnv as AuthMiddlewareEnv } from '../middleware/auth';
 
@@ -19,6 +20,14 @@ function generateGroupId(): GroupId {
 
 function generateMemberId(): string {
   const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+function generateInviteCode(): string {
+  const bytes = new Uint8Array(12);
   crypto.getRandomValues(bytes);
   return Array.from(bytes)
     .map((b) => b.toString(16).padStart(2, '0'))
@@ -88,6 +97,35 @@ groupsRouter.post('/api/groups', requireAuth, async (c) => {
   return c.json({
     groupId,
     epoch: 0,
+  });
+});
+
+groupsRouter.post('/api/groups/:id/invites', requireAuth, async (c) => {
+  const groupId = c.req.param('id') as GroupId;
+  const user = c.get('user');
+  const db = new Database(c.env.DB);
+
+  const membership = await db.query<{ id: string }>(
+    'SELECT id FROM group_members WHERE group_id = ? AND user_id = ?',
+    [groupId, user.id]
+  );
+
+  if (membership.length === 0) {
+    return c.json({ error: 'Not a member of this group' }, 403);
+  }
+
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + InviteConfig.MAX_AGE_DAYS * 24 * 60 * 60 * 1000);
+  const inviteCode = generateInviteCode();
+
+  await db.execute(
+    'INSERT INTO invites (id, group_id, created_by, expires_at, used) VALUES (?, ?, ?, ?, ?)',
+    [inviteCode, groupId, user.id, expiresAt.toISOString(), 0]
+  );
+
+  return c.json({
+    code: inviteCode,
+    expiresAt: expiresAt.toISOString(),
   });
 });
 

@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.groupsRouter = void 0;
 const hono_1 = require("hono");
+const shared_1 = require("@microchat/shared");
 const client_1 = require("../db/client");
 const auth_1 = require("../middleware/auth");
 const groupsRouter = new hono_1.Hono();
@@ -15,6 +16,13 @@ function generateGroupId() {
 }
 function generateMemberId() {
     const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    return Array.from(bytes)
+        .map((b) => b.toString(16).padStart(2, '0'))
+        .join('');
+}
+function generateInviteCode() {
+    const bytes = new Uint8Array(12);
     crypto.getRandomValues(bytes);
     return Array.from(bytes)
         .map((b) => b.toString(16).padStart(2, '0'))
@@ -52,6 +60,23 @@ groupsRouter.post('/api/groups', auth_1.requireAuth, async (c) => {
     return c.json({
         groupId,
         epoch: 0,
+    });
+});
+groupsRouter.post('/api/groups/:id/invites', auth_1.requireAuth, async (c) => {
+    const groupId = c.req.param('id');
+    const user = c.get('user');
+    const db = new client_1.Database(c.env.DB);
+    const membership = await db.query('SELECT id FROM group_members WHERE group_id = ? AND user_id = ?', [groupId, user.id]);
+    if (membership.length === 0) {
+        return c.json({ error: 'Not a member of this group' }, 403);
+    }
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + shared_1.InviteConfig.MAX_AGE_DAYS * 24 * 60 * 60 * 1000);
+    const inviteCode = generateInviteCode();
+    await db.execute('INSERT INTO invites (id, group_id, created_by, expires_at, used) VALUES (?, ?, ?, ?, ?)', [inviteCode, groupId, user.id, expiresAt.toISOString(), 0]);
+    return c.json({
+        code: inviteCode,
+        expiresAt: expiresAt.toISOString(),
     });
 });
 //# sourceMappingURL=groups.js.map
