@@ -14,6 +14,7 @@
 - Client package needs `lib: ["ES2022", "DOM"]` in tsconfig for browser types (WebSocket, PublicKeyCredential)
 - Next.js route groups: (auth), (chat) organize routes without affecting URL structure - /login not /(auth)/login
 - Use useRef for MicroChatClient in React components to persist across re-renders and share WebSocket connection
+- Use GET /api/auth/me to get current authenticated user (userId, displayName)
 
 ---
 
@@ -404,4 +405,19 @@ Thread: https://ampcode.com/threads/T-019beb0f-cebe-7112-b0b3-80ad071a01b5
   - Use isOwner field from getMembers() to show owner badge and control delete visibility
   - Clipboard API for copying invite links: navigator.clipboard.writeText()
   - Owner cannot leave group (server enforces this, use delete instead)
+---
+
+## 2026-01-23 - US-045
+Thread: https://ampcode.com/threads/T-019beb13-063d-70ba-ab7b-cc0109aab43d
+- Implemented message deletion UI with delete button on user's own messages
+- Added confirmation dialog before delete with Delete/Cancel buttons
+- Added /api/auth/me endpoint to server for getting current user info
+- Added getCurrentUser() method to client for identifying own messages
+- Delete button shows on hover, confirmation inline within message bubble
+- Optimistic update marks message as deleted immediately, real-time WebSocket already handles updates for other users
+- Files changed: packages/server/src/routes/auth.ts, packages/client/src/auth-client.ts, packages/client/src/client.ts, packages/client/src/index.ts, apps/web/app/(chat)/chat/[groupId]/page.tsx
+- **Learnings for future iterations:**
+  - Added /api/auth/me endpoint - can be reused for any component needing current user info
+  - Use `isOwn` check to compare senderId against currentUser.userId OR 'me' (optimistic placeholder)
+  - Use CSS group-hover pattern for showing delete button only on hover
 ---
