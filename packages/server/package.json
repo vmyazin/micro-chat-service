@@ -8,8 +8,9 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@microchat/crypto": "workspace:*",
     "@microchat/shared": "workspace:*",
-    "@microchat/crypto": "workspace:*"
+    "hono": "^4.11.5"
   },
   "devDependencies": {
     "typescript": "^5.0.0"

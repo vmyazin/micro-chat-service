@@ -1,2 +1,2 @@
 // MicroChat Server Entry Point
-export {};
+export { app } from './app';

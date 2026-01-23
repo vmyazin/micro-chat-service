@@ -1,2 +1,2 @@
-export { app } from './app';
+export {};
 //# sourceMappingURL=index.d.ts.map
