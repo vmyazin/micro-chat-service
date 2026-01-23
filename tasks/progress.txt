@@ -191,3 +191,15 @@ Thread: https://ampcode.com/threads/T-019be945-12cb-7032-ab54-2b768560bbf7
   - Access context variables with `c.get('user')` and set with `c.set('user', value)`
   - Middleware returns Response for errors, or calls `await next()` to continue chain
 ---
+
+## 2026-01-23 - US-015
+Thread: https://ampcode.com/threads/T-019be947-ae86-72f6-beed-6b516d4cf9df
+- Implemented GET /api/groups endpoint that returns user's groups
+- Query joins groups with group_members to filter by user, includes subquery for member count
+- Returns groupId, encryptedName, memberCount, lastActivity ordered by lastActivity DESC
+- Requires authentication via requireAuth middleware
+- Files changed: packages/server/src/routes/groups.ts
+- **Learnings for future iterations:**
+  - Use subquery `(SELECT COUNT(*) FROM ... WHERE ...)` for aggregate counts in SELECT
+  - D1/SQLite supports INNER JOIN and subqueries in SELECT clause
+---
