@@ -1,6 +1,7 @@
 ## Codebase Patterns
 - Types in packages/shared/src/types.ts are auto-exported via `export * from './types'` in index.ts
 - Use branded types (e.g., `UserId`, `GroupId`) from shared package for type-safe IDs
+- Cross-package imports require `composite: true` in tsconfig and project references to the dependency package
 
 ---
 
@@ -23,4 +24,18 @@ Thread: https://ampcode.com/threads/T-019be932-e0ce-7282-bac0-025d3e6cdaec
 - **Learnings for future iterations:**
   - Use `as const` for config objects to get literal types
   - Types auto-exported via `export * from './types'` in index.ts
+---
+
+## 2026-01-23 - US-003
+Thread: https://ampcode.com/threads/T-019be933-b7c8-7711-b346-3461b107d838
+- Created packages/crypto/src/key-store.ts with KeyStore interface and KeyMetadata type
+- Added StoredKey type for returning key + metadata from getKey
+- Updated index.ts to export key-store module
+- Removed obsolete KeyStore from key-management.ts to avoid naming conflict
+- Fixed tsconfig.json files to use composite mode and project references for cross-package imports
+- Files changed: packages/crypto/src/key-store.ts, packages/crypto/src/index.ts, packages/crypto/src/key-management.ts, packages/crypto/tsconfig.json, packages/shared/tsconfig.json
+- **Learnings for future iterations:**
+  - Cross-package imports require `composite: true` in tsconfig and project references
+  - Check for naming conflicts when adding new interfaces - existing code may have placeholder interfaces
+  - Use GroupId branded type from @microchat/shared for type-safe IDs in crypto package
 ---
