@@ -79,16 +79,20 @@ export default function GroupList({ onNewGroup, selectedGroupId }: GroupListProp
             <li key={group.groupId}>
               <button
                 onClick={() => handleGroupClick(group.groupId)}
-                className={`w-full text-left p-3 brutal-border transition-colors ${
+                className={`group-list-item w-full text-left p-4 brutal-border transition-colors ${
                   selectedGroupId === group.groupId
-                    ? 'bg-primary text-primary-foreground'
-                    : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+                    ? 'bg-blue-600 text-white border-blue-700'
+                    : 'bg-white dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800'
                 }`}
               >
                 <div className="font-semibold truncate">
                   {decodeGroupName(group.encryptedName)}
                 </div>
-                <div className="text-xs opacity-70 mt-1">
+                <div className={`text-xs mt-1 ${
+                  selectedGroupId === group.groupId
+                    ? 'text-blue-100'
+                    : 'text-gray-500 dark:text-gray-400'
+                }`}>
                   {group.memberCount} member{group.memberCount !== 1 ? 's' : ''}
                 </div>
               </button>

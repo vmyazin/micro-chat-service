@@ -9,7 +9,18 @@ export interface MessageListItem {
   id: string;
   groupId: GroupId;
   senderId: UserId;
+  senderName: string;
   encryptedContent: string;
+  createdAt: string;
+  deleted: boolean;
+}
+
+interface ServerMessage {
+  id: string;
+  senderId: UserId;
+  senderName: string;
+  encryptedPayload: string;
+  nonce: string;
   createdAt: string;
   deleted: boolean;
 }
@@ -33,14 +44,28 @@ export class MessageClient {
       throw new Error(error.error || 'Failed to get messages');
     }
 
-    return response.json();
+    const data = await response.json() as { messages: ServerMessage[] };
+    
+    // Map server response to client format
+    return data.messages.map((msg) => ({
+      id: msg.id,
+      groupId,
+      senderId: msg.senderId,
+      senderName: msg.senderName,
+      encryptedContent: msg.encryptedPayload,
+      createdAt: msg.createdAt,
+      deleted: msg.deleted,
+    }));
   }
 
-  async sendMessage(groupId: GroupId, encryptedContent: string): Promise<SendMessageResult> {
+  async sendMessage(groupId: GroupId, encryptedContent: string, nonce?: string): Promise<SendMessageResult> {
+    // For now, use a placeholder nonce if not provided (encryption not yet implemented)
+    const messageNonce = nonce || crypto.randomUUID();
+    
     const response = await fetch(`${this.baseUrl}/api/groups/${groupId}/messages`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ encryptedContent }),
+      body: JSON.stringify({ encryptedPayload: encryptedContent, nonce: messageNonce }),
       credentials: 'include',
     });
 

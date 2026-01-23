@@ -7,6 +7,7 @@ export interface MessageListItem {
     id: string;
     groupId: GroupId;
     senderId: UserId;
+    senderName: string;
     encryptedContent: string;
     createdAt: string;
     deleted: boolean;
@@ -15,7 +16,7 @@ export declare class MessageClient {
     private baseUrl;
     constructor(baseUrl: string);
     getMessages(groupId: GroupId, limit?: number, before?: string): Promise<MessageListItem[]>;
-    sendMessage(groupId: GroupId, encryptedContent: string): Promise<SendMessageResult>;
+    sendMessage(groupId: GroupId, encryptedContent: string, nonce?: string): Promise<SendMessageResult>;
     deleteMessage(groupId: GroupId, messageId: string): Promise<void>;
 }
 //# sourceMappingURL=message-client.d.ts.map

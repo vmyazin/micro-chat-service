@@ -19,13 +19,25 @@ class MessageClient {
             const error = await response.json();
             throw new Error(error.error || 'Failed to get messages');
         }
-        return response.json();
+        const data = await response.json();
+        // Map server response to client format
+        return data.messages.map((msg) => ({
+            id: msg.id,
+            groupId,
+            senderId: msg.senderId,
+            senderName: msg.senderName,
+            encryptedContent: msg.encryptedPayload,
+            createdAt: msg.createdAt,
+            deleted: msg.deleted,
+        }));
     }
-    async sendMessage(groupId, encryptedContent) {
+    async sendMessage(groupId, encryptedContent, nonce) {
+        // For now, use a placeholder nonce if not provided (encryption not yet implemented)
+        const messageNonce = nonce || crypto.randomUUID();
         const response = await fetch(`${this.baseUrl}/api/groups/${groupId}/messages`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ encryptedContent }),
+            body: JSON.stringify({ encryptedPayload: encryptedContent, nonce: messageNonce }),
             credentials: 'include',
         });
         if (!response.ok) {

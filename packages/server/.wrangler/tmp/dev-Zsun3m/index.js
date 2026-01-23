@@ -23184,6 +23184,12 @@ function generateMemberId() {
   return Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 __name(generateMemberId, "generateMemberId");
+function generateMessageId() {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+__name(generateMessageId, "generateMessageId");
 function generateInviteCode() {
   const bytes = new Uint8Array(12);
   crypto.getRandomValues(bytes);
@@ -23408,6 +23414,99 @@ groupsRouter.delete("/api/groups/:id", requireAuth, async (c) => {
   await db.execute("DELETE FROM invites WHERE group_id = ?", [groupId]);
   await db.execute("DELETE FROM group_members WHERE group_id = ?", [groupId]);
   await db.execute("DELETE FROM groups WHERE id = ?", [groupId]);
+  return c.json({ success: true });
+});
+groupsRouter.get("/api/groups/:id/messages", requireAuth, async (c) => {
+  const groupId = c.req.param("id");
+  const user = c.get("user");
+  const db = new Database(c.env.DB);
+  const membership = await db.query(
+    "SELECT id FROM group_members WHERE group_id = ? AND user_id = ?",
+    [groupId, user.id]
+  );
+  if (membership.length === 0) {
+    return c.json({ error: "Not a member of this group" }, 403);
+  }
+  const limit = Math.min(parseInt(c.req.query("limit") || "50", 10), 100);
+  const before = c.req.query("before");
+  const after = c.req.query("after");
+  let query = `
+    SELECT m.id, m.sender_id, m.encrypted_payload, m.nonce, m.created_at, m.deleted_at,
+           u.display_name as sender_name
+    FROM messages m
+    INNER JOIN users u ON u.id = m.sender_id
+    WHERE m.group_id = ?
+  `;
+  const params = [groupId];
+  if (before) {
+    query += " AND m.created_at < ?";
+    params.push(before);
+  } else if (after) {
+    query += " AND m.created_at > ?";
+    params.push(after);
+  }
+  query += " ORDER BY m.created_at DESC LIMIT ?";
+  params.push(limit);
+  const messages = await db.query(query, params);
+  return c.json({
+    messages: messages.reverse().map((m) => ({
+      id: m.id,
+      senderId: m.sender_id,
+      senderName: m.sender_name,
+      encryptedPayload: m.encrypted_payload,
+      nonce: m.nonce,
+      createdAt: m.created_at,
+      deleted: m.deleted_at !== null
+    }))
+  });
+});
+groupsRouter.post("/api/groups/:id/messages", requireAuth, async (c) => {
+  const groupId = c.req.param("id");
+  const user = c.get("user");
+  const db = new Database(c.env.DB);
+  const body = await c.req.json();
+  if (!body.encryptedPayload || !body.nonce) {
+    return c.json({ error: "encryptedPayload and nonce are required" }, 400);
+  }
+  const membership = await db.query(
+    "SELECT id FROM group_members WHERE group_id = ? AND user_id = ?",
+    [groupId, user.id]
+  );
+  if (membership.length === 0) {
+    return c.json({ error: "Not a member of this group" }, 403);
+  }
+  const messageId = generateMessageId();
+  const now = (/* @__PURE__ */ new Date()).toISOString();
+  await db.execute(
+    "INSERT INTO messages (id, group_id, sender_id, encrypted_payload, nonce, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+    [messageId, groupId, user.id, body.encryptedPayload, body.nonce, now]
+  );
+  await db.execute("UPDATE groups SET last_activity_at = ? WHERE id = ?", [now, groupId]);
+  return c.json({
+    messageId,
+    timestamp: now
+  });
+});
+groupsRouter.delete("/api/groups/:id/messages/:messageId", requireAuth, async (c) => {
+  const groupId = c.req.param("id");
+  const messageId = c.req.param("messageId");
+  const user = c.get("user");
+  const db = new Database(c.env.DB);
+  const messages = await db.query(
+    "SELECT id, sender_id FROM messages WHERE id = ? AND group_id = ?",
+    [messageId, groupId]
+  );
+  if (messages.length === 0) {
+    return c.json({ error: "Message not found" }, 404);
+  }
+  if (messages[0].sender_id !== user.id) {
+    return c.json({ error: "Can only delete your own messages" }, 403);
+  }
+  const now = (/* @__PURE__ */ new Date()).toISOString();
+  await db.execute(
+    "UPDATE messages SET deleted_at = ?, deleted_by = ? WHERE id = ?",
+    [now, user.id, messageId]
+  );
   return c.json({ success: true });
 });
 

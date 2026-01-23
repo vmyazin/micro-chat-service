@@ -26,6 +26,14 @@ function generateMemberId(): string {
     .join('');
 }
 
+function generateMessageId(): string {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
 function generateInviteCode(): string {
   const bytes = new Uint8Array(12);
   crypto.getRandomValues(bytes);
@@ -335,6 +343,140 @@ groupsRouter.delete('/api/groups/:id', requireAuth, async (c) => {
   await db.execute('DELETE FROM invites WHERE group_id = ?', [groupId]);
   await db.execute('DELETE FROM group_members WHERE group_id = ?', [groupId]);
   await db.execute('DELETE FROM groups WHERE id = ?', [groupId]);
+
+  return c.json({ success: true });
+});
+
+// Messages endpoints
+
+groupsRouter.get('/api/groups/:id/messages', requireAuth, async (c) => {
+  const groupId = c.req.param('id') as GroupId;
+  const user = c.get('user');
+  const db = new Database(c.env.DB);
+
+  // Check membership
+  const membership = await db.query<{ id: string }>(
+    'SELECT id FROM group_members WHERE group_id = ? AND user_id = ?',
+    [groupId, user.id]
+  );
+
+  if (membership.length === 0) {
+    return c.json({ error: 'Not a member of this group' }, 403);
+  }
+
+  // Parse pagination params
+  const limit = Math.min(parseInt(c.req.query('limit') || '50', 10), 100);
+  const before = c.req.query('before');
+  const after = c.req.query('after');
+
+  let query = `
+    SELECT m.id, m.sender_id, m.encrypted_payload, m.nonce, m.created_at, m.deleted_at,
+           u.display_name as sender_name
+    FROM messages m
+    INNER JOIN users u ON u.id = m.sender_id
+    WHERE m.group_id = ?
+  `;
+  const params: (string | number)[] = [groupId];
+
+  if (before) {
+    query += ' AND m.created_at < ?';
+    params.push(before);
+  } else if (after) {
+    query += ' AND m.created_at > ?';
+    params.push(after);
+  }
+
+  query += ' ORDER BY m.created_at DESC LIMIT ?';
+  params.push(limit);
+
+  const messages = await db.query<{
+    id: string;
+    sender_id: UserId;
+    encrypted_payload: string;
+    nonce: string;
+    created_at: string;
+    deleted_at: string | null;
+    sender_name: string;
+  }>(query, params);
+
+  return c.json({
+    messages: messages.reverse().map((m) => ({
+      id: m.id,
+      senderId: m.sender_id,
+      senderName: m.sender_name,
+      encryptedPayload: m.encrypted_payload,
+      nonce: m.nonce,
+      createdAt: m.created_at,
+      deleted: m.deleted_at !== null,
+    })),
+  });
+});
+
+groupsRouter.post('/api/groups/:id/messages', requireAuth, async (c) => {
+  const groupId = c.req.param('id') as GroupId;
+  const user = c.get('user');
+  const db = new Database(c.env.DB);
+
+  const body = await c.req.json<{ encryptedPayload: string; nonce: string }>();
+
+  if (!body.encryptedPayload || !body.nonce) {
+    return c.json({ error: 'encryptedPayload and nonce are required' }, 400);
+  }
+
+  // Check membership
+  const membership = await db.query<{ id: string }>(
+    'SELECT id FROM group_members WHERE group_id = ? AND user_id = ?',
+    [groupId, user.id]
+  );
+
+  if (membership.length === 0) {
+    return c.json({ error: 'Not a member of this group' }, 403);
+  }
+
+  const messageId = generateMessageId();
+  const now = new Date().toISOString();
+
+  await db.execute(
+    'INSERT INTO messages (id, group_id, sender_id, encrypted_payload, nonce, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+    [messageId, groupId, user.id, body.encryptedPayload, body.nonce, now]
+  );
+
+  // Update group last activity
+  await db.execute('UPDATE groups SET last_activity_at = ? WHERE id = ?', [now, groupId]);
+
+  return c.json({
+    messageId,
+    timestamp: now,
+  });
+});
+
+groupsRouter.delete('/api/groups/:id/messages/:messageId', requireAuth, async (c) => {
+  const groupId = c.req.param('id') as GroupId;
+  const messageId = c.req.param('messageId');
+  const user = c.get('user');
+  const db = new Database(c.env.DB);
+
+  // Check message exists and belongs to this user
+  const messages = await db.query<{ id: string; sender_id: UserId }>(
+    'SELECT id, sender_id FROM messages WHERE id = ? AND group_id = ?',
+    [messageId, groupId]
+  );
+
+  if (messages.length === 0) {
+    return c.json({ error: 'Message not found' }, 404);
+  }
+
+  if (messages[0].sender_id !== user.id) {
+    return c.json({ error: 'Can only delete your own messages' }, 403);
+  }
+
+  const now = new Date().toISOString();
+
+  // Soft delete - mark as deleted but keep record
+  await db.execute(
+    'UPDATE messages SET deleted_at = ?, deleted_by = ? WHERE id = ?',
+    [now, user.id, messageId]
+  );
 
   return c.json({ success: true });
 });
