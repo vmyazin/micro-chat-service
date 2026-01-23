@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #2563EB;
+  --color-secondary: #3B82F6;
+  --color-cta: #F97316;
+  --color-background: #F8FAFC;
+  --color-foreground: #1E293B;
+  
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+:root {
+   /* Fallback / Additional Vars */
+  --border-color: #1E293B;
+  --border-thick: 3px;
+  --shadow-brutal: 4px 4px 0px 0px var(--border-color);
+  
+  --background: #F8FAFC;
+  --foreground: #1E293B;
+  
+   /* Design System Colors */
+  --color-primary: #2563EB;
+  --color-secondary: #3B82F6;
+  --color-cta: #F97316;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #020617;
+    --foreground: #F8FAFC;
+    --border-color: #F8FAFC;
+    --color-primary: #3B82F6;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+/* Custom Classes */
+.brutal-border {
+  border: var(--border-thick) solid var(--border-color);
+}
+
+.brutal-shadow {
+  box-shadow: var(--shadow-brutal);
+}
+
+.brutal-btn {
+  border: var(--border-thick) solid var(--border-color);
+  box-shadow: var(--shadow-brutal);
+  background-color: white;
+  color: black;
+  padding: 0.75rem 1.5rem;
+  font-weight: 700;
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+  cursor: pointer;
+}
+
+.brutal-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  .brutal-btn {
+    background-color: black;
+    color: white;
+  }
+}
+
+.brutal-card {
+  border: var(--border-thick) solid var(--border-color);
+  box-shadow: var(--shadow-brutal);
+  background-color: white;
+  padding: 1.5rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .brutal-card {
+    background-color: #18181b; 
+  }
+}

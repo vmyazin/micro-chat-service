@@ -1,0 +1,771 @@
+{
+  "project": "MicroChat",
+  "branchName": "ralph/microchat-mvp",
+  "description": "MicroChat MVP - Production-ready encrypted group messaging with MLS, WebAuthn, and edge deployment",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add shared types for users and authentication",
+      "description": "As a developer, I need user and auth types defined so other packages can use them.",
+      "acceptanceCriteria": [
+        "Add User type with id, displayName, createdAt to packages/shared/src/types.ts",
+        "Add Session type with id, userId, expiresAt, deviceInfo",
+        "Add WebAuthnCredential type with credentialId, publicKey, userId, createdAt",
+        "Export all new types from packages/shared/src/index.ts",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Add shared types for invites and message deletion",
+      "description": "As a developer, I need invite and deletion types for group management features.",
+      "acceptanceCriteria": [
+        "Add GroupInvite type with id, groupId, createdBy, expiresAt, used fields",
+        "Add DeletedMessage type with id, groupId, deletedAt, deletedBy",
+        "Add InviteConfig constants: MAX_AGE_DAYS=7, SINGLE_USE=true",
+        "Export all new types from packages/shared/src/index.ts",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Create key storage interface in crypto package",
+      "description": "As a developer, I need a key storage abstraction for managing MLS keys.",
+      "acceptanceCriteria": [
+        "Create packages/crypto/src/key-store.ts with KeyStore interface",
+        "Interface methods: storeKey, getKey, deleteKey, deleteAllGroupKeys",
+        "Add KeyMetadata type with groupId, epoch, createdAt",
+        "Export from packages/crypto/src/index.ts",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Implement in-memory key store for development",
+      "description": "As a developer, I need a simple key store implementation for local testing.",
+      "acceptanceCriteria": [
+        "Create packages/crypto/src/memory-key-store.ts implementing KeyStore",
+        "Use Map for storage with groupId:epoch as key",
+        "Implement deleteAllGroupKeys that removes all keys for a group",
+        "Add basic logging for key operations (no key values)",
+        "Typecheck passes",
+        "Unit tests for store, get, delete operations"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Create crypto-erasure service",
+      "description": "As a system, I need a service to securely delete group keys for crypto-erasure.",
+      "acceptanceCriteria": [
+        "Create packages/crypto/src/crypto-erasure.ts with CryptoErasureService class",
+        "Method eraseGroup(groupId) deletes all keys and returns audit log entry",
+        "Audit log entry includes groupId, timestamp, keyCount deleted",
+        "Attempting to decrypt after erasure throws CryptoErasureError",
+        "Export from packages/crypto/src/index.ts",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Create server package structure with Hono router",
+      "description": "As a developer, I need the server package set up with routing framework.",
+      "acceptanceCriteria": [
+        "Add hono dependency to packages/server/package.json",
+        "Create packages/server/src/app.ts with Hono app instance",
+        "Add health check route GET /health returning { status: 'ok' }",
+        "Create packages/server/src/routes/ directory structure",
+        "Export app from packages/server/src/index.ts",
+        "Typecheck passes"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-007",
+      "title": "Add database schema types for D1",
+      "description": "As a developer, I need database schema definitions for Cloudflare D1.",
+      "acceptanceCriteria": [
+        "Create packages/server/src/db/schema.ts with table type definitions",
+        "Define users, sessions, credentials, groups, group_members, messages, invites tables",
+        "Create packages/server/src/db/migrations/001_initial.sql with CREATE TABLE statements",
+        "Add indexes for common queries (userId, groupId, expiresAt)",
+        "Typecheck passes"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-008",
+      "title": "Create database client wrapper for D1",
+      "description": "As a developer, I need a typed database client for D1 operations.",
+      "acceptanceCriteria": [
+        "Create packages/server/src/db/client.ts with Database class",
+        "Accept D1Database binding in constructor",
+        "Add typed query methods: query<T>, execute, batch",
+        "Add error handling that wraps D1 errors",
+        "Export from packages/server/src/db/index.ts",
+        "Typecheck passes"
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-009",
+      "title": "Implement WebAuthn registration options endpoint",
+      "description": "As a new user, I need to get registration options to create a passkey.",
+      "acceptanceCriteria": [
+        "Add @simplewebauthn/server dependency to packages/server",
+        "Create packages/server/src/routes/auth.ts with auth router",
+        "POST /api/auth/register/options accepts displayName, returns registration options",
+        "Options include challenge, rp info, user info, supported algorithms",
+        "Store challenge in session for verification",
+        "Typecheck passes"
+      ],
+      "priority": 9,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-010",
+      "title": "Implement WebAuthn registration verification endpoint",
+      "description": "As a new user, I need to verify my passkey to complete registration.",
+      "acceptanceCriteria": [
+        "POST /api/auth/register/verify accepts credential response",
+        "Verify credential against stored challenge using simplewebauthn",
+        "Create user record in database with displayName",
+        "Store credential public key and metadata",
+        "Return session token as httpOnly cookie",
+        "Typecheck passes"
+      ],
+      "priority": 10,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-011",
+      "title": "Implement WebAuthn login options endpoint",
+      "description": "As a returning user, I need login options to authenticate with my passkey.",
+      "acceptanceCriteria": [
+        "POST /api/auth/login/options accepts optional username hint",
+        "Return authentication options with challenge and allowed credentials",
+        "Store challenge in temporary session",
+        "Support discoverable credentials (no username required)",
+        "Typecheck passes"
+      ],
+      "priority": 11,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-012",
+      "title": "Implement WebAuthn login verification endpoint",
+      "description": "As a returning user, I need to verify my passkey to sign in.",
+      "acceptanceCriteria": [
+        "POST /api/auth/login/verify accepts authentication response",
+        "Verify assertion against stored credential public key",
+        "Create new session with 30-day expiry",
+        "Return session token as httpOnly cookie",
+        "Update credential lastUsedAt timestamp",
+        "Typecheck passes"
+      ],
+      "priority": 12,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-013",
+      "title": "Create authentication middleware",
+      "description": "As a developer, I need middleware to protect authenticated routes.",
+      "acceptanceCriteria": [
+        "Create packages/server/src/middleware/auth.ts with requireAuth middleware",
+        "Extract session token from httpOnly cookie",
+        "Validate session exists and not expired in database",
+        "Attach user to request context",
+        "Return 401 for invalid/missing session",
+        "Typecheck passes"
+      ],
+      "priority": 13,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-014",
+      "title": "Implement create group endpoint",
+      "description": "As a user, I want to create a new encrypted group.",
+      "acceptanceCriteria": [
+        "POST /api/groups accepts encrypted group name",
+        "Create group record with owner as creator",
+        "Add creator as first group member",
+        "Return groupId and initial epoch",
+        "Require authentication",
+        "Typecheck passes"
+      ],
+      "priority": 14,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-015",
+      "title": "Implement list groups endpoint",
+      "description": "As a user, I want to see all groups I belong to.",
+      "acceptanceCriteria": [
+        "GET /api/groups returns user's groups",
+        "Include groupId, encrypted name, memberCount, lastActivity",
+        "Order by lastActivity descending",
+        "Require authentication",
+        "Typecheck passes"
+      ],
+      "priority": 15,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-016",
+      "title": "Implement group invite creation endpoint",
+      "description": "As a group member, I want to generate an invite link.",
+      "acceptanceCriteria": [
+        "POST /api/groups/:id/invites creates new invite",
+        "Invite expires after 7 days",
+        "Invite is single-use",
+        "Return invite code/link",
+        "Only group members can create invites",
+        "Typecheck passes"
+      ],
+      "priority": 16,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-017",
+      "title": "Implement join group via invite endpoint",
+      "description": "As a user, I want to join a group using an invite link.",
+      "acceptanceCriteria": [
+        "POST /api/invites/:code/accept joins user to group",
+        "Validate invite not expired and not used",
+        "Mark invite as used",
+        "Add user to group_members",
+        "Return group info",
+        "Typecheck passes"
+      ],
+      "priority": 17,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-018",
+      "title": "Implement remove group member endpoint",
+      "description": "As a group owner, I want to remove members from my group.",
+      "acceptanceCriteria": [
+        "DELETE /api/groups/:id/members/:userId removes member",
+        "Only group owner can remove members",
+        "Cannot remove self (use leave instead)",
+        "Remove from group_members table",
+        "Return success status",
+        "Typecheck passes"
+      ],
+      "priority": 18,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-019",
+      "title": "Implement leave group endpoint",
+      "description": "As a group member, I want to leave a group.",
+      "acceptanceCriteria": [
+        "POST /api/groups/:id/leave removes self from group",
+        "If owner leaves, transfer ownership to oldest member or delete group",
+        "Remove from group_members table",
+        "Return success status",
+        "Typecheck passes"
+      ],
+      "priority": 19,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-020",
+      "title": "Implement delete group endpoint with crypto-erasure",
+      "description": "As a group owner, I want to delete a group permanently.",
+      "acceptanceCriteria": [
+        "DELETE /api/groups/:id deletes group",
+        "Only owner can delete",
+        "Call CryptoErasureService.eraseGroup()",
+        "Delete all messages, members, invites",
+        "Log audit entry for deletion",
+        "Typecheck passes"
+      ],
+      "priority": 20,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-021",
+      "title": "Implement send message endpoint",
+      "description": "As a group member, I want to send an encrypted message.",
+      "acceptanceCriteria": [
+        "POST /api/groups/:id/messages accepts encrypted payload",
+        "Payload is EncryptedBlob (ciphertext + nonce)",
+        "Store message with sender, timestamp",
+        "Return message id and timestamp",
+        "Only group members can send",
+        "Typecheck passes"
+      ],
+      "priority": 21,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-022",
+      "title": "Implement get messages endpoint with pagination",
+      "description": "As a group member, I want to fetch message history.",
+      "acceptanceCriteria": [
+        "GET /api/groups/:id/messages returns encrypted messages",
+        "Support cursor-based pagination with before/after params",
+        "Default limit 50 messages",
+        "Return messages with id, senderId, encryptedPayload, timestamp",
+        "Only group members can read",
+        "Typecheck passes"
+      ],
+      "priority": 22,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-023",
+      "title": "Implement delete message endpoint",
+      "description": "As a message sender, I want to delete my own messages.",
+      "acceptanceCriteria": [
+        "DELETE /api/groups/:id/messages/:messageId soft-deletes message",
+        "Only sender can delete their message",
+        "Mark message as deleted, keep record for sync",
+        "Return success status",
+        "Typecheck passes"
+      ],
+      "priority": 23,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-024",
+      "title": "Create Durable Object for WebSocket connections",
+      "description": "As a developer, I need a Durable Object to manage WebSocket state.",
+      "acceptanceCriteria": [
+        "Create packages/server/src/durable-objects/chat-room.ts",
+        "Implement WebSocket upgrade handling",
+        "Store connected clients with userId",
+        "Handle connection close cleanup",
+        "Export Durable Object class",
+        "Typecheck passes"
+      ],
+      "priority": 24,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-025",
+      "title": "Implement WebSocket message broadcasting",
+      "description": "As a user, I want messages to be delivered to all group members in real-time.",
+      "acceptanceCriteria": [
+        "Durable Object broadcasts messages to all connected clients",
+        "Message format: { type, groupId, data }",
+        "Support message types: message, memberJoined, memberLeft, messageDeleted",
+        "Only broadcast to authenticated connections",
+        "Typecheck passes"
+      ],
+      "priority": 25,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-026",
+      "title": "Implement WebSocket reconnection with catch-up",
+      "description": "As a user, I want to receive missed messages when I reconnect.",
+      "acceptanceCriteria": [
+        "Client sends lastMessageId on reconnect",
+        "Server fetches messages after lastMessageId",
+        "Send missed messages to client on connection",
+        "Limit catch-up to last 100 messages",
+        "Typecheck passes"
+      ],
+      "priority": 26,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-027",
+      "title": "Create Wrangler configuration for Workers deployment",
+      "description": "As an operator, I need Wrangler config to deploy to Cloudflare.",
+      "acceptanceCriteria": [
+        "Create packages/server/wrangler.toml with worker config",
+        "Configure D1 database binding",
+        "Configure KV namespace for sessions",
+        "Configure Durable Object bindings",
+        "Add environment variables placeholders",
+        "Typecheck passes"
+      ],
+      "priority": 27,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-028",
+      "title": "Create client SDK package structure",
+      "description": "As a developer, I need the client SDK package initialized.",
+      "acceptanceCriteria": [
+        "Update packages/client/package.json with dependencies",
+        "Create packages/client/src/types.ts for SDK-specific types",
+        "Create packages/client/src/config.ts for configuration",
+        "Create packages/client/src/errors.ts for error classes",
+        "Export from packages/client/src/index.ts",
+        "Typecheck passes"
+      ],
+      "priority": 28,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-029",
+      "title": "Implement client SDK HTTP client",
+      "description": "As a developer, I need an HTTP client for API calls.",
+      "acceptanceCriteria": [
+        "Create packages/client/src/http.ts with HttpClient class",
+        "Methods for GET, POST, DELETE with typed responses",
+        "Automatic JSON parsing",
+        "Include credentials (cookies) in requests",
+        "Error handling with typed errors",
+        "Typecheck passes"
+      ],
+      "priority": 29,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-030",
+      "title": "Implement client SDK WebSocket client",
+      "description": "As a developer, I need a WebSocket client for real-time messaging.",
+      "acceptanceCriteria": [
+        "Create packages/client/src/websocket.ts with WebSocketClient class",
+        "Connect with authentication token",
+        "Automatic reconnection with exponential backoff",
+        "Event emitter for message types",
+        "Track lastMessageId for reconnection",
+        "Typecheck passes"
+      ],
+      "priority": 30,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-031",
+      "title": "Implement client SDK auth methods",
+      "description": "As a developer, I need auth methods in the client SDK.",
+      "acceptanceCriteria": [
+        "Add @simplewebauthn/browser dependency",
+        "Create packages/client/src/auth.ts with AuthClient class",
+        "Methods: register(displayName), login(), logout()",
+        "Handle WebAuthn browser APIs",
+        "Store auth state locally",
+        "Typecheck passes"
+      ],
+      "priority": 31,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-032",
+      "title": "Implement client SDK group methods",
+      "description": "As a developer, I need group management methods in the SDK.",
+      "acceptanceCriteria": [
+        "Create packages/client/src/groups.ts with GroupClient class",
+        "Methods: createGroup, listGroups, joinGroup, leaveGroup, deleteGroup",
+        "Methods: createInvite, getMembers, removeMember",
+        "Use HttpClient for API calls",
+        "Typecheck passes"
+      ],
+      "priority": 32,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-033",
+      "title": "Implement client SDK message methods",
+      "description": "As a developer, I need message methods in the SDK.",
+      "acceptanceCriteria": [
+        "Create packages/client/src/messages.ts with MessageClient class",
+        "Methods: sendMessage, getMessages, deleteMessage",
+        "Integrate with WebSocketClient for real-time",
+        "Event callbacks: onMessage, onMessageDeleted",
+        "Typecheck passes"
+      ],
+      "priority": 33,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-034",
+      "title": "Create main MicroChatClient class",
+      "description": "As a developer, I need a unified client class for the SDK.",
+      "acceptanceCriteria": [
+        "Create packages/client/src/client.ts with MicroChatClient class",
+        "Compose AuthClient, GroupClient, MessageClient, WebSocketClient",
+        "Single connect()/disconnect() for WebSocket",
+        "Expose all methods through unified API",
+        "Export as default from packages/client/src/index.ts",
+        "Typecheck passes"
+      ],
+      "priority": 34,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-035",
+      "title": "Create web app with Next.js structure",
+      "description": "As a developer, I need the web app initialized with routing.",
+      "acceptanceCriteria": [
+        "Verify apps/web has Next.js app router structure",
+        "Create apps/web/app/(auth)/login/page.tsx placeholder",
+        "Create apps/web/app/(auth)/register/page.tsx placeholder",
+        "Create apps/web/app/(chat)/chat/page.tsx placeholder",
+        "Add @microchat/client dependency",
+        "Typecheck passes"
+      ],
+      "priority": 35,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-036",
+      "title": "Implement web app registration page",
+      "description": "As a user, I want to register with a passkey.",
+      "acceptanceCriteria": [
+        "Registration page with display name input",
+        "Register with passkey button triggers WebAuthn flow",
+        "Show error for unsupported browsers",
+        "Redirect to /chat on success",
+        "Loading state during registration",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 36,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-037",
+      "title": "Implement web app login page",
+      "description": "As a user, I want to sign in with my passkey.",
+      "acceptanceCriteria": [
+        "Login page with sign in button",
+        "Button triggers WebAuthn authentication",
+        "Show error for failed authentication",
+        "Redirect to /chat on success",
+        "Link to registration page",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 37,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-038",
+      "title": "Create web app chat layout with sidebar",
+      "description": "As a user, I want to see a chat layout with group sidebar.",
+      "acceptanceCriteria": [
+        "Create apps/web/app/(chat)/layout.tsx with sidebar",
+        "Sidebar takes 300px width on desktop",
+        "Main content area fills remaining space",
+        "Responsive: sidebar hidden on mobile with toggle",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 38,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-039",
+      "title": "Implement web app group list component",
+      "description": "As a user, I want to see my groups in the sidebar.",
+      "acceptanceCriteria": [
+        "Create apps/web/components/GroupList.tsx",
+        "Fetch groups using MicroChatClient",
+        "Display group name and member count",
+        "New Group button at top",
+        "Click group to navigate to conversation",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 39,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-040",
+      "title": "Implement web app new group dialog",
+      "description": "As a user, I want to create a new group.",
+      "acceptanceCriteria": [
+        "Create apps/web/components/NewGroupDialog.tsx",
+        "Dialog with group name input",
+        "Create button calls MicroChatClient.createGroup()",
+        "Close dialog and select new group on success",
+        "Show error on failure",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 40,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-041",
+      "title": "Implement web app conversation view",
+      "description": "As a user, I want to view messages in a group.",
+      "acceptanceCriteria": [
+        "Create apps/web/app/(chat)/chat/[groupId]/page.tsx",
+        "Fetch and display message history",
+        "Messages show sender name, content, time",
+        "Auto-scroll to bottom on new messages",
+        "Loading state while fetching",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 41,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-042",
+      "title": "Implement web app message input",
+      "description": "As a user, I want to send messages.",
+      "acceptanceCriteria": [
+        "Create apps/web/components/MessageInput.tsx",
+        "Text input with send button",
+        "Send on Enter key or button click",
+        "Clear input after sending",
+        "Disable while sending",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 42,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-043",
+      "title": "Implement web app real-time message updates",
+      "description": "As a user, I want to see new messages in real-time.",
+      "acceptanceCriteria": [
+        "Connect WebSocket on chat page mount",
+        "Subscribe to group messages",
+        "Append new messages to list",
+        "Handle memberJoined/memberLeft events",
+        "Reconnect on disconnect",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 43,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-044",
+      "title": "Implement web app group settings panel",
+      "description": "As a user, I want to manage group settings.",
+      "acceptanceCriteria": [
+        "Create apps/web/components/GroupSettings.tsx",
+        "Show member list with names",
+        "Invite button generates and copies link",
+        "Leave Group button with confirmation",
+        "Delete Group button for owner only",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 44,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-045",
+      "title": "Implement web app message deletion",
+      "description": "As a user, I want to delete my own messages.",
+      "acceptanceCriteria": [
+        "Add delete button to user's own messages",
+        "Confirmation before delete",
+        "Call MicroChatClient.deleteMessage()",
+        "Show 'Message deleted' placeholder",
+        "Update in real-time for all users",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 45,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-046",
+      "title": "Add auth redirect middleware to web app",
+      "description": "As a system, I need to protect chat routes from unauthenticated users.",
+      "acceptanceCriteria": [
+        "Create apps/web/middleware.ts for route protection",
+        "Redirect /chat/* to /login if not authenticated",
+        "Redirect /login and /register to /chat if authenticated",
+        "Check auth via cookie or client-side state",
+        "Typecheck passes"
+      ],
+      "priority": 46,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-047",
+      "title": "Create GitHub Actions workflow for deployment",
+      "description": "As an operator, I need CI/CD for automated deployment.",
+      "acceptanceCriteria": [
+        "Create .github/workflows/deploy.yml",
+        "Trigger on push to main branch",
+        "Run typecheck and tests",
+        "Deploy server to Cloudflare Workers",
+        "Deploy web app to Cloudflare Pages",
+        "Typecheck passes"
+      ],
+      "priority": 47,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-048",
+      "title": "Implement message retention cleanup job",
+      "description": "As a system, I need to enforce retention policies.",
+      "acceptanceCriteria": [
+        "Create packages/server/src/jobs/retention.ts",
+        "Delete delivery receipts older than 30 days",
+        "Run as Cloudflare Cron Trigger daily",
+        "Log deletion counts",
+        "Add to wrangler.toml cron config",
+        "Typecheck passes"
+      ],
+      "priority": 48,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}
