@@ -287,3 +287,18 @@ Thread: https://ampcode.com/threads/T-019be966-1c3b-70bc-92dd-e7c48f06228a
   - WebAuthn options need base64url decoding to ArrayBuffer for navigator.credentials.create
   - AuthClient from @microchat/client handles WebAuthn flow with getRegisterOptions and verifyRegistration
 ---
+
+## 2026-01-23 - US-037
+Thread: https://ampcode.com/threads/T-019be967-3913-751f-bdee-a9ca6f50f865
+- Implemented web app login page with WebAuthn passkey authentication
+- Sign in button triggers discoverable credentials WebAuthn flow
+- Error state displays for failed authentication
+- Redirect to /chat on success
+- Link to /register page for new users
+- Uses same brutalist design system as registration page
+- Files changed: apps/web/app/(auth)/login/page.tsx
+- **Learnings for future iterations:**
+  - Login page simpler than registration - no form input needed (discoverable credentials)
+  - Use navigator.credentials.get() for authentication vs navigator.credentials.create() for registration
+  - getLoginOptions() returns allowCredentials as optional (empty for discoverable credentials)
+---
