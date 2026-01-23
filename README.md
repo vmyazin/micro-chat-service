@@ -37,8 +37,14 @@ pnpm build
 # Run tests
 pnpm test
 
+# Type check all packages
+pnpm typecheck
+
 # Start development
 pnpm dev
+
+# Start web app only
+pnpm dev:web
 ```
 
 ## Documentation
