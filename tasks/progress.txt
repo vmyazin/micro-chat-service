@@ -6,6 +6,8 @@
 - Add `@types/node` and `types: ["node"]` in tsconfig for Node.js globals like console
 - D1/SQLite uses TEXT for dates (ISO format) and INTEGER for booleans (0/1)
 - Use snake_case for database column names, but TypeScript interfaces use snake_case to match SQL
+- Server package uses `types: ["@cloudflare/workers-types"]` in tsconfig for globals (crypto, TextEncoder)
+- Hono router composition: `app.route('', childRouter)` mounts child router at app root
 
 ---
 
@@ -108,4 +110,20 @@ Thread: https://ampcode.com/threads/T-019be93b-f3e0-73fe-ba25-692bce0222a8
   - D1 uses prepare().bind().all() pattern for parameterized queries
   - D1Result.success must be checked for errors - D1 doesn't throw by default
   - batch() runs queries as a transaction - if one fails, all roll back
+---
+
+## 2026-01-23 - US-009
+Thread: https://ampcode.com/threads/T-019be93d-4d15-745b-8078-c5816a04acdc
+- Added @simplewebauthn/server dependency to packages/server
+- Created packages/server/src/routes/auth.ts with authRouter
+- Implemented POST /api/auth/register/options endpoint returning WebAuthn registration options
+- Challenge stored in CHALLENGE_STORE Map with userId, displayName, and expiry
+- Updated packages/server/src/app.ts to mount auth router
+- Added @cloudflare/workers-types to tsconfig.json types for crypto and TextEncoder globals
+- Files changed: packages/server/package.json, packages/server/src/routes/auth.ts, packages/server/src/app.ts, packages/server/tsconfig.json
+- **Learnings for future iterations:**
+  - Server package uses @cloudflare/workers-types for global types (crypto, TextEncoder)
+  - Uint8Array from TextEncoder needs explicit cast for simplewebauthn: `new Uint8Array(bytes.buffer.slice(0)) as Uint8Array<ArrayBuffer>`
+  - Hono router composition uses `app.route('', router)` to mount child routers
+  - AuthEnv interface defines bindings needed by auth routes (DB, CHALLENGE_STORE, RP_* config)
 ---
