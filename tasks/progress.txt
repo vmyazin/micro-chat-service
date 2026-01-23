@@ -95,3 +95,17 @@ Thread: https://ampcode.com/threads/T-019be93a-6805-714f-a16d-c51a1fdb9ba1
   - D1 uses TEXT for storing dates as ISO strings, INTEGER for booleans (0/1)
   - Use IF NOT EXISTS for tables and indexes to make migrations idempotent
 ---
+
+## 2026-01-23 - US-008
+Thread: https://ampcode.com/threads/T-019be93b-f3e0-73fe-ba25-692bce0222a8
+- Created packages/server/src/db/client.ts with Database class wrapping D1Database
+- Defined D1Database, D1PreparedStatement, D1Result, D1ExecResult interfaces for typing
+- Added query<T>() for typed SELECT queries, execute() for mutations, batch() for transactions
+- Created DatabaseError class that wraps D1 errors with query context
+- Created packages/server/src/db/index.ts barrel export for schema and client
+- Files changed: packages/server/src/db/client.ts, packages/server/src/db/index.ts, packages/server/package.json
+- **Learnings for future iterations:**
+  - D1 uses prepare().bind().all() pattern for parameterized queries
+  - D1Result.success must be checked for errors - D1 doesn't throw by default
+  - batch() runs queries as a transaction - if one fails, all roll back
+---
