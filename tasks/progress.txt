@@ -12,6 +12,7 @@
 - Store binary data (like WebAuthn public keys) as base64 strings in D1 TEXT columns
 - Hono middleware: use `Context<{ Bindings: Env; Variables: Vars }>` type, set context with `c.set()`, access with `c.get()`
 - Client package needs `lib: ["ES2022", "DOM"]` in tsconfig for browser types (WebSocket, PublicKeyCredential)
+- Next.js route groups: (auth), (chat) organize routes without affecting URL structure - /login not /(auth)/login
 
 ---
 
@@ -256,4 +257,18 @@ Thread: https://ampcode.com/threads/T-019be962-586a-7273-b266-e412e1dec199
   - Client package needs `lib: ["ES2022", "DOM"]` in tsconfig for browser types (WebSocket, PublicKeyCredential)
   - Use `credentials: 'include'` on fetch calls for httpOnly session cookies
   - WebAuthn credentials need base64url encoding (replace +/= with -/_/)
+---
+
+## 2026-01-23 - US-035
+Thread: https://ampcode.com/threads/T-019be964-cbcf-767c-ac2e-5b4b44d63dbd
+- Created Next.js app router structure with route groups for auth and chat
+- Created apps/web/app/(auth)/login/page.tsx placeholder
+- Created apps/web/app/(auth)/register/page.tsx placeholder
+- Created apps/web/app/(chat)/chat/page.tsx placeholder
+- Added @microchat/client workspace dependency to apps/web/package.json
+- Files changed: apps/web/app/(auth)/login/page.tsx, apps/web/app/(auth)/register/page.tsx, apps/web/app/(chat)/chat/page.tsx, apps/web/package.json
+- **Learnings for future iterations:**
+  - Next.js route groups use parentheses: (auth), (chat) - they organize routes without affecting URL structure
+  - Use `workspace:*` for internal package dependencies in pnpm workspaces
+  - Next.js 16 automatically detects routes in subdirectories with page.tsx files
 ---
