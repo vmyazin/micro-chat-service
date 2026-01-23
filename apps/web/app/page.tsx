@@ -2,8 +2,9 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Lock, Shield, Trash2, ChevronRight, Menu, Github, Check, AlertTriangle } from "lucide-react";
+import { Lock, Shield, Trash2, ChevronRight, Check, AlertTriangle, Github } from "lucide-react";
 import Link from "next/link";
+import { SiteHeader } from "@/components/site-header";
 
 export default function Home() {
   const features = [
@@ -39,32 +40,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans antialiased overflow-x-hidden selection:bg-blue-600 selection:text-white">
-      {/* Header */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/70 backdrop-blur-xl border-b border-gray-200/50">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3 cursor-pointer group">
-            <div className="w-8 h-8 bg-foreground flex items-center justify-center rounded-sm transition-transform duration-300 group-hover:rotate-45">
-              <Lock className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-2xl tracking-tight font-semibold italic font-heading">MicroChat</span>
-          </div>
-          
-          <div className="hidden md:flex items-center gap-10 text-sm font-medium tracking-wide uppercase">
-            <a href="#protocol" className="hover:text-blue-600 transition-colors cursor-pointer">Protocol</a>
-            <a href="#security" className="hover:text-blue-600 transition-colors cursor-pointer">Security</a>
-            <a href="#" className="hover:text-blue-600 transition-colors cursor-pointer">Whitepaper</a>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <Link href="/chat" className="hidden md:block bg-foreground text-white px-6 py-2.5 rounded-full text-sm font-semibold hover:bg-blue-600 transition-all duration-300 cursor-pointer shadow-lg shadow-black/5 active:scale-95">
-              Create Private Group
-            </Link>
-            <button className="md:hidden">
-               <Menu className="w-6 h-6" />
-            </button>
-          </div>
-        </div>
-      </nav>
+      <SiteHeader />
 
       <main>
         {/* Hero Section */}
