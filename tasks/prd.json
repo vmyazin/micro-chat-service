@@ -61,7 +61,7 @@
         "Unit tests for store, get, delete operations"
       ],
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

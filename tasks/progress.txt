@@ -2,6 +2,8 @@
 - Types in packages/shared/src/types.ts are auto-exported via `export * from './types'` in index.ts
 - Use branded types (e.g., `UserId`, `GroupId`) from shared package for type-safe IDs
 - Cross-package imports require `composite: true` in tsconfig and project references to the dependency package
+- Use vitest for testing with config to exclude dist/ directory
+- Add `@types/node` and `types: ["node"]` in tsconfig for Node.js globals like console
 
 ---
 
@@ -38,4 +40,17 @@ Thread: https://ampcode.com/threads/T-019be933-b7c8-7711-b346-3461b107d838
   - Cross-package imports require `composite: true` in tsconfig and project references
   - Check for naming conflicts when adding new interfaces - existing code may have placeholder interfaces
   - Use GroupId branded type from @microchat/shared for type-safe IDs in crypto package
+---
+
+## 2026-01-23 - US-004
+Thread: https://ampcode.com/threads/T-019be935-7155-7020-9284-ab3a096844aa
+- Implemented MemoryKeyStore class implementing KeyStore interface
+- Uses Map with `groupId:epoch` composite key for storage
+- Added logging for all operations (without exposing key values)
+- Added vitest for testing with 9 passing unit tests
+- Files changed: packages/crypto/src/memory-key-store.ts, packages/crypto/src/memory-key-store.test.ts, packages/crypto/src/index.ts, packages/crypto/package.json, packages/crypto/tsconfig.json, packages/crypto/vitest.config.ts
+- **Learnings for future iterations:**
+  - vitest needs config file with `include` to target src/ and `exclude` to avoid dist/
+  - Need @types/node devDependency and `types: ["node"]` in tsconfig for Node.js globals (console)
+  - Test script should be `vitest run` for single-run mode
 ---
