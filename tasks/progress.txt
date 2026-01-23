@@ -54,3 +54,16 @@ Thread: https://ampcode.com/threads/T-019be935-7155-7020-9284-ab3a096844aa
   - Need @types/node devDependency and `types: ["node"]` in tsconfig for Node.js globals (console)
   - Test script should be `vitest run` for single-run mode
 ---
+
+## 2026-01-23 - US-005
+Thread: https://ampcode.com/threads/T-019be937-a1be-72b5-8411-1de91834ab7b
+- Created CryptoErasureService class in packages/crypto/src/crypto-erasure.ts
+- Added CryptoErasureError that includes groupId and can be thrown when accessing erased group keys
+- Added ErasureAuditEntry interface with groupId, timestamp, keyCount
+- Service tracks erased groups and provides isErased() and assertNotErased() helpers
+- Added comprehensive unit tests (11 tests) for crypto-erasure functionality
+- Files changed: packages/crypto/src/crypto-erasure.ts, packages/crypto/src/crypto-erasure.test.ts, packages/crypto/src/index.ts
+- **Learnings for future iterations:**
+  - The assertNotErased() method is the integration point for decrypt operations to check erasure status
+  - CryptoErasureError includes groupId as a public property for programmatic access
+---
