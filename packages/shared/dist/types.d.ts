@@ -24,4 +24,21 @@ export declare enum RetentionPolicy {
     SEVEN_DAYS = "7_DAYS",
     GROUP_DISBAND = "GROUP_DISBAND"
 }
+export interface User {
+    id: UserId;
+    displayName: string;
+    createdAt: Date;
+}
+export interface Session {
+    id: string;
+    userId: UserId;
+    expiresAt: Date;
+    deviceInfo: string;
+}
+export interface WebAuthnCredential {
+    credentialId: string;
+    publicKey: string;
+    userId: UserId;
+    createdAt: Date;
+}
 //# sourceMappingURL=types.d.ts.map
