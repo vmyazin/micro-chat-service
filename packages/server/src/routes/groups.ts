@@ -195,4 +195,44 @@ groupsRouter.post('/api/invites/:code/accept', requireAuth, async (c) => {
   });
 });
 
+groupsRouter.delete('/api/groups/:id/members/:userId', requireAuth, async (c) => {
+  const groupId = c.req.param('id') as GroupId;
+  const targetUserId = c.req.param('userId') as UserId;
+  const user = c.get('user');
+  const db = new Database(c.env.DB);
+
+  if (targetUserId === user.id) {
+    return c.json({ error: 'Cannot remove yourself. Use leave endpoint instead.' }, 400);
+  }
+
+  const groups = await db.query<{ owner_id: UserId }>(
+    'SELECT owner_id FROM groups WHERE id = ?',
+    [groupId]
+  );
+
+  if (groups.length === 0) {
+    return c.json({ error: 'Group not found' }, 404);
+  }
+
+  if (groups[0].owner_id !== user.id) {
+    return c.json({ error: 'Only the group owner can remove members' }, 403);
+  }
+
+  const membership = await db.query<{ id: string }>(
+    'SELECT id FROM group_members WHERE group_id = ? AND user_id = ?',
+    [groupId, targetUserId]
+  );
+
+  if (membership.length === 0) {
+    return c.json({ error: 'User is not a member of this group' }, 404);
+  }
+
+  await db.execute('DELETE FROM group_members WHERE group_id = ? AND user_id = ?', [
+    groupId,
+    targetUserId,
+  ]);
+
+  return c.json({ success: true });
+});
+
 export { groupsRouter };

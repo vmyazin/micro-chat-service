@@ -216,4 +216,17 @@ Thread: https://ampcode.com/threads/T-019be948-9dbb-739d-a7e1-6219d14d6b5b
   - Import InviteConfig from @microchat/shared for consistent invite settings
   - Use `c.req.param('id') as GroupId` for typed path parameters in Hono
   - Invites stored with `used: 0` (INTEGER for boolean in D1)
----
+  ---
+
+  ## 2026-01-23 - US-017
+  Thread: https://ampcode.com/threads/T-019be94c-ea6f-75ed-b10f-fe0ea0a419bb
+  - Implemented POST /api/invites/:code/accept endpoint for joining groups via invite
+  - Validates invite exists, is not used (used === 0), and is not expired
+  - Marks invite as used with used_by and used_at fields
+  - Adds user to group_members if not already a member
+  - Returns group info (groupId, encryptedName, ownerId)
+  - Files changed: packages/server/src/routes/groups.ts
+  - **Learnings for future iterations:**
+    - Check existing membership before adding user to group to prevent duplicates
+    - Use db.execute() for UPDATE statements (same as INSERT/DELETE)
+  ---
