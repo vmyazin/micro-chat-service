@@ -28,17 +28,14 @@ export function SiteHeader() {
           >
             Protocol
           </Link>
-          <Link 
-            href="/#security" 
-            className="hover:text-blue-600 transition-colors cursor-pointer"
+          <Link
+            href="/security"
+            className={cn(
+              "hover:text-blue-600 transition-colors cursor-pointer",
+              pathname === "/security" && "text-blue-600"
+            )}
           >
             Security
-          </Link>
-          <Link 
-            href="#" 
-            className="hover:text-blue-600 transition-colors cursor-pointer"
-          >
-            Whitepaper
           </Link>
         </div>
         
