@@ -1,4 +1,5 @@
 import type { GroupId, UserId } from '@microchat/shared';
+import type { GroupCipher, EncryptedMessage } from '@microchat/crypto';
 
 export interface SendMessageResult {
   messageId: string;
@@ -21,12 +22,20 @@ interface ServerMessage {
   senderName: string;
   encryptedPayload: string;
   nonce: string;
+  epoch?: number;
   createdAt: string;
   deleted: boolean;
 }
 
 export class MessageClient {
-  constructor(private baseUrl: string) {}
+  private cipher: GroupCipher | null;
+
+  constructor(
+    private baseUrl: string,
+    cipher?: GroupCipher,
+  ) {
+    this.cipher = cipher ?? null;
+  }
 
   async getMessages(
     groupId: GroupId,
@@ -67,11 +76,25 @@ export class MessageClient {
 
   async sendMessage(
     groupId: GroupId,
-    encryptedContent: string,
-    nonce?: string,
+    content: string,
+    epoch?: number,
   ): Promise<SendMessageResult> {
-    // For now, use a placeholder nonce if not provided (encryption not yet implemented)
-    const messageNonce = nonce || crypto.randomUUID();
+    let encryptedPayload: string;
+    let nonce: string;
+
+    if (this.cipher && epoch !== undefined) {
+      const encrypted: EncryptedMessage = await this.cipher.encrypt(
+        groupId,
+        epoch,
+        content,
+      );
+      encryptedPayload = encrypted.ciphertext;
+      nonce = encrypted.nonce;
+    } else {
+      // Fallback: no cipher configured, send plaintext (development only)
+      encryptedPayload = content;
+      nonce = crypto.randomUUID();
+    }
 
     const response = await fetch(
       `${this.baseUrl}/api/groups/${groupId}/messages`,
@@ -79,8 +102,9 @@ export class MessageClient {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          encryptedPayload: encryptedContent,
-          nonce: messageNonce,
+          encryptedPayload,
+          nonce,
+          epoch,
         }),
         credentials: 'include',
       },
@@ -92,6 +116,23 @@ export class MessageClient {
     }
 
     return response.json();
+  }
+
+  async decryptMessage(
+    groupId: GroupId,
+    message: MessageListItem,
+    epoch: number,
+  ): Promise<string> {
+    if (!this.cipher) {
+      // No cipher: return as-is (development mode)
+      return message.encryptedContent;
+    }
+
+    return this.cipher.decrypt(groupId, {
+      ciphertext: message.encryptedContent,
+      nonce: message.encryptedContent, // nonce is not in MessageListItem yet
+      epoch,
+    });
   }
 
   async deleteMessage(groupId: GroupId, messageId: string): Promise<void> {
