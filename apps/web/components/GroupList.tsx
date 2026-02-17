@@ -7,9 +7,10 @@ import { MicroChatClient, type GroupListItem } from '@microchat/client';
 interface GroupListProps {
   onNewGroup: () => void;
   selectedGroupId?: string;
+  refreshKey?: number;
 }
 
-export default function GroupList({ onNewGroup, selectedGroupId }: GroupListProps) {
+export default function GroupList({ onNewGroup, selectedGroupId, refreshKey }: GroupListProps) {
   const router = useRouter();
   const [groups, setGroups] = useState<GroupListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -17,7 +18,7 @@ export default function GroupList({ onNewGroup, selectedGroupId }: GroupListProp
 
   useEffect(() => {
     fetchGroups();
-  }, []);
+  }, [refreshKey]);
 
   async function fetchGroups() {
     try {

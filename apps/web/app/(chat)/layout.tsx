@@ -13,11 +13,16 @@ export default function ChatLayout({
   const params = useParams();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showNewGroupDialog, setShowNewGroupDialog] = useState(false);
+  const [groupListKey, setGroupListKey] = useState(0);
 
   const selectedGroupId = params?.groupId as string | undefined;
 
   function handleNewGroup() {
     setShowNewGroupDialog(true);
+  }
+
+  function handleGroupCreated() {
+    setGroupListKey((k) => k + 1);
   }
 
   return (
@@ -61,6 +66,7 @@ export default function ChatLayout({
             <GroupList
               onNewGroup={handleNewGroup}
               selectedGroupId={selectedGroupId}
+              refreshKey={groupListKey}
             />
           </div>
         </div>
@@ -89,6 +95,7 @@ export default function ChatLayout({
       <NewGroupDialog
         open={showNewGroupDialog}
         onClose={() => setShowNewGroupDialog(false)}
+        onGroupCreated={handleGroupCreated}
       />
     </div>
   );
