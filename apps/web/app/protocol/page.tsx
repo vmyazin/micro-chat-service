@@ -50,6 +50,7 @@ export default function ProtocolPage() {
       <div className="flex justify-center mb-20 px-6">
         <div className="bg-white p-1.5 rounded-full border border-gray-200 shadow-sm flex items-center gap-1">
           <button
+            type="button"
             onClick={() => setMode('layman')}
             className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all ${
               mode === 'layman'
@@ -60,6 +61,7 @@ export default function ProtocolPage() {
             For Everyone
           </button>
           <button
+            type="button"
             onClick={() => setMode('nerd')}
             className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all ${
               mode === 'nerd'
@@ -446,6 +448,7 @@ function NerdTreeDemo() {
   return (
     <div className="relative w-full h-full flex flex-col items-center justify-center">
       <svg
+        aria-hidden="true"
         className="absolute inset-0 w-full h-full pointer-events-none stroke-slate-700"
         style={{ overflow: 'visible' }}
       >

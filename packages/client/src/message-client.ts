@@ -1,5 +1,5 @@
+import type { EncryptedMessage, GroupCipher } from '@microchat/crypto';
 import type { GroupId, UserId } from '@microchat/shared';
-import type { GroupCipher, EncryptedMessage } from '@microchat/crypto';
 
 export interface SendMessageResult {
   messageId: string;

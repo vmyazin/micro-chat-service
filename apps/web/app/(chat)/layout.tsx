@@ -24,7 +24,9 @@ export default function ChatLayout({
     <div className="flex h-screen overflow-hidden">
       {/* Mobile overlay */}
       {sidebarOpen && (
+        // biome-ignore lint/a11y/noStaticElementInteractions: modal backdrop dismiss pattern
         <div
+          role="presentation"
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
@@ -45,6 +47,7 @@ export default function ChatLayout({
           <div className="flex items-center justify-between p-4 border-b-[3px] border-[var(--border-color)]">
             <h2 className="font-bold text-lg">Groups</h2>
             <button
+              type="button"
               onClick={() => setSidebarOpen(false)}
               className="lg:hidden p-1 hover:bg-gray-100 dark:hover:bg-gray-800"
               aria-label="Close sidebar"
@@ -68,6 +71,7 @@ export default function ChatLayout({
         {/* Mobile header with toggle */}
         <div className="lg:hidden flex items-center p-4 border-b-[3px] border-[var(--border-color)]">
           <button
+            type="button"
             onClick={() => setSidebarOpen(true)}
             className="p-2 brutal-border hover:bg-gray-100 dark:hover:bg-gray-800"
             aria-label="Open sidebar"
@@ -93,6 +97,7 @@ export default function ChatLayout({
 function MenuIcon() {
   return (
     <svg
+      aria-hidden="true"
       xmlns="http://www.w3.org/2000/svg"
       width="20"
       height="20"
@@ -113,6 +118,7 @@ function MenuIcon() {
 function CloseIcon() {
   return (
     <svg
+      aria-hidden="true"
       xmlns="http://www.w3.org/2000/svg"
       width="20"
       height="20"

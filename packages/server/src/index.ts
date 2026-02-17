@@ -3,7 +3,7 @@ export { app } from './app';
 export { ChatHub } from './websocket/chat-hub';
 
 import { type AppEnv, app } from './app';
-import { type RetentionEnv, handleScheduled } from './jobs/retention';
+import { handleScheduled, type RetentionEnv } from './jobs/retention';
 
 type Env = AppEnv & RetentionEnv;
 

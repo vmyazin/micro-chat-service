@@ -39,14 +39,7 @@ export default function ConversationPage() {
     return clientRef.current;
   }, []);
 
-  useEffect(() => {
-    if (groupId) {
-      fetchMessages();
-      fetchCurrentUser();
-    }
-  }, [groupId, fetchCurrentUser, fetchMessages]);
-
-  async function fetchCurrentUser() {
+  const fetchCurrentUser = useCallback(async () => {
     try {
       const client = getClient();
       const user = await client.getCurrentUser();
@@ -54,11 +47,34 @@ export default function ConversationPage() {
     } catch (err) {
       console.error('Failed to get current user:', err);
     }
-  }
+  }, [getClient]);
+
+  const fetchMessages = useCallback(async () => {
+    if (!groupId) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+      const client = getClient();
+      const result = await client.getMessages(groupId as GroupId);
+      setMessages(result);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load messages');
+    } finally {
+      setLoading(false);
+    }
+  }, [groupId, getClient]);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [scrollToBottom]);
+    if (groupId) {
+      fetchMessages();
+      fetchCurrentUser();
+    }
+  }, [groupId, fetchCurrentUser, fetchMessages]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  });
 
   useEffect(() => {
     if (!groupId) return;
@@ -160,26 +176,6 @@ export default function ConversationPage() {
     };
   }, []);
 
-  async function fetchMessages() {
-    if (!groupId) return;
-
-    try {
-      setLoading(true);
-      setError(null);
-      const client = getClient();
-      const result = await client.getMessages(groupId as GroupId);
-      setMessages(result);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load messages');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function scrollToBottom() {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }
-
   async function handleSendMessage(content: string) {
     if (!groupId) return;
 
@@ -275,6 +271,7 @@ export default function ConversationPage() {
         <div className="p-4 brutal-border bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 max-w-md">
           <p className="mb-2">{error}</p>
           <button
+            type="button"
             onClick={fetchMessages}
             className="text-sm underline hover:no-underline"
           >
@@ -290,11 +287,13 @@ export default function ConversationPage() {
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
         <h1 className="text-lg font-bold truncate">Group Chat</h1>
         <button
+          type="button"
           onClick={() => setShowSettings(true)}
           className="p-2 brutal-border hover:bg-gray-100 dark:hover:bg-gray-800"
           aria-label="Group Settings"
         >
           <svg
+            aria-hidden="true"
             className="w-5 h-5"
             fill="none"
             stroke="currentColor"
@@ -419,11 +418,13 @@ function MessageBubble({
           </div>
           {isOwn && !showDeleteConfirm && (
             <button
+              type="button"
               onClick={onRequestDelete}
               className="opacity-0 group-hover:opacity-100 transition-opacity ml-2 p-1 text-gray-400 hover:text-red-500"
               aria-label="Delete message"
             >
               <svg
+                aria-hidden="true"
                 className="w-4 h-4"
                 fill="none"
                 stroke="currentColor"
@@ -446,6 +447,7 @@ function MessageBubble({
             </p>
             <div className="flex gap-2">
               <button
+                type="button"
                 onClick={onConfirmDelete}
                 disabled={deleting}
                 className="flex-1 text-xs px-2 py-1 brutal-border bg-red-500 text-white hover:bg-red-600 disabled:opacity-50"
@@ -453,6 +455,7 @@ function MessageBubble({
                 {deleting ? 'Deleting...' : 'Delete'}
               </button>
               <button
+                type="button"
                 onClick={onCancelDelete}
                 disabled={deleting}
                 className="flex-1 text-xs px-2 py-1 brutal-border bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50"
@@ -474,6 +477,7 @@ function decodeContent(encryptedContent: string): string {
 function LoadingSpinner() {
   return (
     <svg
+      aria-hidden="true"
       className="animate-spin h-6 w-6"
       xmlns="http://www.w3.org/2000/svg"
       fill="none"

@@ -127,6 +127,7 @@ function RegisterForm() {
           )}
 
           <button
+            type="button"
             onClick={handleRegister}
             disabled={state === 'loading'}
             className="w-full brutal-btn flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -185,6 +186,7 @@ function RegisterPageSkeleton() {
 function LoadingSpinner() {
   return (
     <svg
+      aria-hidden="true"
       className="animate-spin h-5 w-5"
       xmlns="http://www.w3.org/2000/svg"
       fill="none"

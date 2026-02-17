@@ -1,5 +1,4 @@
-import type { GroupId } from '@microchat/shared';
-import type { WebSocketEvent } from '@microchat/shared';
+import type { GroupId, WebSocketEvent } from '@microchat/shared';
 
 export type { WebSocketEvent };
 

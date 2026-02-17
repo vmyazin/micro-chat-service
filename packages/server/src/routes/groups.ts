@@ -434,46 +434,54 @@ groupsRouter.get('/api/groups/:id/messages', requireAuth, async (c) => {
   });
 });
 
-groupsRouter.post('/api/groups/:id/messages', requireAuth, rateLimitMessages(), async (c) => {
-  const groupId = c.req.param('id') as GroupId;
-  const user = c.get('user');
-  const db = new Database(c.env.DB);
+groupsRouter.post(
+  '/api/groups/:id/messages',
+  requireAuth,
+  rateLimitMessages(),
+  async (c) => {
+    const groupId = c.req.param('id') as GroupId;
+    const user = c.get('user');
+    const db = new Database(c.env.DB);
 
-  const body = await c.req.json<{ encryptedPayload: string; nonce: string }>();
+    const body = await c.req.json<{
+      encryptedPayload: string;
+      nonce: string;
+    }>();
 
-  if (!body.encryptedPayload || !body.nonce) {
-    return c.json({ error: 'encryptedPayload and nonce are required' }, 400);
-  }
+    if (!body.encryptedPayload || !body.nonce) {
+      return c.json({ error: 'encryptedPayload and nonce are required' }, 400);
+    }
 
-  // Check membership
-  const membership = await db.query<{ id: string }>(
-    'SELECT id FROM group_members WHERE group_id = ? AND user_id = ?',
-    [groupId, user.id],
-  );
+    // Check membership
+    const membership = await db.query<{ id: string }>(
+      'SELECT id FROM group_members WHERE group_id = ? AND user_id = ?',
+      [groupId, user.id],
+    );
 
-  if (membership.length === 0) {
-    return c.json({ error: 'Not a member of this group' }, 403);
-  }
+    if (membership.length === 0) {
+      return c.json({ error: 'Not a member of this group' }, 403);
+    }
 
-  const messageId = generateMessageId();
-  const now = new Date().toISOString();
+    const messageId = generateMessageId();
+    const now = new Date().toISOString();
 
-  await db.execute(
-    'INSERT INTO messages (id, group_id, sender_id, encrypted_payload, nonce, created_at) VALUES (?, ?, ?, ?, ?, ?)',
-    [messageId, groupId, user.id, body.encryptedPayload, body.nonce, now],
-  );
+    await db.execute(
+      'INSERT INTO messages (id, group_id, sender_id, encrypted_payload, nonce, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+      [messageId, groupId, user.id, body.encryptedPayload, body.nonce, now],
+    );
 
-  // Update group last activity
-  await db.execute('UPDATE groups SET last_activity_at = ? WHERE id = ?', [
-    now,
-    groupId,
-  ]);
+    // Update group last activity
+    await db.execute('UPDATE groups SET last_activity_at = ? WHERE id = ?', [
+      now,
+      groupId,
+    ]);
 
-  return c.json({
-    messageId,
-    timestamp: now,
-  });
-});
+    return c.json({
+      messageId,
+      timestamp: now,
+    });
+  },
+);
 
 groupsRouter.delete(
   '/api/groups/:id/messages/:messageId',

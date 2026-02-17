@@ -1,5 +1,5 @@
 import type { GroupId } from '@microchat/shared';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { GroupCipher, GroupCipherError } from './group-cipher';
 import { MemoryKeyStore } from './memory-key-store';
 
@@ -23,7 +23,7 @@ describe('GroupCipher', () => {
 
       const stored = await keyStore.getKey(groupId, epoch);
       expect(stored).not.toBeNull();
-      expect(stored!.key).toEqual(rawKey);
+      expect(stored?.key).toEqual(rawKey);
     });
 
     it('generates unique keys per invocation', async () => {
@@ -43,7 +43,7 @@ describe('GroupCipher', () => {
 
       const stored = await keyStore.getKey(groupId, epoch);
       expect(stored).not.toBeNull();
-      expect(stored!.key).toEqual(rawKey);
+      expect(stored?.key).toEqual(rawKey);
     });
 
     it('rejects keys with wrong length', async () => {
@@ -93,16 +93,17 @@ describe('GroupCipher', () => {
     it('handles unicode content', async () => {
       await cipher.generateGroupKey(groupId, epoch);
 
-      const plaintext = 'Hello! Emoji test: \u{1F600}\u{1F680} Chinese: \u4F60\u597D';
+      const plaintext =
+        'Hello! Emoji test: \u{1F600}\u{1F680} Chinese: \u4F60\u597D';
       const encrypted = await cipher.encrypt(groupId, epoch, plaintext);
       const decrypted = await cipher.decrypt(groupId, encrypted);
       expect(decrypted).toBe(plaintext);
     });
 
     it('throws when no key exists for encryption', async () => {
-      await expect(
-        cipher.encrypt(groupId, epoch, 'test'),
-      ).rejects.toThrow(GroupCipherError);
+      await expect(cipher.encrypt(groupId, epoch, 'test')).rejects.toThrow(
+        GroupCipherError,
+      );
     });
 
     it('throws when no key exists for decryption', async () => {
@@ -111,9 +112,9 @@ describe('GroupCipher', () => {
 
       // Try decrypting with a different epoch
       encrypted.epoch = 999;
-      await expect(
-        cipher.decrypt(groupId, encrypted),
-      ).rejects.toThrow(GroupCipherError);
+      await expect(cipher.decrypt(groupId, encrypted)).rejects.toThrow(
+        GroupCipherError,
+      );
     });
 
     it('fails to decrypt with wrong key', async () => {
@@ -124,9 +125,9 @@ describe('GroupCipher', () => {
       const otherGroupId = 'other-group' as GroupId;
       await cipher.generateGroupKey(otherGroupId, epoch);
 
-      await expect(
-        cipher.decrypt(otherGroupId, encrypted),
-      ).rejects.toThrow(GroupCipherError);
+      await expect(cipher.decrypt(otherGroupId, encrypted)).rejects.toThrow(
+        GroupCipherError,
+      );
     });
 
     it('fails to decrypt tampered ciphertext', async () => {
@@ -146,9 +147,9 @@ describe('GroupCipher', () => {
       }
       encrypted.ciphertext = btoa(binary);
 
-      await expect(
-        cipher.decrypt(groupId, encrypted),
-      ).rejects.toThrow(GroupCipherError);
+      await expect(cipher.decrypt(groupId, encrypted)).rejects.toThrow(
+        GroupCipherError,
+      );
     });
   });
 

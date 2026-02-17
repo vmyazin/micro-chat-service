@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { Database } from '../db/client';
 import { MockD1Database } from './mock-d1';
 
@@ -9,17 +9,38 @@ describe('Group deletion (atomic batch)', () => {
   beforeEach(() => {
     mockD1 = new MockD1Database();
     mockD1._seed('groups', [
-      { id: 'g1', encrypted_name: 'test', owner_id: 'u1', created_at: '2024-01-01', last_activity_at: '2024-01-01' },
+      {
+        id: 'g1',
+        encrypted_name: 'test',
+        owner_id: 'u1',
+        created_at: '2024-01-01',
+        last_activity_at: '2024-01-01',
+      },
     ]);
     mockD1._seed('group_members', [
       { id: 'm1', group_id: 'g1', user_id: 'u1', joined_at: '2024-01-01' },
       { id: 'm2', group_id: 'g1', user_id: 'u2', joined_at: '2024-01-02' },
     ]);
     mockD1._seed('messages', [
-      { id: 'msg1', group_id: 'g1', sender_id: 'u1', encrypted_payload: 'hello', nonce: 'n1', created_at: '2024-01-01', deleted_at: null, deleted_by: null },
+      {
+        id: 'msg1',
+        group_id: 'g1',
+        sender_id: 'u1',
+        encrypted_payload: 'hello',
+        nonce: 'n1',
+        created_at: '2024-01-01',
+        deleted_at: null,
+        deleted_by: null,
+      },
     ]);
     mockD1._seed('invites', [
-      { id: 'inv1', group_id: 'g1', created_by: 'u1', expires_at: '2025-01-01', used: 0 },
+      {
+        id: 'inv1',
+        group_id: 'g1',
+        created_by: 'u1',
+        expires_at: '2025-01-01',
+        used: 0,
+      },
     ]);
     db = new Database(mockD1);
   });
@@ -46,8 +67,20 @@ describe('Group deletion (atomic batch)', () => {
   it('does not affect other groups', async () => {
     // Add another group's data
     mockD1._seed('groups', [
-      { id: 'g1', encrypted_name: 'test', owner_id: 'u1', created_at: '2024-01-01', last_activity_at: '2024-01-01' },
-      { id: 'g2', encrypted_name: 'other', owner_id: 'u3', created_at: '2024-01-01', last_activity_at: '2024-01-01' },
+      {
+        id: 'g1',
+        encrypted_name: 'test',
+        owner_id: 'u1',
+        created_at: '2024-01-01',
+        last_activity_at: '2024-01-01',
+      },
+      {
+        id: 'g2',
+        encrypted_name: 'other',
+        owner_id: 'u3',
+        created_at: '2024-01-01',
+        last_activity_at: '2024-01-01',
+      },
     ]);
     mockD1._seed('group_members', [
       { id: 'm1', group_id: 'g1', user_id: 'u1', joined_at: '2024-01-01' },

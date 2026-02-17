@@ -101,7 +101,10 @@ export default function Home() {
               >
                 Create Private Group
               </Link>
-              <button className="w-full sm:w-auto bg-white text-[#1E293B] border border-gray-200 px-10 py-4 rounded-full font-bold text-lg hover:bg-gray-50 transition-all cursor-pointer">
+              <button
+                type="button"
+                className="w-full sm:w-auto bg-white text-[#1E293B] border border-gray-200 px-10 py-4 rounded-full font-bold text-lg hover:bg-gray-50 transition-all cursor-pointer"
+              >
                 How it works
               </button>
             </motion.div>
@@ -128,8 +131,8 @@ export default function Home() {
             </div>
 
             <div className="grid md:grid-cols-3 gap-12">
-              {features.map((feature, i) => (
-                <div key={i} className="group cursor-pointer">
+              {features.map((feature) => (
+                <div key={feature.title} className="group cursor-pointer">
                   <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-6 transition-transform duration-500 group-hover:rotate-12 border border-blue-100">
                     {feature.icon}
                   </div>
@@ -168,8 +171,8 @@ export default function Home() {
                   What We Promise
                 </h3>
                 <div className="space-y-4">
-                  {promises.map((promise, i) => (
-                    <div key={i} className="flex items-start gap-3">
+                  {promises.map((promise) => (
+                    <div key={promise} className="flex items-start gap-3">
                       <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center shrink-0 mt-0.5">
                         <Check className="w-3 h-3 text-green-600" />
                       </div>
@@ -187,8 +190,8 @@ export default function Home() {
                   What We Don't Promise
                 </h3>
                 <div className="space-y-4">
-                  {limitations.map((limitation, i) => (
-                    <div key={i} className="flex items-start gap-3">
+                  {limitations.map((limitation) => (
+                    <div key={limitation} className="flex items-start gap-3">
                       <div className="w-5 h-5 bg-amber-100 rounded-full flex items-center justify-center shrink-0 mt-0.5">
                         <AlertTriangle className="w-3 h-3 text-amber-600" />
                       </div>
@@ -231,7 +234,7 @@ export default function Home() {
                 Create Private Group
               </Link>
               <a
-                href="#"
+                href="/protocol"
                 className="text-white/60 hover:text-white transition-colors flex items-center gap-2 group cursor-pointer text-lg"
               >
                 Read the Whitepaper
@@ -256,25 +259,25 @@ export default function Home() {
 
           <div className="flex gap-10 text-xs font-bold text-gray-400 uppercase tracking-widest">
             <a
-              href="#"
+              href="/security"
               className="hover:text-blue-600 transition-colors cursor-pointer"
             >
               Security Whitepaper
             </a>
             <a
-              href="#"
+              href="/security"
               className="hover:text-blue-600 transition-colors cursor-pointer"
             >
               Threat Model
             </a>
             <a
-              href="#"
+              href="/security"
               className="hover:text-blue-600 transition-colors cursor-pointer"
             >
               Privacy Policy
             </a>
             <a
-              href="#"
+              href="https://github.com"
               className="hover:text-blue-600 transition-colors cursor-pointer"
             >
               <Github className="w-4 h-4" />

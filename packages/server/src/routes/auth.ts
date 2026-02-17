@@ -50,7 +50,10 @@ export class ChallengeStore {
       display_name: string | null;
       type: 'registration' | 'authentication';
       expires_at: string;
-    }>('SELECT challenge, user_id, display_name, type, expires_at FROM challenges WHERE challenge = ?', [challenge]);
+    }>(
+      'SELECT challenge, user_id, display_name, type, expires_at FROM challenges WHERE challenge = ?',
+      [challenge],
+    );
 
     if (rows.length === 0) return null;
 
@@ -65,7 +68,9 @@ export class ChallengeStore {
   }
 
   async delete(challenge: string): Promise<void> {
-    await this.db.execute('DELETE FROM challenges WHERE challenge = ?', [challenge]);
+    await this.db.execute('DELETE FROM challenges WHERE challenge = ?', [
+      challenge,
+    ]);
   }
 
   async deleteExpired(): Promise<number> {

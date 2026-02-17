@@ -18,7 +18,7 @@ export class ChatHub implements DurableObject {
   private db: Database | null = null;
 
   constructor(
-    private readonly state: DurableObjectState,
+    _state: DurableObjectState,
     private readonly env: { DB: D1Database },
   ) {}
 

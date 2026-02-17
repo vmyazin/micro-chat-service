@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { ChallengeStore } from '../routes/auth';
 import { MockD1Database } from './mock-d1';
 
@@ -59,10 +59,10 @@ describe('ChallengeStore', () => {
 
       const result = await store.get('abc123');
       expect(result).not.toBeNull();
-      expect(result!.challenge).toBe('abc123');
-      expect(result!.userId).toBe('user-1');
-      expect(result!.displayName).toBe('Alice');
-      expect(result!.type).toBe('registration');
+      expect(result?.challenge).toBe('abc123');
+      expect(result?.userId).toBe('user-1');
+      expect(result?.displayName).toBe('Alice');
+      expect(result?.type).toBe('registration');
     });
 
     it('returns null for non-existent challenge', async () => {
@@ -79,8 +79,8 @@ describe('ChallengeStore', () => {
 
       const result = await store.get('auth-challenge');
       expect(result).not.toBeNull();
-      expect(result!.userId).toBeUndefined();
-      expect(result!.displayName).toBeUndefined();
+      expect(result?.userId).toBeUndefined();
+      expect(result?.displayName).toBeUndefined();
     });
   });
 
@@ -109,9 +109,27 @@ describe('ChallengeStore', () => {
       const futureExpiry = new Date(Date.now() + 60_000).toISOString();
 
       mockD1._seed('challenges', [
-        { challenge: 'expired-1', user_id: null, display_name: null, type: 'registration', expires_at: pastExpiry },
-        { challenge: 'expired-2', user_id: null, display_name: null, type: 'authentication', expires_at: pastExpiry },
-        { challenge: 'valid-1', user_id: null, display_name: null, type: 'authentication', expires_at: futureExpiry },
+        {
+          challenge: 'expired-1',
+          user_id: null,
+          display_name: null,
+          type: 'registration',
+          expires_at: pastExpiry,
+        },
+        {
+          challenge: 'expired-2',
+          user_id: null,
+          display_name: null,
+          type: 'authentication',
+          expires_at: pastExpiry,
+        },
+        {
+          challenge: 'valid-1',
+          user_id: null,
+          display_name: null,
+          type: 'authentication',
+          expires_at: futureExpiry,
+        },
       ]);
 
       const count = await store.deleteExpired();
@@ -125,7 +143,13 @@ describe('ChallengeStore', () => {
     it('returns 0 when no challenges are expired', async () => {
       const futureExpiry = new Date(Date.now() + 60_000).toISOString();
       mockD1._seed('challenges', [
-        { challenge: 'valid-1', user_id: null, display_name: null, type: 'authentication', expires_at: futureExpiry },
+        {
+          challenge: 'valid-1',
+          user_id: null,
+          display_name: null,
+          type: 'authentication',
+          expires_at: futureExpiry,
+        },
       ]);
 
       const count = await store.deleteExpired();

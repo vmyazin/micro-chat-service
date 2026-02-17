@@ -78,7 +78,9 @@ export class GroupCipher {
       ['encrypt', 'decrypt'],
     );
 
-    const rawKey = new Uint8Array(await crypto.subtle.exportKey('raw', derivedKey));
+    const rawKey = new Uint8Array(
+      await crypto.subtle.exportKey('raw', derivedKey),
+    );
     await this.keyStore.storeKey(groupId, epoch, rawKey);
     return rawKey;
   }
