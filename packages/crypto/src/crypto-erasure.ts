@@ -10,7 +10,7 @@ export interface ErasureAuditEntry {
 export class CryptoErasureError extends Error {
   constructor(
     public readonly groupId: GroupId,
-    message: string = `Keys for group ${groupId} have been erased`
+    message: string = `Keys for group ${groupId} have been erased`,
   ) {
     super(message);
     this.name = 'CryptoErasureError';
@@ -33,7 +33,7 @@ export class CryptoErasureService {
     };
 
     console.log(
-      `[CryptoErasure] Erased ${keyCount} keys for group ${groupId} at ${auditEntry.timestamp.toISOString()}`
+      `[CryptoErasure] Erased ${keyCount} keys for group ${groupId} at ${auditEntry.timestamp.toISOString()}`,
     );
 
     return auditEntry;

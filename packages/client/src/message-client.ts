@@ -1,4 +1,4 @@
-import type { GroupId, Message, UserId } from '@microchat/shared';
+import type { GroupId, UserId } from '@microchat/shared';
 
 export interface SendMessageResult {
   messageId: string;
@@ -28,24 +28,31 @@ interface ServerMessage {
 export class MessageClient {
   constructor(private baseUrl: string) {}
 
-  async getMessages(groupId: GroupId, limit = 50, before?: string): Promise<MessageListItem[]> {
+  async getMessages(
+    groupId: GroupId,
+    limit = 50,
+    before?: string,
+  ): Promise<MessageListItem[]> {
     const params = new URLSearchParams({ limit: String(limit) });
     if (before) {
       params.set('before', before);
     }
 
-    const response = await fetch(`${this.baseUrl}/api/groups/${groupId}/messages?${params}`, {
-      method: 'GET',
-      credentials: 'include',
-    });
+    const response = await fetch(
+      `${this.baseUrl}/api/groups/${groupId}/messages?${params}`,
+      {
+        method: 'GET',
+        credentials: 'include',
+      },
+    );
 
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error || 'Failed to get messages');
     }
 
-    const data = await response.json() as { messages: ServerMessage[] };
-    
+    const data = (await response.json()) as { messages: ServerMessage[] };
+
     // Map server response to client format
     return data.messages.map((msg) => ({
       id: msg.id,
@@ -58,16 +65,26 @@ export class MessageClient {
     }));
   }
 
-  async sendMessage(groupId: GroupId, encryptedContent: string, nonce?: string): Promise<SendMessageResult> {
+  async sendMessage(
+    groupId: GroupId,
+    encryptedContent: string,
+    nonce?: string,
+  ): Promise<SendMessageResult> {
     // For now, use a placeholder nonce if not provided (encryption not yet implemented)
     const messageNonce = nonce || crypto.randomUUID();
-    
-    const response = await fetch(`${this.baseUrl}/api/groups/${groupId}/messages`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ encryptedPayload: encryptedContent, nonce: messageNonce }),
-      credentials: 'include',
-    });
+
+    const response = await fetch(
+      `${this.baseUrl}/api/groups/${groupId}/messages`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          encryptedPayload: encryptedContent,
+          nonce: messageNonce,
+        }),
+        credentials: 'include',
+      },
+    );
 
     if (!response.ok) {
       const error = await response.json();
@@ -78,10 +95,13 @@ export class MessageClient {
   }
 
   async deleteMessage(groupId: GroupId, messageId: string): Promise<void> {
-    const response = await fetch(`${this.baseUrl}/api/groups/${groupId}/messages/${messageId}`, {
-      method: 'DELETE',
-      credentials: 'include',
-    });
+    const response = await fetch(
+      `${this.baseUrl}/api/groups/${groupId}/messages/${messageId}`,
+      {
+        method: 'DELETE',
+        credentials: 'include',
+      },
+    );
 
     if (!response.ok) {
       const error = await response.json();

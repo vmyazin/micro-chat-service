@@ -34,7 +34,7 @@ export class DatabaseError extends Error {
   constructor(
     message: string,
     public readonly query?: string,
-    public readonly cause?: unknown
+    public readonly cause?: unknown,
   ) {
     super(message);
     this.name = 'DatabaseError';
@@ -62,7 +62,7 @@ export class Database {
       throw new DatabaseError(
         error instanceof Error ? error.message : 'Unknown database error',
         sql,
-        error
+        error,
       );
     }
   }
@@ -85,13 +85,13 @@ export class Database {
       throw new DatabaseError(
         error instanceof Error ? error.message : 'Unknown database error',
         sql,
-        error
+        error,
       );
     }
   }
 
   async batch(
-    queries: Array<{ sql: string; params?: unknown[] }>
+    queries: Array<{ sql: string; params?: unknown[] }>,
   ): Promise<D1Result[]> {
     try {
       const statements = queries.map(({ sql, params = [] }) => {
@@ -106,7 +106,7 @@ export class Database {
         if (!results[i].success) {
           throw new DatabaseError(
             results[i].error || 'Batch query failed',
-            queries[i].sql
+            queries[i].sql,
           );
         }
       }
@@ -118,7 +118,7 @@ export class Database {
       throw new DatabaseError(
         error instanceof Error ? error.message : 'Unknown database error',
         undefined,
-        error
+        error,
       );
     }
   }

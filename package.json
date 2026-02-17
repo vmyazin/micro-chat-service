@@ -1,18 +1,21 @@
 {
-  "name": "@microchat/root",
-  "private": true,
-  "scripts": {
-    "build": "pnpm -r build",
-    "test": "pnpm -r test",
-    "typecheck": "pnpm -r typecheck",
-    "dev": "pnpm -r --parallel dev",
-    "dev:web": "pnpm --filter @microchat/web dev"
-  },
-  "devDependencies": {
-    "typescript": "^5.4.0"
-  },
-  "engines": {
-    "node": ">=20.0.0",
-    "pnpm": ">=9.0.0"
-  }
+    "name": "@microchat/root",
+    "private": true,
+    "scripts": {
+        "build": "pnpm -r build",
+        "test": "pnpm -r test",
+        "typecheck": "pnpm -r typecheck",
+        "lint": "biome check .",
+        "lint:fix": "biome check --fix .",
+        "dev": "pnpm -r --parallel dev",
+        "dev:web": "pnpm --filter @microchat/web dev"
+    },
+    "devDependencies": {
+        "@biomejs/biome": "^2.4.2",
+        "typescript": "^5.4.0"
+    },
+    "engines": {
+        "node": ">=20.0.0",
+        "pnpm": ">=9.0.0"
+    }
 }

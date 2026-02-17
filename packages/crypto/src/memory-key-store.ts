@@ -1,5 +1,5 @@
 import type { GroupId } from '@microchat/shared';
-import type { KeyStore, KeyMetadata, StoredKey } from './key-store';
+import type { KeyMetadata, KeyStore, StoredKey } from './key-store';
 
 export class MemoryKeyStore implements KeyStore {
   private store = new Map<string, StoredKey>();
@@ -8,7 +8,11 @@ export class MemoryKeyStore implements KeyStore {
     return `${groupId}:${epoch}`;
   }
 
-  async storeKey(groupId: GroupId, epoch: number, key: Uint8Array): Promise<void> {
+  async storeKey(
+    groupId: GroupId,
+    epoch: number,
+    key: Uint8Array,
+  ): Promise<void> {
     const storageKey = this.makeKey(groupId, epoch);
     const metadata: KeyMetadata = {
       groupId,
@@ -23,17 +27,23 @@ export class MemoryKeyStore implements KeyStore {
     const storageKey = this.makeKey(groupId, epoch);
     const stored = this.store.get(storageKey);
     if (stored) {
-      console.log(`[KeyStore] Retrieved key for group ${groupId}, epoch ${epoch}`);
+      console.log(
+        `[KeyStore] Retrieved key for group ${groupId}, epoch ${epoch}`,
+      );
       return stored;
     }
-    console.log(`[KeyStore] Key not found for group ${groupId}, epoch ${epoch}`);
+    console.log(
+      `[KeyStore] Key not found for group ${groupId}, epoch ${epoch}`,
+    );
     return null;
   }
 
   async deleteKey(groupId: GroupId, epoch: number): Promise<boolean> {
     const storageKey = this.makeKey(groupId, epoch);
     const deleted = this.store.delete(storageKey);
-    console.log(`[KeyStore] ${deleted ? 'Deleted' : 'Not found'} key for group ${groupId}, epoch ${epoch}`);
+    console.log(
+      `[KeyStore] ${deleted ? 'Deleted' : 'Not found'} key for group ${groupId}, epoch ${epoch}`,
+    );
     return deleted;
   }
 

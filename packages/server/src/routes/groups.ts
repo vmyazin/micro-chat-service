@@ -1,14 +1,21 @@
-import { Hono } from 'hono';
 import type { GroupId, UserId } from '@microchat/shared';
 import { InviteConfig } from '@microchat/shared';
-import { Database, type D1Database } from '../db/client';
-import { requireAuth, type AuthVariables, type AuthEnv as AuthMiddlewareEnv } from '../middleware/auth';
+import { Hono } from 'hono';
+import { type D1Database, Database } from '../db/client';
+import {
+  type AuthEnv as AuthMiddlewareEnv,
+  type AuthVariables,
+  requireAuth,
+} from '../middleware/auth';
 
 export interface GroupsEnv extends AuthMiddlewareEnv {
   DB: D1Database;
 }
 
-const groupsRouter = new Hono<{ Bindings: GroupsEnv; Variables: AuthVariables }>();
+const groupsRouter = new Hono<{
+  Bindings: GroupsEnv;
+  Variables: AuthVariables;
+}>();
 
 function generateGroupId(): GroupId {
   const bytes = new Uint8Array(16);
@@ -65,7 +72,7 @@ groupsRouter.get('/api/groups', requireAuth, async (c) => {
      INNER JOIN group_members m ON m.group_id = g.id
      WHERE m.user_id = ?
      ORDER BY g.last_activity_at DESC`,
-    [user.id]
+    [user.id],
   );
 
   const result: GroupListItem[] = groups.map((g) => ({
@@ -94,12 +101,12 @@ groupsRouter.post('/api/groups', requireAuth, async (c) => {
 
   await db.execute(
     'INSERT INTO groups (id, encrypted_name, owner_id, created_at, last_activity_at) VALUES (?, ?, ?, ?, ?)',
-    [groupId, body.encryptedName, user.id, now, now]
+    [groupId, body.encryptedName, user.id, now, now],
   );
 
   await db.execute(
     'INSERT INTO group_members (id, group_id, user_id, joined_at) VALUES (?, ?, ?, ?)',
-    [memberId, groupId, user.id, now]
+    [memberId, groupId, user.id, now],
   );
 
   return c.json({
@@ -115,7 +122,7 @@ groupsRouter.post('/api/groups/:id/invites', requireAuth, async (c) => {
 
   const membership = await db.query<{ id: string }>(
     'SELECT id FROM group_members WHERE group_id = ? AND user_id = ?',
-    [groupId, user.id]
+    [groupId, user.id],
   );
 
   if (membership.length === 0) {
@@ -123,12 +130,14 @@ groupsRouter.post('/api/groups/:id/invites', requireAuth, async (c) => {
   }
 
   const now = new Date();
-  const expiresAt = new Date(now.getTime() + InviteConfig.MAX_AGE_DAYS * 24 * 60 * 60 * 1000);
+  const expiresAt = new Date(
+    now.getTime() + InviteConfig.MAX_AGE_DAYS * 24 * 60 * 60 * 1000,
+  );
   const inviteCode = generateInviteCode();
 
   await db.execute(
     'INSERT INTO invites (id, group_id, created_by, expires_at, used) VALUES (?, ?, ?, ?, ?)',
-    [inviteCode, groupId, user.id, expiresAt.toISOString(), 0]
+    [inviteCode, groupId, user.id, expiresAt.toISOString(), 0],
   );
 
   return c.json({
@@ -166,7 +175,7 @@ groupsRouter.post('/api/invites/:code/accept', requireAuth, async (c) => {
 
   const existingMembership = await db.query<{ id: string }>(
     'SELECT id FROM group_members WHERE group_id = ? AND user_id = ?',
-    [invite.group_id, user.id]
+    [invite.group_id, user.id],
   );
 
   if (existingMembership.length > 0) {
@@ -175,24 +184,23 @@ groupsRouter.post('/api/invites/:code/accept', requireAuth, async (c) => {
 
   const memberId = generateMemberId();
 
-  await db.execute('UPDATE invites SET used = 1, used_by = ?, used_at = ? WHERE id = ?', [
-    user.id,
-    now,
-    code,
-  ]);
+  await db.execute(
+    'UPDATE invites SET used = 1, used_by = ?, used_at = ? WHERE id = ?',
+    [user.id, now, code],
+  );
 
-  await db.execute('INSERT INTO group_members (id, group_id, user_id, joined_at) VALUES (?, ?, ?, ?)', [
-    memberId,
-    invite.group_id,
-    user.id,
-    now,
-  ]);
+  await db.execute(
+    'INSERT INTO group_members (id, group_id, user_id, joined_at) VALUES (?, ?, ?, ?)',
+    [memberId, invite.group_id, user.id, now],
+  );
 
   const groups = await db.query<{
     id: GroupId;
     encrypted_name: string;
     owner_id: UserId;
-  }>('SELECT id, encrypted_name, owner_id FROM groups WHERE id = ?', [invite.group_id]);
+  }>('SELECT id, encrypted_name, owner_id FROM groups WHERE id = ?', [
+    invite.group_id,
+  ]);
 
   const group = groups[0];
 
@@ -203,45 +211,52 @@ groupsRouter.post('/api/invites/:code/accept', requireAuth, async (c) => {
   });
 });
 
-groupsRouter.delete('/api/groups/:id/members/:userId', requireAuth, async (c) => {
-  const groupId = c.req.param('id') as GroupId;
-  const targetUserId = c.req.param('userId') as UserId;
-  const user = c.get('user');
-  const db = new Database(c.env.DB);
+groupsRouter.delete(
+  '/api/groups/:id/members/:userId',
+  requireAuth,
+  async (c) => {
+    const groupId = c.req.param('id') as GroupId;
+    const targetUserId = c.req.param('userId') as UserId;
+    const user = c.get('user');
+    const db = new Database(c.env.DB);
 
-  if (targetUserId === user.id) {
-    return c.json({ error: 'Cannot remove yourself. Use leave endpoint instead.' }, 400);
-  }
+    if (targetUserId === user.id) {
+      return c.json(
+        { error: 'Cannot remove yourself. Use leave endpoint instead.' },
+        400,
+      );
+    }
 
-  const groups = await db.query<{ owner_id: UserId }>(
-    'SELECT owner_id FROM groups WHERE id = ?',
-    [groupId]
-  );
+    const groups = await db.query<{ owner_id: UserId }>(
+      'SELECT owner_id FROM groups WHERE id = ?',
+      [groupId],
+    );
 
-  if (groups.length === 0) {
-    return c.json({ error: 'Group not found' }, 404);
-  }
+    if (groups.length === 0) {
+      return c.json({ error: 'Group not found' }, 404);
+    }
 
-  if (groups[0].owner_id !== user.id) {
-    return c.json({ error: 'Only the group owner can remove members' }, 403);
-  }
+    if (groups[0].owner_id !== user.id) {
+      return c.json({ error: 'Only the group owner can remove members' }, 403);
+    }
 
-  const membership = await db.query<{ id: string }>(
-    'SELECT id FROM group_members WHERE group_id = ? AND user_id = ?',
-    [groupId, targetUserId]
-  );
+    const membership = await db.query<{ id: string }>(
+      'SELECT id FROM group_members WHERE group_id = ? AND user_id = ?',
+      [groupId, targetUserId],
+    );
 
-  if (membership.length === 0) {
-    return c.json({ error: 'User is not a member of this group' }, 404);
-  }
+    if (membership.length === 0) {
+      return c.json({ error: 'User is not a member of this group' }, 404);
+    }
 
-  await db.execute('DELETE FROM group_members WHERE group_id = ? AND user_id = ?', [
-    groupId,
-    targetUserId,
-  ]);
+    await db.execute(
+      'DELETE FROM group_members WHERE group_id = ? AND user_id = ?',
+      [groupId, targetUserId],
+    );
 
-  return c.json({ success: true });
-});
+    return c.json({ success: true });
+  },
+);
 
 groupsRouter.get('/api/groups/:id/members', requireAuth, async (c) => {
   const groupId = c.req.param('id') as GroupId;
@@ -250,7 +265,7 @@ groupsRouter.get('/api/groups/:id/members', requireAuth, async (c) => {
 
   const membership = await db.query<{ id: string }>(
     'SELECT id FROM group_members WHERE group_id = ? AND user_id = ?',
-    [groupId, user.id]
+    [groupId, user.id],
   );
 
   if (membership.length === 0) {
@@ -267,12 +282,12 @@ groupsRouter.get('/api/groups/:id/members', requireAuth, async (c) => {
      INNER JOIN users u ON u.id = gm.user_id
      WHERE gm.group_id = ?
      ORDER BY gm.joined_at ASC`,
-    [groupId]
+    [groupId],
   );
 
   const group = await db.query<{ owner_id: UserId }>(
     'SELECT owner_id FROM groups WHERE id = ?',
-    [groupId]
+    [groupId],
   );
 
   return c.json({
@@ -293,7 +308,7 @@ groupsRouter.post('/api/groups/:id/leave', requireAuth, async (c) => {
 
   const groups = await db.query<{ owner_id: UserId }>(
     'SELECT owner_id FROM groups WHERE id = ?',
-    [groupId]
+    [groupId],
   );
 
   if (groups.length === 0) {
@@ -301,22 +316,25 @@ groupsRouter.post('/api/groups/:id/leave', requireAuth, async (c) => {
   }
 
   if (groups[0].owner_id === user.id) {
-    return c.json({ error: 'Owner cannot leave. Transfer ownership or delete the group.' }, 400);
+    return c.json(
+      { error: 'Owner cannot leave. Transfer ownership or delete the group.' },
+      400,
+    );
   }
 
   const membership = await db.query<{ id: string }>(
     'SELECT id FROM group_members WHERE group_id = ? AND user_id = ?',
-    [groupId, user.id]
+    [groupId, user.id],
   );
 
   if (membership.length === 0) {
     return c.json({ error: 'Not a member of this group' }, 404);
   }
 
-  await db.execute('DELETE FROM group_members WHERE group_id = ? AND user_id = ?', [
-    groupId,
-    user.id,
-  ]);
+  await db.execute(
+    'DELETE FROM group_members WHERE group_id = ? AND user_id = ?',
+    [groupId, user.id],
+  );
 
   return c.json({ success: true });
 });
@@ -328,7 +346,7 @@ groupsRouter.delete('/api/groups/:id', requireAuth, async (c) => {
 
   const groups = await db.query<{ owner_id: UserId }>(
     'SELECT owner_id FROM groups WHERE id = ?',
-    [groupId]
+    [groupId],
   );
 
   if (groups.length === 0) {
@@ -357,7 +375,7 @@ groupsRouter.get('/api/groups/:id/messages', requireAuth, async (c) => {
   // Check membership
   const membership = await db.query<{ id: string }>(
     'SELECT id FROM group_members WHERE group_id = ? AND user_id = ?',
-    [groupId, user.id]
+    [groupId, user.id],
   );
 
   if (membership.length === 0) {
@@ -426,7 +444,7 @@ groupsRouter.post('/api/groups/:id/messages', requireAuth, async (c) => {
   // Check membership
   const membership = await db.query<{ id: string }>(
     'SELECT id FROM group_members WHERE group_id = ? AND user_id = ?',
-    [groupId, user.id]
+    [groupId, user.id],
   );
 
   if (membership.length === 0) {
@@ -438,11 +456,14 @@ groupsRouter.post('/api/groups/:id/messages', requireAuth, async (c) => {
 
   await db.execute(
     'INSERT INTO messages (id, group_id, sender_id, encrypted_payload, nonce, created_at) VALUES (?, ?, ?, ?, ?, ?)',
-    [messageId, groupId, user.id, body.encryptedPayload, body.nonce, now]
+    [messageId, groupId, user.id, body.encryptedPayload, body.nonce, now],
   );
 
   // Update group last activity
-  await db.execute('UPDATE groups SET last_activity_at = ? WHERE id = ?', [now, groupId]);
+  await db.execute('UPDATE groups SET last_activity_at = ? WHERE id = ?', [
+    now,
+    groupId,
+  ]);
 
   return c.json({
     messageId,
@@ -450,35 +471,39 @@ groupsRouter.post('/api/groups/:id/messages', requireAuth, async (c) => {
   });
 });
 
-groupsRouter.delete('/api/groups/:id/messages/:messageId', requireAuth, async (c) => {
-  const groupId = c.req.param('id') as GroupId;
-  const messageId = c.req.param('messageId');
-  const user = c.get('user');
-  const db = new Database(c.env.DB);
+groupsRouter.delete(
+  '/api/groups/:id/messages/:messageId',
+  requireAuth,
+  async (c) => {
+    const groupId = c.req.param('id') as GroupId;
+    const messageId = c.req.param('messageId');
+    const user = c.get('user');
+    const db = new Database(c.env.DB);
 
-  // Check message exists and belongs to this user
-  const messages = await db.query<{ id: string; sender_id: UserId }>(
-    'SELECT id, sender_id FROM messages WHERE id = ? AND group_id = ?',
-    [messageId, groupId]
-  );
+    // Check message exists and belongs to this user
+    const messages = await db.query<{ id: string; sender_id: UserId }>(
+      'SELECT id, sender_id FROM messages WHERE id = ? AND group_id = ?',
+      [messageId, groupId],
+    );
 
-  if (messages.length === 0) {
-    return c.json({ error: 'Message not found' }, 404);
-  }
+    if (messages.length === 0) {
+      return c.json({ error: 'Message not found' }, 404);
+    }
 
-  if (messages[0].sender_id !== user.id) {
-    return c.json({ error: 'Can only delete your own messages' }, 403);
-  }
+    if (messages[0].sender_id !== user.id) {
+      return c.json({ error: 'Can only delete your own messages' }, 403);
+    }
 
-  const now = new Date().toISOString();
+    const now = new Date().toISOString();
 
-  // Soft delete - mark as deleted but keep record
-  await db.execute(
-    'UPDATE messages SET deleted_at = ?, deleted_by = ? WHERE id = ?',
-    [now, user.id, messageId]
-  );
+    // Soft delete - mark as deleted but keep record
+    await db.execute(
+      'UPDATE messages SET deleted_at = ?, deleted_by = ? WHERE id = ?',
+      [now, user.id, messageId],
+    );
 
-  return c.json({ success: true });
-});
+    return c.json({ success: true });
+  },
+);
 
 export { groupsRouter };

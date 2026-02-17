@@ -69,10 +69,13 @@ export class GroupClient {
   }
 
   async createInvite(groupId: GroupId): Promise<InviteResult> {
-    const response = await fetch(`${this.baseUrl}/api/groups/${groupId}/invites`, {
-      method: 'POST',
-      credentials: 'include',
-    });
+    const response = await fetch(
+      `${this.baseUrl}/api/groups/${groupId}/invites`,
+      {
+        method: 'POST',
+        credentials: 'include',
+      },
+    );
 
     if (!response.ok) {
       const error = await response.json();
@@ -97,10 +100,13 @@ export class GroupClient {
   }
 
   async removeMember(groupId: GroupId, userId: UserId): Promise<void> {
-    const response = await fetch(`${this.baseUrl}/api/groups/${groupId}/members/${userId}`, {
-      method: 'DELETE',
-      credentials: 'include',
-    });
+    const response = await fetch(
+      `${this.baseUrl}/api/groups/${groupId}/members/${userId}`,
+      {
+        method: 'DELETE',
+        credentials: 'include',
+      },
+    );
 
     if (!response.ok) {
       const error = await response.json();
@@ -109,10 +115,13 @@ export class GroupClient {
   }
 
   async getMembers(groupId: GroupId): Promise<GroupMembersResult> {
-    const response = await fetch(`${this.baseUrl}/api/groups/${groupId}/members`, {
-      method: 'GET',
-      credentials: 'include',
-    });
+    const response = await fetch(
+      `${this.baseUrl}/api/groups/${groupId}/members`,
+      {
+        method: 'GET',
+        credentials: 'include',
+      },
+    );
 
     if (!response.ok) {
       const error = await response.json();
@@ -123,10 +132,13 @@ export class GroupClient {
   }
 
   async leaveGroup(groupId: GroupId): Promise<void> {
-    const response = await fetch(`${this.baseUrl}/api/groups/${groupId}/leave`, {
-      method: 'POST',
-      credentials: 'include',
-    });
+    const response = await fetch(
+      `${this.baseUrl}/api/groups/${groupId}/leave`,
+      {
+        method: 'POST',
+        credentials: 'include',
+      },
+    );
 
     if (!response.ok) {
       const error = await response.json();

@@ -1,10 +1,10 @@
 // apps/web/app/(auth)/register/page.tsx
 'use client';
 
-import { useState, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
 import { AuthClient } from '@microchat/client';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useState } from 'react';
 
 type RegistrationState = 'idle' | 'loading' | 'unsupported';
 
@@ -17,8 +17,7 @@ function RegisterForm() {
   const [error, setError] = useState<string | null>(null);
 
   const isWebAuthnSupported =
-    typeof window !== 'undefined' &&
-    window.PublicKeyCredential !== undefined;
+    typeof window !== 'undefined' && window.PublicKeyCredential !== undefined;
 
   async function handleRegister() {
     if (!displayName.trim()) {
@@ -35,9 +34,7 @@ function RegisterForm() {
     setState('loading');
 
     try {
-      const authClient = new AuthClient(
-        process.env.NEXT_PUBLIC_API_URL || ''
-      );
+      const authClient = new AuthClient(process.env.NEXT_PUBLIC_API_URL || '');
 
       const options = await authClient.getRegisterOptions(displayName.trim());
 
@@ -54,8 +51,10 @@ function RegisterForm() {
         attestation: options.attestation as AttestationConveyancePreference,
         authenticatorSelection: options.authenticatorSelection
           ? {
-              residentKey: options.authenticatorSelection.residentKey as ResidentKeyRequirement,
-              userVerification: options.authenticatorSelection.userVerification as UserVerificationRequirement,
+              residentKey: options.authenticatorSelection
+                .residentKey as ResidentKeyRequirement,
+              userVerification: options.authenticatorSelection
+                .userVerification as UserVerificationRequirement,
             }
           : undefined,
       };
@@ -70,7 +69,7 @@ function RegisterForm() {
 
       await authClient.verifyRegistration(
         credential as PublicKeyCredential,
-        options.challenge
+        options.challenge,
       );
 
       router.push(redirectTo);
@@ -145,7 +144,11 @@ function RegisterForm() {
           <p className="text-center text-sm text-gray-600 dark:text-gray-400">
             Already have an account?{' '}
             <Link
-              href={redirectTo !== '/chat' ? `/login?redirect=${encodeURIComponent(redirectTo)}` : '/login'}
+              href={
+                redirectTo !== '/chat'
+                  ? `/login?redirect=${encodeURIComponent(redirectTo)}`
+                  : '/login'
+              }
               className="font-semibold text-primary hover:underline"
             >
               Sign in

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
 import { useParams } from 'next/navigation';
+import { useState } from 'react';
 import GroupList from '@/components/GroupList';
 import NewGroupDialog from '@/components/NewGroupDialog';
 
@@ -78,9 +78,7 @@ export default function ChatLayout({
         </div>
 
         {/* Page content */}
-        <div className="flex-1 overflow-hidden">
-          {children}
-        </div>
+        <div className="flex-1 overflow-hidden">{children}</div>
       </main>
 
       {/* New Group Dialog */}

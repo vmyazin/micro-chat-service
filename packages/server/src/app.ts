@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
-import { authRouter, type AuthEnv } from './routes/auth';
-import { groupsRouter, type GroupsEnv } from './routes/groups';
+import { type AuthEnv, authRouter } from './routes/auth';
+import { type GroupsEnv, groupsRouter } from './routes/groups';
 
 export interface AppEnv extends AuthEnv, GroupsEnv {}
 

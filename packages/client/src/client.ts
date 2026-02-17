@@ -1,22 +1,26 @@
 import type { GroupId, UserId } from '@microchat/shared';
-import { AuthClient, type RegisterOptions, type LoginOptions, type AuthResult, type CurrentUser } from './auth-client';
 import {
+  AuthClient,
+  type AuthResult,
+  type CurrentUser,
+  type LoginOptions,
+  type RegisterOptions,
+} from './auth-client';
+import {
+  type AcceptInviteResult,
+  type CreateGroupResult,
   GroupClient,
   type GroupListItem,
-  type CreateGroupResult,
-  type InviteResult,
-  type AcceptInviteResult,
-  type GroupMember,
   type GroupMembersResult,
+  type InviteResult,
 } from './group-client';
 import {
   MessageClient,
-  type SendMessageResult,
   type MessageListItem,
+  type SendMessageResult,
 } from './message-client';
 import {
   WebSocketClient,
-  type WebSocketEvent,
   type WebSocketEventHandler,
 } from './websocket-client';
 
@@ -42,7 +46,10 @@ export class MicroChatClient {
     return this.authClient.getRegisterOptions(displayName);
   }
 
-  verifyRegistration(response: PublicKeyCredential, challenge: string): Promise<AuthResult> {
+  verifyRegistration(
+    response: PublicKeyCredential,
+    challenge: string,
+  ): Promise<AuthResult> {
     return this.authClient.verifyRegistration(response, challenge);
   }
 
@@ -50,7 +57,10 @@ export class MicroChatClient {
     return this.authClient.getLoginOptions(username);
   }
 
-  verifyLogin(response: PublicKeyCredential, challenge: string): Promise<AuthResult> {
+  verifyLogin(
+    response: PublicKeyCredential,
+    challenge: string,
+  ): Promise<AuthResult> {
     return this.authClient.verifyLogin(response, challenge);
   }
 
@@ -92,11 +102,18 @@ export class MicroChatClient {
   }
 
   // Message methods
-  getMessages(groupId: GroupId, limit?: number, before?: string): Promise<MessageListItem[]> {
+  getMessages(
+    groupId: GroupId,
+    limit?: number,
+    before?: string,
+  ): Promise<MessageListItem[]> {
     return this.messageClient.getMessages(groupId, limit, before);
   }
 
-  sendMessage(groupId: GroupId, encryptedContent: string): Promise<SendMessageResult> {
+  sendMessage(
+    groupId: GroupId,
+    encryptedContent: string,
+  ): Promise<SendMessageResult> {
     return this.messageClient.sendMessage(groupId, encryptedContent);
   }
 

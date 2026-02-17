@@ -52,10 +52,10 @@ export class AuthClient {
 
   async verifyRegistration(
     response: PublicKeyCredential,
-    challenge: string
+    challenge: string,
   ): Promise<AuthResult> {
     const credential = response.response as AuthenticatorAttestationResponse;
-    
+
     const body = {
       challenge,
       response: {
@@ -63,7 +63,9 @@ export class AuthClient {
         rawId: this.bufferToBase64url(response.rawId),
         response: {
           clientDataJSON: this.bufferToBase64url(credential.clientDataJSON),
-          attestationObject: this.bufferToBase64url(credential.attestationObject),
+          attestationObject: this.bufferToBase64url(
+            credential.attestationObject,
+          ),
         },
         type: response.type,
       },
@@ -102,10 +104,10 @@ export class AuthClient {
 
   async verifyLogin(
     response: PublicKeyCredential,
-    challenge: string
+    challenge: string,
   ): Promise<AuthResult> {
     const assertion = response.response as AuthenticatorAssertionResponse;
-    
+
     const body = {
       challenge,
       response: {
@@ -113,7 +115,9 @@ export class AuthClient {
         rawId: this.bufferToBase64url(response.rawId),
         response: {
           clientDataJSON: this.bufferToBase64url(assertion.clientDataJSON),
-          authenticatorData: this.bufferToBase64url(assertion.authenticatorData),
+          authenticatorData: this.bufferToBase64url(
+            assertion.authenticatorData,
+          ),
           signature: this.bufferToBase64url(assertion.signature),
           userHandle: assertion.userHandle
             ? this.bufferToBase64url(assertion.userHandle)
@@ -158,6 +162,9 @@ export class AuthClient {
     for (let i = 0; i < bytes.length; i++) {
       binary += String.fromCharCode(bytes[i]);
     }
-    return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+    return btoa(binary)
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=/g, '');
   }
 }

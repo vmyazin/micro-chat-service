@@ -1,10 +1,10 @@
 // apps/web/app/(auth)/login/page.tsx
 'use client';
 
-import { useState, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
 import { AuthClient } from '@microchat/client';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useState } from 'react';
 
 type LoginState = 'idle' | 'loading' | 'unsupported';
 
@@ -16,8 +16,7 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(null);
 
   const isWebAuthnSupported =
-    typeof window !== 'undefined' &&
-    window.PublicKeyCredential !== undefined;
+    typeof window !== 'undefined' && window.PublicKeyCredential !== undefined;
 
   async function handleLogin() {
     if (!isWebAuthnSupported) {
@@ -29,9 +28,7 @@ function LoginForm() {
     setState('loading');
 
     try {
-      const authClient = new AuthClient(
-        process.env.NEXT_PUBLIC_API_URL || ''
-      );
+      const authClient = new AuthClient(process.env.NEXT_PUBLIC_API_URL || '');
 
       const options = await authClient.getLoginOptions();
 
@@ -39,7 +36,9 @@ function LoginForm() {
         challenge: base64urlToBuffer(options.challenge),
         rpId: options.rpId,
         timeout: options.timeout,
-        userVerification: (options.userVerification as UserVerificationRequirement) || 'preferred',
+        userVerification:
+          (options.userVerification as UserVerificationRequirement) ||
+          'preferred',
         allowCredentials: options.allowCredentials?.map((cred) => ({
           id: base64urlToBuffer(cred.id),
           type: cred.type,
@@ -56,7 +55,7 @@ function LoginForm() {
 
       await authClient.verifyLogin(
         credential as PublicKeyCredential,
-        options.challenge
+        options.challenge,
       );
 
       router.push(redirectTo);
@@ -110,7 +109,11 @@ function LoginForm() {
           <p className="text-center text-sm text-gray-600 dark:text-gray-400">
             Don&apos;t have an account?{' '}
             <Link
-              href={redirectTo !== '/chat' ? `/register?redirect=${encodeURIComponent(redirectTo)}` : '/register'}
+              href={
+                redirectTo !== '/chat'
+                  ? `/register?redirect=${encodeURIComponent(redirectTo)}`
+                  : '/register'
+              }
               className="font-semibold text-primary hover:underline"
             >
               Create one

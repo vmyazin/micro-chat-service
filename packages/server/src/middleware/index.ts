@@ -1,1 +1,1 @@
-export { requireAuth, type AuthUser, type AuthVariables } from './auth';
+export { type AuthUser, type AuthVariables, requireAuth } from './auth';

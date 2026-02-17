@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest';
 import type { GroupId } from '@microchat/shared';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { MemoryKeyStore } from './memory-key-store';
 
 describe('MemoryKeyStore', () => {
@@ -17,10 +17,10 @@ describe('MemoryKeyStore', () => {
       const result = await store.getKey(groupId, 1);
 
       expect(result).not.toBeNull();
-      expect(result!.key).toEqual(testKey);
-      expect(result!.metadata.groupId).toBe(groupId);
-      expect(result!.metadata.epoch).toBe(1);
-      expect(result!.metadata.createdAt).toBeInstanceOf(Date);
+      expect(result?.key).toEqual(testKey);
+      expect(result?.metadata.groupId).toBe(groupId);
+      expect(result?.metadata.epoch).toBe(1);
+      expect(result?.metadata.createdAt).toBeInstanceOf(Date);
     });
 
     it('overwrites key for same group and epoch', async () => {
@@ -29,7 +29,7 @@ describe('MemoryKeyStore', () => {
       await store.storeKey(groupId, 1, newKey);
 
       const result = await store.getKey(groupId, 1);
-      expect(result!.key).toEqual(newKey);
+      expect(result?.key).toEqual(newKey);
     });
   });
 
@@ -44,7 +44,7 @@ describe('MemoryKeyStore', () => {
       const result = await store.getKey(groupId, 5);
 
       expect(result).not.toBeNull();
-      expect(result!.metadata.epoch).toBe(5);
+      expect(result?.metadata.epoch).toBe(5);
     });
   });
 

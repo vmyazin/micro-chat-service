@@ -1,9 +1,26 @@
 import type { GroupId, UserId } from '@microchat/shared';
 
 export type WebSocketEvent =
-  | { type: 'message'; groupId: GroupId; messageId: string; senderId: UserId; encryptedContent: string; timestamp: string }
-  | { type: 'messageDeleted'; groupId: GroupId; messageId: string; deletedBy: UserId }
-  | { type: 'memberJoined'; groupId: GroupId; userId: UserId; displayName: string }
+  | {
+      type: 'message';
+      groupId: GroupId;
+      messageId: string;
+      senderId: UserId;
+      encryptedContent: string;
+      timestamp: string;
+    }
+  | {
+      type: 'messageDeleted';
+      groupId: GroupId;
+      messageId: string;
+      deletedBy: UserId;
+    }
+  | {
+      type: 'memberJoined';
+      groupId: GroupId;
+      userId: UserId;
+      displayName: string;
+    }
   | { type: 'memberLeft'; groupId: GroupId; userId: UserId }
   | { type: 'connected' }
   | { type: 'disconnected' }
@@ -27,7 +44,7 @@ export class WebSocketClient {
       return;
     }
 
-    const wsUrl = this.baseUrl.replace(/^http/, 'ws') + '/ws';
+    const wsUrl = `${this.baseUrl.replace(/^http/, 'ws')}/ws`;
     this.ws = new WebSocket(wsUrl);
 
     this.ws.onopen = () => {
@@ -44,7 +61,10 @@ export class WebSocketClient {
         const data = JSON.parse(event.data);
         this.emit(data);
       } catch {
-        this.emit({ type: 'error', error: 'Failed to parse WebSocket message' });
+        this.emit({
+          type: 'error',
+          error: 'Failed to parse WebSocket message',
+        });
       }
     };
 
@@ -119,7 +139,7 @@ export class WebSocketClient {
       return;
     }
 
-    const delay = this.reconnectDelayMs * Math.pow(2, this.reconnectAttempts);
+    const delay = this.reconnectDelayMs * 2 ** this.reconnectAttempts;
     this.reconnectAttempts++;
 
     this.reconnectTimeout = setTimeout(() => {

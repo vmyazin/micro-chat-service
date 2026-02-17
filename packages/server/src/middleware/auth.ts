@@ -1,8 +1,8 @@
-import { getCookie } from 'hono/cookie';
-import type { Context, Next } from 'hono';
 import type { UserId } from '@microchat/shared';
-import { Database, type D1Database } from '../db/client';
-import type { UsersTable, SessionsTable } from '../db/schema';
+import type { Context, Next } from 'hono';
+import { getCookie } from 'hono/cookie';
+import { type D1Database, Database } from '../db/client';
+import type { SessionsTable, UsersTable } from '../db/schema';
 
 export interface AuthUser {
   id: UserId;
@@ -19,8 +19,8 @@ export interface AuthEnv {
 
 export async function requireAuth(
   c: Context<{ Bindings: AuthEnv; Variables: AuthVariables }>,
-  next: Next
-): Promise<Response | void> {
+  next: Next,
+): Promise<Response | undefined> {
   const sessionId = getCookie(c, 'session');
 
   if (!sessionId) {
@@ -31,7 +31,7 @@ export async function requireAuth(
 
   const sessions = await db.query<SessionsTable>(
     'SELECT id, user_id, expires_at FROM sessions WHERE id = ?',
-    [sessionId]
+    [sessionId],
   );
 
   if (sessions.length === 0) {
@@ -49,7 +49,7 @@ export async function requireAuth(
 
   const users = await db.query<UsersTable>(
     'SELECT id, display_name FROM users WHERE id = ?',
-    [session.user_id]
+    [session.user_id],
   );
 
   if (users.length === 0) {

@@ -1,23 +1,25 @@
 {
-  "name": "@microchat/server",
-  "version": "0.0.1",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "tsc",
-    "clean": "rm -rf dist",
-    "dev": "wrangler dev --port 8787",
-    "typecheck": "tsc --noEmit"
-  },
-  "dependencies": {
-    "@microchat/crypto": "workspace:*",
-    "@microchat/shared": "workspace:*",
-    "@simplewebauthn/server": "^13.2.2",
-    "hono": "^4.11.5"
-  },
-  "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260123.0",
-    "typescript": "^5.0.0",
-    "wrangler": "^4.60.0"
-  }
+    "name": "@microchat/server",
+    "version": "0.0.1",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsc",
+        "clean": "rm -rf dist",
+        "dev": "wrangler dev --port 8787",
+        "test": "vitest run",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@microchat/crypto": "workspace:*",
+        "@microchat/shared": "workspace:*",
+        "@simplewebauthn/server": "^13.2.2",
+        "hono": "^4.11.5"
+    },
+    "devDependencies": {
+        "@cloudflare/workers-types": "^4.20260123.0",
+        "typescript": "^5.0.0",
+        "vitest": "^4.0.18",
+        "wrangler": "^4.60.0"
+    }
 }

@@ -1,19 +1,28 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import {
+  type CurrentUser,
+  type GroupId,
+  type MessageListItem,
+  MicroChatClient,
+  type UserId,
+  type WebSocketEvent,
+} from '@microchat/client';
 import { useParams } from 'next/navigation';
-import { MicroChatClient, type MessageListItem, type GroupId, type UserId, type WebSocketEvent, type CurrentUser } from '@microchat/client';
-import { MessageInput } from '@/components/MessageInput';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import GroupSettings from '@/components/GroupSettings';
+import { MessageInput } from '@/components/MessageInput';
 
 export default function ConversationPage() {
   const params = useParams();
   const groupId = params?.groupId as string | undefined;
-  
+
   const [messages, setMessages] = useState<MessageListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'reconnecting'>('disconnected');
+  const [connectionStatus, setConnectionStatus] = useState<
+    'connected' | 'disconnected' | 'reconnecting'
+  >('disconnected');
   const [showSettings, setShowSettings] = useState(false);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
@@ -35,7 +44,7 @@ export default function ConversationPage() {
       fetchMessages();
       fetchCurrentUser();
     }
-  }, [groupId]);
+  }, [groupId, fetchCurrentUser, fetchMessages]);
 
   async function fetchCurrentUser() {
     try {
@@ -49,24 +58,24 @@ export default function ConversationPage() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [scrollToBottom]);
 
   useEffect(() => {
     if (!groupId) return;
 
     const client = getClient();
-    
+
     const handleEvent = (event: WebSocketEvent) => {
       switch (event.type) {
         case 'connected':
           setConnectionStatus('connected');
           client.subscribe(groupId as GroupId);
           break;
-        
+
         case 'disconnected':
           setConnectionStatus('reconnecting');
           break;
-        
+
         case 'message':
           if (event.groupId === groupId) {
             const newMessage: MessageListItem = {
@@ -84,17 +93,17 @@ export default function ConversationPage() {
             });
           }
           break;
-        
+
         case 'messageDeleted':
           if (event.groupId === groupId) {
             setMessages((prev) =>
               prev.map((m) =>
-                m.id === event.messageId ? { ...m, deleted: true } : m
-              )
+                m.id === event.messageId ? { ...m, deleted: true } : m,
+              ),
             );
           }
           break;
-        
+
         case 'memberJoined':
           if (event.groupId === groupId) {
             const systemMessage: MessageListItem = {
@@ -108,7 +117,7 @@ export default function ConversationPage() {
             setMessages((prev) => [...prev, systemMessage]);
           }
           break;
-        
+
         case 'memberLeft':
           if (event.groupId === groupId) {
             const systemMessage: MessageListItem = {
@@ -122,7 +131,7 @@ export default function ConversationPage() {
             setMessages((prev) => [...prev, systemMessage]);
           }
           break;
-        
+
         case 'error':
           console.error('WebSocket error:', event.error);
           break;
@@ -131,7 +140,7 @@ export default function ConversationPage() {
 
     const unsubscribe = client.onEvent(handleEvent);
     client.connect();
-    
+
     if (connectionStatus === 'connected') {
       client.subscribe(groupId as GroupId);
     }
@@ -153,7 +162,7 @@ export default function ConversationPage() {
 
   async function fetchMessages() {
     if (!groupId) return;
-    
+
     try {
       setLoading(true);
       setError(null);
@@ -173,10 +182,10 @@ export default function ConversationPage() {
 
   async function handleSendMessage(content: string) {
     if (!groupId) return;
-    
+
     const client = getClient();
     const result = await client.sendMessage(groupId as GroupId, content);
-    
+
     // Add the new message to the list optimistically
     // The real-time WebSocket update will deduplicate by messageId
     const newMessage: MessageListItem = {
@@ -196,16 +205,14 @@ export default function ConversationPage() {
 
   async function handleDeleteMessage(messageId: string) {
     if (!groupId) return;
-    
+
     try {
       setDeleting(true);
       const client = getClient();
       await client.deleteMessage(groupId as GroupId, messageId);
       // Optimistic update - mark as deleted locally
       setMessages((prev) =>
-        prev.map((m) =>
-          m.id === messageId ? { ...m, deleted: true } : m
-        )
+        prev.map((m) => (m.id === messageId ? { ...m, deleted: true } : m)),
       );
       setDeleteConfirmId(null);
     } catch (err) {
@@ -219,7 +226,10 @@ export default function ConversationPage() {
   function isOwnMessage(message: MessageListItem): boolean {
     if (!currentUser) return false;
     // Check both actual user ID and optimistic 'me' placeholder
-    return message.senderId === currentUser.userId || message.senderId === ('me' as UserId);
+    return (
+      message.senderId === currentUser.userId ||
+      message.senderId === ('me' as UserId)
+    );
   }
 
   function formatTime(dateStr: string): string {
@@ -284,9 +294,24 @@ export default function ConversationPage() {
           className="p-2 brutal-border hover:bg-gray-100 dark:hover:bg-gray-800"
           aria-label="Group Settings"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+            />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+            />
           </svg>
         </button>
       </div>
@@ -357,15 +382,15 @@ interface MessageBubbleProps {
   deleting: boolean;
 }
 
-function MessageBubble({ 
-  message, 
-  formatTime, 
-  isOwn, 
-  showDeleteConfirm, 
-  onRequestDelete, 
-  onConfirmDelete, 
+function MessageBubble({
+  message,
+  formatTime,
+  isOwn,
+  showDeleteConfirm,
+  onRequestDelete,
+  onConfirmDelete,
   onCancelDelete,
-  deleting 
+  deleting,
 }: MessageBubbleProps) {
   if (message.deleted) {
     return (
@@ -398,15 +423,27 @@ function MessageBubble({
               className="opacity-0 group-hover:opacity-100 transition-opacity ml-2 p-1 text-gray-400 hover:text-red-500"
               aria-label="Delete message"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                />
               </svg>
             </button>
           )}
         </div>
         {showDeleteConfirm && (
           <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-            <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">Delete this message?</p>
+            <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+              Delete this message?
+            </p>
             <div className="flex gap-2">
               <button
                 onClick={onConfirmDelete}

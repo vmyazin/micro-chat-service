@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach } from 'vitest';
 import type { GroupId } from '@microchat/shared';
-import { CryptoErasureService, CryptoErasureError } from './crypto-erasure';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { CryptoErasureError, CryptoErasureService } from './crypto-erasure';
 import { MemoryKeyStore } from './memory-key-store';
 
 describe('CryptoErasureService', () => {
@@ -60,7 +60,7 @@ describe('CryptoErasureService', () => {
       await erasureService.eraseGroup(testGroupId);
 
       expect(() => erasureService.assertNotErased(testGroupId)).toThrow(
-        CryptoErasureError
+        CryptoErasureError,
       );
     });
 
@@ -82,7 +82,9 @@ describe('CryptoErasureService', () => {
     it('has correct name and message', () => {
       const error = new CryptoErasureError(testGroupId);
       expect(error.name).toBe('CryptoErasureError');
-      expect(error.message).toBe(`Keys for group ${testGroupId} have been erased`);
+      expect(error.message).toBe(
+        `Keys for group ${testGroupId} have been erased`,
+      );
       expect(error.groupId).toBe(testGroupId);
     });
 

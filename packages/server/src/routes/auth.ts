@@ -1,8 +1,16 @@
+import type { UserId } from '@microchat/shared';
+import type {
+  AuthenticationResponseJSON,
+  RegistrationResponseJSON,
+} from '@simplewebauthn/server';
+import {
+  generateAuthenticationOptions,
+  generateRegistrationOptions,
+  verifyAuthenticationResponse,
+  verifyRegistrationResponse,
+} from '@simplewebauthn/server';
 import { Hono } from 'hono';
 import { setCookie } from 'hono/cookie';
-import { generateRegistrationOptions, verifyRegistrationResponse, generateAuthenticationOptions, verifyAuthenticationResponse } from '@simplewebauthn/server';
-import type { RegistrationResponseJSON, AuthenticationResponseJSON } from '@simplewebauthn/server';
-import type { UserId } from '@microchat/shared';
 import { Database } from '../db/client';
 
 export interface ChallengeData {
@@ -68,15 +76,17 @@ function base64ToUint8Array(base64: string): Uint8Array {
 
 authRouter.post('/api/auth/register/options', async (c) => {
   const body = await c.req.json<{ displayName: string }>();
-  
+
   if (!body.displayName || typeof body.displayName !== 'string') {
     return c.json({ error: 'displayName is required' }, 400);
   }
 
   const userId = generateUserId();
-  
+
   const userIdBytes = new TextEncoder().encode(userId);
-  const userIdBuffer = new Uint8Array(userIdBytes.buffer.slice(0)) as Uint8Array<ArrayBuffer>;
+  const userIdBuffer = new Uint8Array(
+    userIdBytes.buffer.slice(0),
+  ) as Uint8Array<ArrayBuffer>;
 
   const options = await generateRegistrationOptions({
     rpName: c.env.RP_NAME || 'MicroChat',
@@ -105,14 +115,17 @@ authRouter.post('/api/auth/register/options', async (c) => {
 });
 
 authRouter.post('/api/auth/register/verify', async (c) => {
-  const body = await c.req.json<{ response: RegistrationResponseJSON; challenge: string }>();
-  
+  const body = await c.req.json<{
+    response: RegistrationResponseJSON;
+    challenge: string;
+  }>();
+
   if (!body.response || !body.challenge) {
     return c.json({ error: 'response and challenge are required' }, 400);
   }
 
   const storedChallenge = CHALLENGE_STORE.get(body.challenge);
-  
+
   if (!storedChallenge) {
     return c.json({ error: 'Challenge not found or expired' }, 400);
   }
@@ -142,23 +155,34 @@ authRouter.post('/api/auth/register/verify', async (c) => {
 
     await db.execute(
       'INSERT INTO users (id, display_name, created_at) VALUES (?, ?, ?)',
-      [userId, storedChallenge.displayName, now]
+      [userId, storedChallenge.displayName, now],
     );
 
     const credId = generateCredentialId();
-    const publicKeyBase64 = uint8ArrayToBase64(verification.registrationInfo.credential.publicKey);
-    
+    const publicKeyBase64 = uint8ArrayToBase64(
+      verification.registrationInfo.credential.publicKey,
+    );
+
     await db.execute(
       'INSERT INTO credentials (id, user_id, credential_id, public_key, created_at, last_used_at) VALUES (?, ?, ?, ?, ?, ?)',
-      [credId, userId, verification.registrationInfo.credential.id, publicKeyBase64, now, null]
+      [
+        credId,
+        userId,
+        verification.registrationInfo.credential.id,
+        publicKeyBase64,
+        now,
+        null,
+      ],
     );
 
     const sessionId = generateSessionId();
-    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-    
+    const expiresAt = new Date(
+      Date.now() + 30 * 24 * 60 * 60 * 1000,
+    ).toISOString();
+
     await db.execute(
       'INSERT INTO sessions (id, user_id, expires_at, device_info, created_at) VALUES (?, ?, ?, ?, ?)',
-      [sessionId, userId, expiresAt, '', now]
+      [sessionId, userId, expiresAt, '', now],
     );
 
     setCookie(c, 'session', sessionId, {
@@ -169,35 +193,38 @@ authRouter.post('/api/auth/register/verify', async (c) => {
       maxAge: 30 * 24 * 60 * 60,
     });
 
-    return c.json({ 
-      verified: true, 
+    return c.json({
+      verified: true,
       userId,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Verification failed';
+    const message =
+      error instanceof Error ? error.message : 'Verification failed';
     return c.json({ error: message }, 400);
   }
 });
 
 authRouter.post('/api/auth/login/options', async (c) => {
-  const body = await c.req.json<{ username?: string }>().catch(() => ({ username: undefined }));
-  
+  const body = await c.req
+    .json<{ username?: string }>()
+    .catch(() => ({ username: undefined }));
+
   const db = new Database(c.env.DB);
-  
+
   let allowCredentials: { id: string; type: 'public-key' }[] = [];
-  
+
   if (body.username) {
     const users = await db.query<{ id: string }>(
       'SELECT id FROM users WHERE display_name = ?',
-      [body.username]
+      [body.username],
     );
-    
+
     if (users.length > 0) {
       const credentials = await db.query<{ credential_id: string }>(
         'SELECT credential_id FROM credentials WHERE user_id = ?',
-        [users[0].id]
+        [users[0].id],
       );
-      
+
       allowCredentials = credentials.map((cred) => ({
         id: cred.credential_id,
         type: 'public-key' as const,
@@ -221,8 +248,10 @@ authRouter.post('/api/auth/login/options', async (c) => {
 });
 
 authRouter.get('/api/auth/me', async (c) => {
-  const sessionId = await import('hono/cookie').then(m => m.getCookie(c, 'session'));
-  
+  const sessionId = await import('hono/cookie').then((m) =>
+    m.getCookie(c, 'session'),
+  );
+
   if (!sessionId) {
     return c.json({ error: 'Not authenticated' }, 401);
   }
@@ -231,7 +260,7 @@ authRouter.get('/api/auth/me', async (c) => {
 
   const sessions = await db.query<{ user_id: string; expires_at: string }>(
     'SELECT user_id, expires_at FROM sessions WHERE id = ?',
-    [sessionId]
+    [sessionId],
   );
 
   if (sessions.length === 0) {
@@ -249,7 +278,7 @@ authRouter.get('/api/auth/me', async (c) => {
 
   const users = await db.query<{ id: string; display_name: string }>(
     'SELECT id, display_name FROM users WHERE id = ?',
-    [session.user_id]
+    [session.user_id],
   );
 
   if (users.length === 0) {
@@ -264,14 +293,17 @@ authRouter.get('/api/auth/me', async (c) => {
 });
 
 authRouter.post('/api/auth/login/verify', async (c) => {
-  const body = await c.req.json<{ response: AuthenticationResponseJSON; challenge: string }>();
-  
+  const body = await c.req.json<{
+    response: AuthenticationResponseJSON;
+    challenge: string;
+  }>();
+
   if (!body.response || !body.challenge) {
     return c.json({ error: 'response and challenge are required' }, 400);
   }
 
   const storedChallenge = CHALLENGE_STORE.get(body.challenge);
-  
+
   if (!storedChallenge) {
     return c.json({ error: 'Challenge not found or expired' }, 400);
   }
@@ -287,20 +319,27 @@ authRouter.post('/api/auth/login/verify', async (c) => {
 
   try {
     const db = new Database(c.env.DB);
-    
-    const credentials = await db.query<{ id: string; user_id: string; credential_id: string; public_key: string }>(
+
+    const credentials = await db.query<{
+      id: string;
+      user_id: string;
+      credential_id: string;
+      public_key: string;
+    }>(
       'SELECT id, user_id, credential_id, public_key FROM credentials WHERE credential_id = ?',
-      [body.response.id]
+      [body.response.id],
     );
-    
+
     if (credentials.length === 0) {
       return c.json({ error: 'Credential not found' }, 400);
     }
-    
+
     const credential = credentials[0];
     const publicKeyBytes = base64ToUint8Array(credential.public_key);
-    const publicKeyBuffer = new Uint8Array(publicKeyBytes.buffer.slice(0)) as Uint8Array<ArrayBuffer>;
-    
+    const publicKeyBuffer = new Uint8Array(
+      publicKeyBytes.buffer.slice(0),
+    ) as Uint8Array<ArrayBuffer>;
+
     const verification = await verifyAuthenticationResponse({
       response: body.response,
       expectedChallenge: storedChallenge.challenge,
@@ -322,17 +361,19 @@ authRouter.post('/api/auth/login/verify', async (c) => {
     const now = new Date().toISOString();
     const userId = credential.user_id as UserId;
 
-    await db.execute(
-      'UPDATE credentials SET last_used_at = ? WHERE id = ?',
-      [now, credential.id]
-    );
+    await db.execute('UPDATE credentials SET last_used_at = ? WHERE id = ?', [
+      now,
+      credential.id,
+    ]);
 
     const sessionId = generateSessionId();
-    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-    
+    const expiresAt = new Date(
+      Date.now() + 30 * 24 * 60 * 60 * 1000,
+    ).toISOString();
+
     await db.execute(
       'INSERT INTO sessions (id, user_id, expires_at, device_info, created_at) VALUES (?, ?, ?, ?, ?)',
-      [sessionId, userId, expiresAt, '', now]
+      [sessionId, userId, expiresAt, '', now],
     );
 
     setCookie(c, 'session', sessionId, {
@@ -343,12 +384,13 @@ authRouter.post('/api/auth/login/verify', async (c) => {
       maxAge: 30 * 24 * 60 * 60,
     });
 
-    return c.json({ 
-      verified: true, 
+    return c.json({
+      verified: true,
       userId,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Verification failed';
+    const message =
+      error instanceof Error ? error.message : 'Verification failed';
     return c.json({ error: message }, 400);
   }
 });
