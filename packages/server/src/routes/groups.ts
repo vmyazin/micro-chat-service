@@ -358,10 +358,13 @@ groupsRouter.delete('/api/groups/:id', requireAuth, async (c) => {
     return c.json({ error: 'Only the group owner can delete the group' }, 403);
   }
 
-  await db.execute('DELETE FROM messages WHERE group_id = ?', [groupId]);
-  await db.execute('DELETE FROM invites WHERE group_id = ?', [groupId]);
-  await db.execute('DELETE FROM group_members WHERE group_id = ?', [groupId]);
-  await db.execute('DELETE FROM groups WHERE id = ?', [groupId]);
+  // Delete all group data atomically using batch
+  await db.batch([
+    { sql: 'DELETE FROM messages WHERE group_id = ?', params: [groupId] },
+    { sql: 'DELETE FROM invites WHERE group_id = ?', params: [groupId] },
+    { sql: 'DELETE FROM group_members WHERE group_id = ?', params: [groupId] },
+    { sql: 'DELETE FROM groups WHERE id = ?', params: [groupId] },
+  ]);
 
   return c.json({ success: true });
 });
