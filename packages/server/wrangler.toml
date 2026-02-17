@@ -9,23 +9,33 @@ RP_NAME = "MicroChat"
 RP_ORIGIN = "http://localhost:3000"
 
 [env.production.vars]
-RP_ID = "microchat.example.com"
+RP_ID = "microchat.smoxu.com"
 RP_NAME = "MicroChat"
-RP_ORIGIN = "https://microchat.example.com"
+RP_ORIGIN = "https://microchat.smoxu.com"
 
 [[d1_databases]]
 binding = "DB"
 database_name = "microchat-db"
-database_id = "placeholder-replace-with-actual-id"
+database_id = "a5b418d2-f9f5-4bdc-a1c8-f0c0d5a4f2af"
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "microchat-db"
+database_id = "a5b418d2-f9f5-4bdc-a1c8-f0c0d5a4f2af"
 
 [durable_objects]
 bindings = [
   { name = "CHAT_HUB", class_name = "ChatHub" }
 ]
 
+[env.production.durable_objects]
+bindings = [
+  { name = "CHAT_HUB", class_name = "ChatHub" }
+]
+
 [[migrations]]
 tag = "v1"
-new_classes = ["ChatHub"]
+new_sqlite_classes = ["ChatHub"]
 
 [triggers]
 crons = ["0 3 * * *"]
