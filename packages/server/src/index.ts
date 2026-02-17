@@ -1,8 +1,9 @@
 // MicroChat Server Entry Point
 export { app } from './app';
+export { ChatHub } from './websocket/chat-hub';
 
 import { type AppEnv, app } from './app';
-import { handleScheduled, type RetentionEnv } from './jobs/retention';
+import { type RetentionEnv, handleScheduled } from './jobs/retention';
 
 type Env = AppEnv & RetentionEnv;
 

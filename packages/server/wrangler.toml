@@ -18,5 +18,14 @@ binding = "DB"
 database_name = "microchat-db"
 database_id = "placeholder-replace-with-actual-id"
 
+[durable_objects]
+bindings = [
+  { name = "CHAT_HUB", class_name = "ChatHub" }
+]
+
+[[migrations]]
+tag = "v1"
+new_classes = ["ChatHub"]
+
 [triggers]
 crons = ["0 3 * * *"]

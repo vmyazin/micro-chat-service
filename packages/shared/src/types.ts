@@ -64,3 +64,29 @@ export const InviteConfig = {
   MAX_AGE_DAYS: 7,
   SINGLE_USE: true,
 } as const;
+
+export type WebSocketEvent =
+  | {
+      type: 'message';
+      groupId: GroupId;
+      messageId: string;
+      senderId: UserId;
+      encryptedContent: string;
+      timestamp: string;
+    }
+  | {
+      type: 'messageDeleted';
+      groupId: GroupId;
+      messageId: string;
+      deletedBy: UserId;
+    }
+  | {
+      type: 'memberJoined';
+      groupId: GroupId;
+      userId: UserId;
+      displayName: string;
+    }
+  | { type: 'memberLeft'; groupId: GroupId; userId: UserId }
+  | { type: 'connected' }
+  | { type: 'disconnected' }
+  | { type: 'error'; error: string };
