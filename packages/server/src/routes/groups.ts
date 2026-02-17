@@ -7,6 +7,7 @@ import {
   type AuthVariables,
   requireAuth,
 } from '../middleware/auth';
+import { rateLimitMessages } from '../middleware/rate-limit';
 
 export interface GroupsEnv extends AuthMiddlewareEnv {
   DB: D1Database;
@@ -430,7 +431,7 @@ groupsRouter.get('/api/groups/:id/messages', requireAuth, async (c) => {
   });
 });
 
-groupsRouter.post('/api/groups/:id/messages', requireAuth, async (c) => {
+groupsRouter.post('/api/groups/:id/messages', requireAuth, rateLimitMessages(), async (c) => {
   const groupId = c.req.param('id') as GroupId;
   const user = c.get('user');
   const db = new Database(c.env.DB);
