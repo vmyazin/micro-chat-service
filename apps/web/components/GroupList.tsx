@@ -30,7 +30,12 @@ export default function GroupList({ onNewGroup, selectedGroupId, refreshKey }: G
       const result = await client.listGroups();
       setGroups(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load groups');
+      const message = err instanceof Error ? err.message : 'Failed to load groups';
+      if (message.includes('session') || message.includes('Authentication required')) {
+        router.push('/login?redirect=/chat');
+        return;
+      }
+      setError(message);
     } finally {
       setLoading(false);
     }

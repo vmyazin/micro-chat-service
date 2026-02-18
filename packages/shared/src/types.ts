@@ -71,6 +71,7 @@ export type WebSocketEvent =
       groupId: GroupId;
       messageId: string;
       senderId: UserId;
+      senderName: string;
       encryptedContent: string;
       timestamp: string;
     }

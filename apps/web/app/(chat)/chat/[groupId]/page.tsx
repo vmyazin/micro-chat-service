@@ -98,7 +98,7 @@ export default function ConversationPage() {
               id: event.messageId,
               groupId: event.groupId,
               senderId: event.senderId,
-              senderName: event.senderId,
+              senderName: event.senderName,
               encryptedContent: event.encryptedContent,
               createdAt: event.timestamp,
               deleted: false,
@@ -190,8 +190,8 @@ export default function ConversationPage() {
     const newMessage: MessageListItem = {
       id: result.messageId,
       groupId: groupId as GroupId,
-      senderId: 'me' as UserId,
-      senderName: 'me',
+      senderId: (currentUser?.userId ?? 'me') as UserId,
+      senderName: currentUser?.displayName ?? 'me',
       encryptedContent: content,
       createdAt: result.timestamp,
       deleted: false,
@@ -411,7 +411,7 @@ function MessageBubble({
     <div className="flex justify-start group">
       <div className="max-w-[70%] p-3 brutal-border bg-white dark:bg-gray-900 relative">
         <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
-          {message.senderId}
+          {message.senderName}
         </div>
         <p className="text-sm break-words">
           {decodeContent(message.encryptedContent)}

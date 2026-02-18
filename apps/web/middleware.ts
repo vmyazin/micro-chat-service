@@ -2,12 +2,14 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 const AUTH_ROUTES = ['/login', '/register'];
-const PROTECTED_ROUTES = ['/chat'];
+const PROTECTED_ROUTES = ['/chat', '/invite'];
 
-export function middleware(request: NextRequest) {
+const API_BASE = process.env.API_URL || 'http://localhost:8787';
+
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const sessionCookie = request.cookies.get('session');
-  const isAuthenticated = !!sessionCookie?.value;
+  let isAuthenticated = !!sessionCookie?.value;
 
   // Check if route is protected (starts with /chat)
   const isProtectedRoute = PROTECTED_ROUTES.some((route) =>
@@ -16,6 +18,30 @@ export function middleware(request: NextRequest) {
 
   // Check if route is auth route (login/register)
   const isAuthRoute = AUTH_ROUTES.some((route) => pathname === route);
+
+  // Validate session against the API when it matters
+  if (isAuthenticated && (isAuthRoute || isProtectedRoute)) {
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/me`, {
+        headers: { Cookie: `session=${sessionCookie!.value}` },
+      });
+      if (!res.ok) {
+        isAuthenticated = false;
+      }
+    } catch {
+      // API unreachable -- treat as unauthenticated to avoid redirect loops
+      isAuthenticated = false;
+    }
+  }
+
+  // Clear stale cookie if session is invalid
+  if (!isAuthenticated && sessionCookie?.value) {
+    const response = isProtectedRoute
+      ? NextResponse.redirect(new URL(`/login?redirect=${pathname}`, request.url))
+      : NextResponse.next();
+    response.cookies.delete('session');
+    return response;
+  }
 
   // Redirect unauthenticated users from protected routes to login
   if (isProtectedRoute && !isAuthenticated) {
