@@ -26,6 +26,7 @@ import {
 
 export interface MicroChatClientOptions {
   baseUrl: string;
+  wsUrl?: string;
 }
 
 export class MicroChatClient {
@@ -38,7 +39,7 @@ export class MicroChatClient {
     this.authClient = new AuthClient(options.baseUrl);
     this.groupClient = new GroupClient(options.baseUrl);
     this.messageClient = new MessageClient(options.baseUrl);
-    this.wsClient = new WebSocketClient(options.baseUrl);
+    this.wsClient = new WebSocketClient(options.wsUrl ?? options.baseUrl);
   }
 
   // Auth methods

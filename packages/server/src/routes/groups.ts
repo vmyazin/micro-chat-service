@@ -1,4 +1,4 @@
-import type { GroupId, UserId } from '@microchat/shared';
+import type { GroupId, UserId, WebSocketEvent } from '@microchat/shared';
 import { InviteConfig } from '@microchat/shared';
 import { Hono } from 'hono';
 import { type D1Database, Database } from '../db/client';
@@ -11,6 +11,7 @@ import { rateLimitMessages } from '../middleware/rate-limit';
 
 export interface GroupsEnv extends AuthMiddlewareEnv {
   DB: D1Database;
+  CHAT_HUB: DurableObjectNamespace;
 }
 
 const groupsRouter = new Hono<{
@@ -476,6 +477,23 @@ groupsRouter.post(
       groupId,
     ]);
 
+    // Broadcast to WebSocket subscribers
+    const hubId = c.env.CHAT_HUB.idFromName('main');
+    const hub = c.env.CHAT_HUB.get(hubId);
+    const event: WebSocketEvent = {
+      type: 'message',
+      groupId,
+      messageId,
+      senderId: user.id,
+      senderName: user.displayName,
+      encryptedContent: body.encryptedPayload,
+      timestamp: now,
+    };
+    await hub.fetch('https://hub/broadcast', {
+      method: 'POST',
+      body: JSON.stringify(event),
+    });
+
     return c.json({
       messageId,
       timestamp: now,
@@ -513,6 +531,20 @@ groupsRouter.delete(
       'UPDATE messages SET deleted_at = ?, deleted_by = ? WHERE id = ?',
       [now, user.id, messageId],
     );
+
+    // Broadcast deletion to WebSocket subscribers
+    const hubId = c.env.CHAT_HUB.idFromName('main');
+    const hub = c.env.CHAT_HUB.get(hubId);
+    const event: WebSocketEvent = {
+      type: 'messageDeleted',
+      groupId,
+      messageId,
+      deletedBy: user.id,
+    };
+    await hub.fetch('https://hub/broadcast', {
+      method: 'POST',
+      body: JSON.stringify(event),
+    });
 
     return c.json({ success: true });
   },

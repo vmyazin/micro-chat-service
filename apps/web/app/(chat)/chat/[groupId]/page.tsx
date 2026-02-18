@@ -34,6 +34,7 @@ export default function ConversationPage() {
     if (!clientRef.current) {
       clientRef.current = new MicroChatClient({
         baseUrl: process.env.NEXT_PUBLIC_API_URL || '',
+        wsUrl: process.env.NEXT_PUBLIC_WS_URL,
       });
     }
     return clientRef.current;
