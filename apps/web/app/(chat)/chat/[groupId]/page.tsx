@@ -324,7 +324,7 @@ export default function ConversationPage() {
           Reconnecting to real-time updates...
         </div>
       )}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-1.5">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <p className="text-gray-500 dark:text-gray-400 text-center">
@@ -342,8 +342,8 @@ export default function ConversationPage() {
               return (
                 <div key={message.id}>
                   {showDateHeader && (
-                    <div className="flex items-center justify-center my-4">
-                      <span className="px-3 py-1 text-xs text-gray-500 dark:text-gray-400 brutal-border bg-gray-50 dark:bg-gray-800">
+                    <div className="flex items-center justify-center my-3">
+                      <span className="px-3 py-1 rounded-full text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800/60">
                         {formatDate(message.createdAt)}
                       </span>
                     </div>
@@ -396,11 +396,25 @@ function MessageBubble({
   onCancelDelete,
   deleting,
 }: MessageBubbleProps) {
+  const isSystem = message.senderId === ('system' as UserId);
+
+  // System messages: centered pill
+  if (isSystem) {
+    return (
+      <div className="flex justify-center my-1">
+        <span className="px-3 py-1 rounded-full text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800/60">
+          {decodeContent(message.encryptedContent)}
+        </span>
+      </div>
+    );
+  }
+
+  // Deleted message: subtle tombstone aligned to sender side
   if (message.deleted) {
     return (
-      <div className="flex justify-start">
-        <div className="max-w-[70%] p-3 brutal-border bg-gray-100 dark:bg-gray-800 opacity-60">
-          <p className="text-sm italic text-gray-500 dark:text-gray-400">
+      <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
+        <div className="max-w-[72%] px-4 py-2.5 rounded-2xl bg-gray-100 dark:bg-gray-800/70 opacity-60">
+          <p className="text-sm italic text-gray-400 dark:text-gray-500">
             Message deleted
           </p>
         </div>
@@ -409,70 +423,139 @@ function MessageBubble({
   }
 
   return (
-    <div className="flex justify-start group">
-      <div className="max-w-[70%] p-3 brutal-border bg-white dark:bg-gray-900 relative">
-        <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
-          {message.senderName}
+    <div
+      className={`flex items-end gap-2 group ${isOwn ? 'justify-end' : 'justify-start'}`}
+    >
+      {/* Avatar for others */}
+      {!isOwn && (
+        <div
+          className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white select-none"
+          style={{ background: avatarColor(message.senderName) }}
+          aria-hidden="true"
+        >
+          {message.senderName.charAt(0).toUpperCase()}
         </div>
-        <p className="text-sm break-words">
+      )}
+
+      <div
+        className={`max-w-[72%] flex flex-col ${isOwn ? 'items-end' : 'items-start'}`}
+      >
+        {/* Sender name — only for others */}
+        {!isOwn && (
+          <span
+            className="text-xs font-semibold mb-1 px-1"
+            style={{ color: avatarColor(message.senderName) }}
+          >
+            {message.senderName}
+          </span>
+        )}
+
+        {/* Bubble */}
+        <div
+          className={`relative px-4 py-2.5 text-base leading-relaxed break-words ${
+            isOwn
+              ? 'bg-[#2B5EE8] text-white rounded-t-2xl rounded-bl-2xl rounded-br-md'
+              : 'bg-white dark:bg-[#1e2535] text-gray-900 dark:text-gray-100 rounded-t-2xl rounded-br-2xl rounded-bl-md shadow-sm border border-gray-100 dark:border-gray-700/50'
+          }`}
+        >
           {decodeContent(message.encryptedContent)}
-        </p>
-        <div className="flex items-center justify-between mt-1">
-          <div className="text-xs text-gray-500 dark:text-gray-400">
-            {formatTime(message.createdAt)}
-          </div>
-          {isOwn && !showDeleteConfirm && (
-            <button
-              type="button"
-              onClick={onRequestDelete}
-              className="opacity-0 group-hover:opacity-100 transition-opacity ml-2 p-1 text-gray-400 hover:text-red-500"
-              aria-label="Delete message"
+
+          {/* Timestamp + delete row */}
+          <div
+            className={`flex items-center gap-2 mt-1.5 ${isOwn ? 'justify-end' : 'justify-start'}`}
+          >
+            <span
+              className={`text-[11px] leading-none ${isOwn ? 'text-blue-200' : 'text-gray-400 dark:text-gray-500'}`}
             >
-              <svg
-                aria-hidden="true"
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+              {formatTime(message.createdAt)}
+            </span>
+            {isOwn && !showDeleteConfirm && (
+              <button
+                type="button"
+                onClick={onRequestDelete}
+                className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 text-blue-300 hover:text-red-300"
+                aria-label="Delete message"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                />
-              </svg>
-            </button>
+                <svg
+                  aria-hidden="true"
+                  className="w-3.5 h-3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
+                </svg>
+              </button>
+            )}
+          </div>
+
+          {/* Delete confirmation */}
+          {showDeleteConfirm && (
+            <div
+              className={`mt-2 pt-2 border-t ${isOwn ? 'border-blue-400/30' : 'border-gray-200 dark:border-gray-600'}`}
+            >
+              <p
+                className={`text-xs mb-2 ${isOwn ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}
+              >
+                Delete this message?
+              </p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={onConfirmDelete}
+                  disabled={deleting}
+                  className="flex-1 text-xs px-2 py-1 rounded-lg bg-red-500 text-white hover:bg-red-600 disabled:opacity-50 transition-colors"
+                >
+                  {deleting ? 'Deleting...' : 'Delete'}
+                </button>
+                <button
+                  type="button"
+                  onClick={onCancelDelete}
+                  disabled={deleting}
+                  className={`flex-1 text-xs px-2 py-1 rounded-lg disabled:opacity-50 transition-colors ${
+                    isOwn
+                      ? 'bg-white/20 hover:bg-white/30'
+                      : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
           )}
         </div>
-        {showDeleteConfirm && (
-          <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-            <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
-              Delete this message?
-            </p>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={onConfirmDelete}
-                disabled={deleting}
-                className="flex-1 text-xs px-2 py-1 brutal-border bg-red-500 text-white hover:bg-red-600 disabled:opacity-50"
-              >
-                {deleting ? 'Deleting...' : 'Delete'}
-              </button>
-              <button
-                type="button"
-                onClick={onCancelDelete}
-                disabled={deleting}
-                className="flex-1 text-xs px-2 py-1 brutal-border bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* Spacer on right side for own messages (mirrors avatar space) */}
+      {isOwn && <div className="w-8 flex-shrink-0" />}
     </div>
   );
+}
+
+/** Deterministic color from a display name for avatars and sender labels */
+function avatarColor(name: string): string {
+  const palette = [
+    '#E53E3E',
+    '#DD6B20',
+    '#D69E2E',
+    '#38A169',
+    '#319795',
+    '#3182CE',
+    '#805AD5',
+    '#D53F8C',
+    '#00B5D8',
+    '#F6AD55',
+  ];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return palette[Math.abs(hash) % palette.length];
 }
 
 function decodeContent(encryptedContent: string): string {
