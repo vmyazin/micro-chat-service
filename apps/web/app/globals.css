@@ -1,9 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #2563EB;
-  --color-secondary: #3B82F6;
-  --color-cta: #F97316;
+  --color-accent: #2B5EE8;
   --color-background: #F8FAFC;
   --color-foreground: #1E293B;
   
@@ -12,7 +10,6 @@
 }
 
 :root {
-   /* Fallback / Additional Vars */
   --border-color: #1E293B;
   --border-thick: 3px;
   --shadow-brutal: 4px 4px 0px 0px var(--border-color);
@@ -20,10 +17,15 @@
   --background: #F8FAFC;
   --foreground: #1E293B;
   
-   /* Design System Colors */
-  --color-primary: #2563EB;
-  --color-secondary: #3B82F6;
-  --color-cta: #F97316;
+  --accent: #2B5EE8;
+  --accent-hover: #1E4FD1;
+  
+  --text-primary: #1E293B;
+  --text-secondary: #64748B;
+  --text-muted: #94A3B8;
+  
+  --surface-elevated: #FFFFFF;
+  --surface-muted: #F1F5F9;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -31,7 +33,16 @@
     --background: #020617;
     --foreground: #F8FAFC;
     --border-color: #F8FAFC;
-    --color-primary: #3B82F6;
+    
+    --accent: #3B82F6;
+    --accent-hover: #60A5FA;
+    
+    --text-primary: #F8FAFC;
+    --text-secondary: #94A3B8;
+    --text-muted: #64748B;
+    
+    --surface-elevated: #18181B;
+    --surface-muted: #1E293B;
   }
 }
 
@@ -78,12 +89,12 @@ body {
 .brutal-card {
   border: var(--border-thick) solid var(--border-color);
   box-shadow: var(--shadow-brutal);
-  background-color: white;
+  background-color: var(--surface-elevated);
   padding: 1.5rem;
 }
 
 @media (prefers-color-scheme: dark) {
   .brutal-card {
-    background-color: #18181b; 
+    background-color: var(--surface-elevated);
   }
 }

@@ -343,7 +343,7 @@ export default function ConversationPage() {
                 <div key={message.id}>
                   {showDateHeader && (
                     <div className="flex items-center justify-center my-3">
-                      <span className="px-3 py-1 rounded-full text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800/60">
+                      <span className="px-3 py-1 rounded-full text-xs text-[var(--text-muted)] bg-[var(--surface-muted)]">
                         {formatDate(message.createdAt)}
                       </span>
                     </div>
@@ -402,7 +402,7 @@ function MessageBubble({
   if (isSystem) {
     return (
       <div className="flex justify-center my-1">
-        <span className="px-3 py-1 rounded-full text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800/60">
+        <span className="px-3 py-1 rounded-full text-xs text-[var(--text-muted)] bg-[var(--surface-muted)]">
           {decodeContent(message.encryptedContent)}
         </span>
       </div>
@@ -413,8 +413,8 @@ function MessageBubble({
   if (message.deleted) {
     return (
       <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
-        <div className="max-w-[72%] px-4 py-2.5 rounded-2xl bg-gray-100 dark:bg-gray-800/70 opacity-60">
-          <p className="text-sm italic text-gray-400 dark:text-gray-500">
+        <div className="max-w-[72%] px-4 py-2.5 rounded-2xl bg-[var(--surface-muted)] opacity-60">
+          <p className="text-sm italic text-[var(--text-muted)]">
             Message deleted
           </p>
         </div>
@@ -454,8 +454,8 @@ function MessageBubble({
         <div
           className={`relative px-4 py-2.5 text-base leading-relaxed break-words ${
             isOwn
-              ? 'bg-[#2B5EE8] text-white rounded-t-2xl rounded-bl-2xl rounded-br-md'
-              : 'bg-white dark:bg-[#1e2535] text-gray-900 dark:text-gray-100 rounded-t-2xl rounded-br-2xl rounded-bl-md shadow-sm border border-gray-100 dark:border-gray-700/50'
+              ? 'bg-[var(--accent)] text-white rounded-t-2xl rounded-bl-2xl rounded-br-md'
+              : 'bg-[var(--surface-elevated)] text-[var(--text-primary)] rounded-t-2xl rounded-br-2xl rounded-bl-md shadow-sm border border-[var(--text-muted)]/20'
           }`}
         >
           {decodeContent(message.encryptedContent)}
@@ -465,7 +465,7 @@ function MessageBubble({
             className={`flex items-center gap-2 mt-1.5 ${isOwn ? 'justify-end' : 'justify-start'}`}
           >
             <span
-              className={`text-[11px] leading-none ${isOwn ? 'text-blue-200' : 'text-gray-400 dark:text-gray-500'}`}
+              className={`text-[11px] leading-none ${isOwn ? 'text-blue-200' : 'text-[var(--text-muted)]'}`}
             >
               {formatTime(message.createdAt)}
             </span>

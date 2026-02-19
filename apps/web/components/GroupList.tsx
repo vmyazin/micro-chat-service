@@ -74,7 +74,7 @@ export default function GroupList({ onNewGroup, selectedGroupId, refreshKey }: G
       )}
 
       {!loading && !error && groups.length === 0 && (
-        <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+        <p className="text-sm text-[var(--text-muted)] text-center py-4">
           No groups yet. Create one to get started!
         </p>
       )}
@@ -87,8 +87,8 @@ export default function GroupList({ onNewGroup, selectedGroupId, refreshKey }: G
                 onClick={() => handleGroupClick(group.groupId)}
                 className={`group-list-item w-full text-left p-4 brutal-border transition-colors ${
                   selectedGroupId === group.groupId
-                    ? 'bg-blue-600 text-white border-blue-700'
-                    : 'bg-white dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800'
+                    ? 'bg-[var(--accent)] text-white border-[var(--accent-hover)]'
+                    : 'bg-[var(--surface-elevated)] hover:bg-[var(--surface-muted)]'
                 }`}
               >
                 <div className="font-semibold truncate">
@@ -96,8 +96,8 @@ export default function GroupList({ onNewGroup, selectedGroupId, refreshKey }: G
                 </div>
                 <div className={`text-xs mt-1 ${
                   selectedGroupId === group.groupId
-                    ? 'text-blue-100'
-                    : 'text-gray-500 dark:text-gray-400'
+                    ? 'text-white/70'
+                    : 'text-[var(--text-secondary)]'
                 }`}>
                   {group.memberCount} member{group.memberCount !== 1 ? 's' : ''}
                 </div>
