@@ -30,19 +30,19 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #020617;
-    --foreground: #F8FAFC;
-    --border-color: #F8FAFC;
-    
-    --accent: #3B82F6;
-    --accent-hover: #60A5FA;
-    
-    --text-primary: #F8FAFC;
-    --text-secondary: #94A3B8;
-    --text-muted: #64748B;
-    
-    --surface-elevated: #18181B;
-    --surface-muted: #1E293B;
+    --background: #1a1a1a;
+    --foreground: #e5e5e5;
+    --border-color: #404040;
+
+    --accent: #29a256;
+    --accent-hover: #22c55e;
+
+    --text-primary: #e5e5e5;
+    --text-secondary: #a3a3a3;
+    --text-muted: #737373;
+
+    --surface-elevated: #262626;
+    --surface-muted: #333333;
   }
 }
 
