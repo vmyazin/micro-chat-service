@@ -15,8 +15,16 @@ app.get('/health', (c) => {
   return c.json({ status: 'ok' });
 });
 
-// Apply rate limiting
-app.use('/api/auth/*', rateLimitAuth());
+// Apply rate limiting.
+// Session-check endpoint is high-frequency (called by Next.js middleware on
+// every navigation), so it uses the general API limiter instead of the
+// stricter auth limiter reserved for login/register mutations.
+app.use('/api/auth/*', async (c, next) => {
+  if (new URL(c.req.url).pathname === '/api/auth/me') {
+    return rateLimitApi()(c, next);
+  }
+  return rateLimitAuth()(c, next);
+});
 app.use('/api/groups/*', rateLimitApi());
 
 // WebSocket upgrade endpoint

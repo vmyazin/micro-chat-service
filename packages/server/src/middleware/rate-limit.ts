@@ -74,7 +74,7 @@ export class RateLimiter {
 }
 
 /** Rate limiters for different endpoint categories */
-const authLimiter = new RateLimiter({ maxRequests: 10, windowMs: 60_000 });
+const authLimiter = new RateLimiter({ maxRequests: 30, windowMs: 60_000 });
 const apiLimiter = new RateLimiter({ maxRequests: 60, windowMs: 60_000 });
 const messageLimiter = new RateLimiter({ maxRequests: 30, windowMs: 60_000 });
 
