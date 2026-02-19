@@ -15,6 +15,7 @@ import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import GroupSettings from '@/components/GroupSettings';
 import { MessageInput } from '@/components/MessageInput';
+import { useSfx } from '@/hooks/useSfx';
 import { VoiceMessagePlayer } from '@/components/VoiceMessagePlayer';
 
 export default function ConversationPage() {
@@ -34,6 +35,9 @@ export default function ConversationPage() {
   const [highlightedIds, setHighlightedIds] = useState<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const clientRef = useRef<MicroChatClient | null>(null);
+  const currentUserRef = useRef(currentUser);
+  currentUserRef.current = currentUser;
+  const playSfx = useSfx();
 
   // Load highlighted IDs from sessionStorage
   useEffect(() => {
@@ -139,6 +143,9 @@ export default function ConversationPage() {
               if (exists) return prev;
               return [...prev, newMessage];
             });
+            if (document.hidden && event.senderId !== currentUserRef.current?.userId) {
+              playSfx('message');
+            }
           }
           break;
 
@@ -164,6 +171,7 @@ export default function ConversationPage() {
               deleted: false,
             };
             setMessages((prev) => [...prev, systemMessage]);
+            playSfx('memberJoined');
           }
           break;
 
