@@ -26,6 +26,9 @@
 
   --surface-elevated: #FFFFFF;
   --surface-muted: #F1F5F9;
+
+  --highlight: #FACC15;
+  --highlight-glow: rgba(250, 204, 21, 0.25);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -43,6 +46,9 @@
 
     --surface-elevated: #262626;
     --surface-muted: #333333;
+
+    --highlight: #FACC15;
+    --highlight-glow: rgba(250, 204, 21, 0.25);
   }
 }
 

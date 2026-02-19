@@ -8,6 +8,7 @@ import {
   type UserId,
   type WebSocketEvent,
 } from '@microchat/client';
+import * as ContextMenu from '@radix-ui/react-context-menu';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import GroupSettings from '@/components/GroupSettings';
@@ -27,8 +28,34 @@ export default function ConversationPage() {
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [highlightedIds, setHighlightedIds] = useState<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const clientRef = useRef<MicroChatClient | null>(null);
+
+  // Load highlighted IDs from sessionStorage
+  useEffect(() => {
+    if (!groupId) return;
+    const storageKey = `microchat:highlighted:${groupId}`;
+    const saved = sessionStorage.getItem(storageKey);
+    if (saved) {
+      try {
+        const ids = JSON.parse(saved) as string[];
+        setHighlightedIds(new Set(ids));
+      } catch {
+        // Ignore parse errors
+      }
+    }
+  }, [groupId]);
+
+  // Save highlighted IDs to sessionStorage
+  useEffect(() => {
+    if (!groupId) return;
+    const storageKey = `microchat:highlighted:${groupId}`;
+    sessionStorage.setItem(
+      storageKey,
+      JSON.stringify(Array.from(highlightedIds)),
+    );
+  }, [highlightedIds, groupId]);
 
   const getClient = useCallback(() => {
     if (!clientRef.current) {
@@ -324,7 +351,7 @@ export default function ConversationPage() {
           Reconnecting to real-time updates...
         </div>
       )}
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-1.5">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-3 space-y-1.5">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <p className="text-gray-500 dark:text-gray-400 text-center">
@@ -357,6 +384,18 @@ export default function ConversationPage() {
                     onConfirmDelete={() => handleDeleteMessage(message.id)}
                     onCancelDelete={() => setDeleteConfirmId(null)}
                     deleting={deleting && deleteConfirmId === message.id}
+                    isHighlighted={highlightedIds.has(message.id)}
+                    onToggleHighlight={() =>
+                      setHighlightedIds((prev) => {
+                        const next = new Set(prev);
+                        if (next.has(message.id)) {
+                          next.delete(message.id);
+                        } else {
+                          next.add(message.id);
+                        }
+                        return next;
+                      })
+                    }
                   />
                 </div>
               );
@@ -384,6 +423,8 @@ interface MessageBubbleProps {
   onConfirmDelete: () => void;
   onCancelDelete: () => void;
   deleting: boolean;
+  isHighlighted: boolean;
+  onToggleHighlight: () => void;
 }
 
 function MessageBubble({
@@ -395,6 +436,8 @@ function MessageBubble({
   onConfirmDelete,
   onCancelDelete,
   deleting,
+  isHighlighted,
+  onToggleHighlight,
 }: MessageBubbleProps) {
   const isSystem = message.senderId === ('system' as UserId);
 
@@ -423,62 +466,135 @@ function MessageBubble({
   }
 
   return (
-    <div
-      className={`flex items-end gap-2 group ${isOwn ? 'justify-end' : 'justify-start'}`}
-    >
-      {/* Avatar for others */}
-      {!isOwn && (
+    <ContextMenu.Root>
+      <ContextMenu.Trigger asChild>
         <div
-          className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white select-none"
-          style={{ background: avatarColor(message.senderName) }}
-          aria-hidden="true"
+          className={`flex items-end gap-2 ${isOwn ? 'justify-end' : 'justify-start'}`}
         >
-          {message.senderName.charAt(0).toUpperCase()}
-        </div>
-      )}
-
-      <div
-        className={`max-w-[72%] flex flex-col ${isOwn ? 'items-end' : 'items-start'}`}
-      >
-        {/* Sender name — only for others */}
-        {!isOwn && (
-          <span
-            className="text-xs font-semibold mb-1 px-1"
-            style={{ color: avatarColor(message.senderName) }}
-          >
-            {message.senderName}
-          </span>
-        )}
-
-        {/* Bubble */}
-        <div
-          className={`relative px-4 py-2.5 text-base leading-relaxed break-words ${
-            isOwn
-              ? 'bg-[var(--accent)] text-white rounded-t-2xl rounded-bl-2xl rounded-br-md'
-              : 'bg-[var(--surface-elevated)] text-[var(--text-primary)] rounded-t-2xl rounded-br-2xl rounded-bl-md shadow-sm border border-[var(--text-muted)]/20'
-          }`}
-        >
-          {decodeContent(message.encryptedContent)}
-
-          {/* Timestamp + delete row */}
-          <div
-            className={`flex items-center gap-2 mt-1.5 ${isOwn ? 'justify-end' : 'justify-start'}`}
-          >
-            <span
-              className={`text-[11px] leading-none ${isOwn ? 'text-blue-200' : 'text-[var(--text-muted)]'}`}
+          {/* Avatar for others */}
+          {!isOwn && (
+            <div
+              className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white select-none"
+              style={{ background: avatarColor(message.senderName) }}
+              aria-hidden="true"
             >
-              {formatTime(message.createdAt)}
-            </span>
-            {isOwn && !showDeleteConfirm && (
-              <button
-                type="button"
-                onClick={onRequestDelete}
-                className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 text-blue-300 hover:text-red-300"
-                aria-label="Delete message"
+              {message.senderName.charAt(0).toUpperCase()}
+            </div>
+          )}
+
+          <div
+            className={`max-w-[72%] flex flex-col ${isOwn ? 'items-end' : 'items-start'}`}
+          >
+            {/* Sender name — only for others */}
+            {!isOwn && (
+              <span
+                className="text-xs font-semibold mb-1 px-1"
+                style={{ color: avatarColor(message.senderName) }}
+              >
+                {message.senderName}
+              </span>
+            )}
+
+            {/* Bubble */}
+            <div
+              className={`relative px-4 py-2.5 text-base leading-relaxed break-words transition-all duration-200 ${
+                isHighlighted
+                  ? `scale-[1.15] z-10 ring-4 ring-[var(--highlight)] ${isOwn ? 'origin-right' : 'origin-left'}`
+                  : ''
+              } ${
+                isOwn
+                  ? 'bg-[var(--accent)] text-white rounded-t-2xl rounded-bl-2xl rounded-br-md'
+                  : 'bg-[var(--surface-elevated)] text-[var(--text-primary)] rounded-t-2xl rounded-br-2xl rounded-bl-md shadow-sm border border-[var(--text-muted)]/20'
+              }`}
+              style={{
+                boxShadow: isHighlighted
+                  ? '0 0 16px 4px var(--highlight-glow)'
+                  : undefined,
+              }}
+            >
+              {decodeContent(message.encryptedContent)}
+
+              {/* Timestamp row */}
+              <div
+                className={`flex items-center gap-2 mt-1.5 ${isOwn ? 'justify-end' : 'justify-start'}`}
+              >
+                <span
+                  className={`text-[11px] leading-none ${isOwn ? 'text-blue-200' : 'text-[var(--text-muted)]'}`}
+                >
+                  {formatTime(message.createdAt)}
+                </span>
+              </div>
+
+              {/* Delete confirmation */}
+              {showDeleteConfirm && (
+                <div
+                  className={`mt-2 pt-2 border-t ${isOwn ? 'border-blue-400/30' : 'border-gray-200 dark:border-gray-600'}`}
+                >
+                  <p
+                    className={`text-xs mb-2 ${isOwn ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}
+                  >
+                    Delete this message?
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={onConfirmDelete}
+                      disabled={deleting}
+                      className="flex-1 text-xs px-2 py-1 rounded-lg bg-red-500 text-white hover:bg-red-600 disabled:opacity-50 transition-colors"
+                    >
+                      {deleting ? 'Deleting...' : 'Delete'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={onCancelDelete}
+                      disabled={deleting}
+                      className={`flex-1 text-xs px-2 py-1 rounded-lg disabled:opacity-50 transition-colors ${
+                        isOwn
+                          ? 'bg-white/20 hover:bg-white/30'
+                          : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </ContextMenu.Trigger>
+
+      <ContextMenu.Portal>
+        <ContextMenu.Content className="min-w-[160px] bg-[var(--surface-elevated)] brutal-border rounded-lg p-1 shadow-lg z-50">
+          <ContextMenu.Item
+            className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--surface-muted)] rounded-md cursor-pointer outline-none transition-colors"
+            onSelect={onToggleHighlight}
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+              />
+            </svg>
+            {isHighlighted ? 'Unhighlight' : 'Highlight'}
+          </ContextMenu.Item>
+
+          {isOwn && (
+            <>
+              <ContextMenu.Separator className="h-px bg-[var(--border-color)] my-1" />
+              <ContextMenu.Item
+                className="flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md cursor-pointer outline-none transition-colors"
+                onSelect={onRequestDelete}
               >
                 <svg
-                  aria-hidden="true"
-                  className="w-3.5 h-3.5"
+                  className="w-4 h-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -490,47 +606,13 @@ function MessageBubble({
                     d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                   />
                 </svg>
-              </button>
-            )}
-          </div>
-
-          {/* Delete confirmation */}
-          {showDeleteConfirm && (
-            <div
-              className={`mt-2 pt-2 border-t ${isOwn ? 'border-blue-400/30' : 'border-gray-200 dark:border-gray-600'}`}
-            >
-              <p
-                className={`text-xs mb-2 ${isOwn ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}
-              >
-                Delete this message?
-              </p>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={onConfirmDelete}
-                  disabled={deleting}
-                  className="flex-1 text-xs px-2 py-1 rounded-lg bg-red-500 text-white hover:bg-red-600 disabled:opacity-50 transition-colors"
-                >
-                  {deleting ? 'Deleting...' : 'Delete'}
-                </button>
-                <button
-                  type="button"
-                  onClick={onCancelDelete}
-                  disabled={deleting}
-                  className={`flex-1 text-xs px-2 py-1 rounded-lg disabled:opacity-50 transition-colors ${
-                    isOwn
-                      ? 'bg-white/20 hover:bg-white/30'
-                      : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
-                  }`}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
+                Delete
+              </ContextMenu.Item>
+            </>
           )}
-        </div>
-      </div>
-    </div>
+        </ContextMenu.Content>
+      </ContextMenu.Portal>
+    </ContextMenu.Root>
   );
 }
 
