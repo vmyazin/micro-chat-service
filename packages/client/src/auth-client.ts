@@ -156,6 +156,18 @@ export class AuthClient {
     return response.json();
   }
 
+  async logout(): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/api/auth/logout`, {
+      method: 'POST',
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Logout failed');
+    }
+  }
+
   private bufferToBase64url(buffer: ArrayBuffer): string {
     const bytes = new Uint8Array(buffer);
     let binary = '';

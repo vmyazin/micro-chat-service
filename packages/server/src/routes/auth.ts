@@ -309,6 +309,27 @@ authRouter.post('/api/auth/login/options', async (c) => {
   return c.json(options);
 });
 
+authRouter.post('/api/auth/logout', async (c) => {
+  const sessionId = await import('hono/cookie').then((m) =>
+    m.getCookie(c, 'session'),
+  );
+
+  if (sessionId) {
+    const db = new Database(c.env.DB);
+    await db.execute('DELETE FROM sessions WHERE id = ?', [sessionId]);
+  }
+
+  setCookie(c, 'session', '', {
+    path: '/',
+    httpOnly: true,
+    secure: c.env.RP_ORIGIN?.startsWith('https') ?? false,
+    sameSite: 'Lax',
+    maxAge: 0,
+  });
+
+  return c.json({ success: true });
+});
+
 authRouter.get('/api/auth/me', async (c) => {
   const sessionId = await import('hono/cookie').then((m) =>
     m.getCookie(c, 'session'),

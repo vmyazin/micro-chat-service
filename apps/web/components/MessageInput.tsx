@@ -41,7 +41,7 @@ export function MessageInput({ onSend, disabled = false }: MessageInputProps) {
   const isDisabled = sending || disabled;
 
   return (
-    <div className="p-4 border-t-2 border-black dark:border-gray-700 bg-white dark:bg-gray-900">
+    <div className="p-4 border-t-[var(--border-thick)] border-[var(--border-color)] bg-[var(--surface-elevated)]">
       <div className="flex gap-2">
         <input
           ref={inputRef}
@@ -51,12 +51,12 @@ export function MessageInput({ onSend, disabled = false }: MessageInputProps) {
           onKeyDown={handleKeyDown}
           placeholder="Type a message..."
           disabled={isDisabled}
-          className="flex-1 px-4 py-2 brutal-border bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex-1 px-4 py-2 brutal-border bg-[var(--surface-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] disabled:opacity-50 disabled:cursor-not-allowed"
         />
         <button
           onClick={handleSend}
           disabled={isDisabled || !content.trim()}
-          className="px-6 py-2 brutal-btn bg-black dark:bg-white text-white dark:text-black font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-6 py-2 brutal-btn bg-[var(--accent)] text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {sending ? (
             <SendingSpinner />
