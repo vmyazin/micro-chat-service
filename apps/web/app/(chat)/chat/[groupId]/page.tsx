@@ -530,9 +530,6 @@ function MessageBubble({
           )}
         </div>
       </div>
-
-      {/* Spacer on right side for own messages (mirrors avatar space) */}
-      {isOwn && <div className="w-8 flex-shrink-0" />}
     </div>
   );
 }
