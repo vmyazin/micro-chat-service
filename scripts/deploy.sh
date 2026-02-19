@@ -26,7 +26,7 @@ pnpm wrangler deploy --env production
 
 echo ""
 echo "==> Deploying Frontend to VPS..."
-ssh -t "$VPS_HOST" "bash -l -c 'cd $VPS_PATH && git pull && pnpm install --frozen-lockfile && pnpm build && pm2 start apps/web/ecosystem.config.js && pm2 save'"
+ssh -t "$VPS_HOST" "bash -l -c 'cd $VPS_PATH && git fetch origin && git reset --hard origin/main && pnpm install --frozen-lockfile && pnpm build && pm2 reload ecosystem.config.js --update-env 2>/dev/null || pm2 start apps/web/ecosystem.config.js && pm2 save'"
 
 echo ""
 echo "==> Deployment complete!"
