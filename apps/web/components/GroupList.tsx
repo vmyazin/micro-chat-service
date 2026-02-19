@@ -99,7 +99,9 @@ export default function GroupList({ onNewGroup, selectedGroupId, refreshKey }: G
                     ? 'text-white/70'
                     : 'text-[var(--text-secondary)]'
                 }`}>
-                  {group.memberCount} member{group.memberCount !== 1 ? 's' : ''}
+                  {group.memberCount < 4 && group.memberNames.length > 0
+                    ? group.memberNames.join(', ')
+                    : `${group.memberCount} member${group.memberCount !== 1 ? 's' : ''}`}
                 </div>
               </button>
             </li>

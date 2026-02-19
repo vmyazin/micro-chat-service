@@ -56,6 +56,7 @@ interface GroupListItem {
   encryptedName: string;
   memberCount: number;
   lastActivity: string;
+  memberNames: string[];
 }
 
 groupsRouter.get('/api/groups', requireAuth, async (c) => {
@@ -77,11 +78,37 @@ groupsRouter.get('/api/groups', requireAuth, async (c) => {
     [user.id],
   );
 
+  // Fetch member names for groups with less than 4 members
+  const groupIds = groups.map((g) => g.id);
+  const memberNamesMap = new Map<GroupId, string[]>();
+
+  if (groupIds.length > 0) {
+    const placeholders = groupIds.map(() => '?').join(',');
+    const members = await db.query<{
+      group_id: GroupId;
+      display_name: string;
+    }>(
+      `SELECT gm.group_id, u.display_name
+       FROM group_members gm
+       INNER JOIN users u ON u.id = gm.user_id
+       WHERE gm.group_id IN (${placeholders})
+       ORDER BY gm.joined_at ASC`,
+      groupIds,
+    );
+
+    for (const m of members) {
+      const names = memberNamesMap.get(m.group_id) || [];
+      names.push(m.display_name);
+      memberNamesMap.set(m.group_id, names);
+    }
+  }
+
   const result: GroupListItem[] = groups.map((g) => ({
     groupId: g.id,
     encryptedName: g.encrypted_name,
     memberCount: g.member_count,
     lastActivity: g.last_activity_at,
+    memberNames: memberNamesMap.get(g.id) || [],
   }));
 
   return c.json(result);

@@ -5,6 +5,7 @@ export interface GroupListItem {
   encryptedName: string;
   memberCount: number;
   lastActivity: string;
+  memberNames: string[];
 }
 
 export interface CreateGroupResult {
