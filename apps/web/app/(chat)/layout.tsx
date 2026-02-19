@@ -90,7 +90,7 @@ export default function ChatLayout({
               type="button"
               onClick={handleSignOut}
               disabled={isSigningOut}
-              className="w-full brutal-btn flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full brutal-btn brutal-btn-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSigningOut ? (
                 <>
