@@ -56,14 +56,14 @@ export default function ChatLayout({
         className={`
           fixed lg:static inset-y-0 left-0 z-50
           w-[300px] brutal-border border-r-0 lg:border-r
-          bg-[var(--background)]
+          bg-[var(--sidebar-background)]
           transform transition-transform duration-200 ease-in-out
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
       >
         <div className="flex flex-col h-full">
           {/* Sidebar header */}
-          <div className="flex items-center justify-between p-4 border-b-[3px] border-[var(--border-color)]">
+          <div className="flex items-center justify-between p-4 border-b border-[var(--border-color)]">
             <h2 className="font-bold text-lg">Groups</h2>
             <button
               type="button"
@@ -85,7 +85,7 @@ export default function ChatLayout({
           </div>
 
           {/* Sign Out button */}
-          <div className="p-4 border-t-[3px] border-[var(--border-color)] space-y-2">
+          <div className="p-4 border-t border-[var(--border-color)] space-y-2">
             <a
               href="/"
               className="w-full flex items-center justify-center gap-2 p-2"
@@ -117,7 +117,7 @@ export default function ChatLayout({
       {/* Main content area */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile header with toggle */}
-        <div className="lg:hidden flex items-center p-4 border-b-[3px] border-[var(--border-color)]">
+        <div className="lg:hidden flex items-center p-4 border-b border-[var(--border-color)]">
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}

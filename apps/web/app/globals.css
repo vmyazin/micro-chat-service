@@ -10,11 +10,12 @@
 }
 
 :root {
-  --border-color: #1E293B;
-  --border-thick: 3px;
-  --shadow-brutal: 4px 4px 0px 0px var(--border-color);
+  --border-color: #E2E8F0;
+  --border-thick: 1px;
+  --shadow-subtle: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
 
   --background: #F8FAFC;
+  --sidebar-background: #F1F5F9;
   --foreground: #1E293B;
 
   --accent: #2B5EE8;
@@ -34,8 +35,9 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #1a1a1a;
+    --sidebar-background: #171717;
     --foreground: #e5e5e5;
-    --border-color: #404040;
+    --border-color: #334155;
 
     --accent: #29a256;
     --accent-hover: #22c55e;
@@ -61,34 +63,39 @@ body {
 /* Custom Classes */
 .brutal-border {
   border: var(--border-thick) solid var(--border-color);
+  border-radius: 0.375rem;
 }
 
 .brutal-shadow {
-  box-shadow: var(--shadow-brutal);
+  box-shadow: var(--shadow-subtle);
 }
 
 .brutal-btn {
   border: var(--border-thick) solid var(--border-color);
-  background-color: white;
-  color: black;
-  padding: 0.75rem 1.5rem;
-  font-weight: 700;
-  border-radius: 0.5rem;
+  background-color: var(--surface-elevated);
+  color: var(--text-primary);
+  padding: 0.625rem 1rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  border-radius: 0.375rem;
   transition-property: all;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
   cursor: pointer;
 }
 
+.brutal-btn:hover {
+  background-color: var(--surface-muted);
+}
+
 .brutal-btn:active {
-  transform: translate(2px, 2px);
   opacity: 0.9;
 }
 
 .brutal-btn-sm {
   padding: 0.375rem 0.75rem;
-  font-size: 0.875rem;
-  border-radius: 0.375rem;
+  font-size: 0.8125rem;
+  border-radius: 0.25rem;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -100,9 +107,10 @@ body {
 
 .brutal-card {
   border: var(--border-thick) solid var(--border-color);
-  box-shadow: var(--shadow-brutal);
+  box-shadow: var(--shadow-subtle);
   background-color: var(--surface-elevated);
-  padding: 1.5rem;
+  padding: 1.25rem;
+  border-radius: 0.5rem;
 }
 
 @media (prefers-color-scheme: dark) {
