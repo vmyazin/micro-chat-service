@@ -18,6 +18,7 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [inviteLink, setInviteLink] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -46,6 +47,7 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
     if (open) {
       fetchMembers();
       setInviteLink(null);
+      setCopied(false);
       setShowLeaveConfirm(false);
       setShowDeleteConfirm(false);
     }
@@ -57,15 +59,30 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
     try {
       setActionLoading(true);
       setError(null);
+      setCopied(false);
       const client = getClient();
       const result = await client.createInvite(groupId);
       const link = `${window.location.origin}/invite/${result.code}`;
       setInviteLink(link);
-      await navigator.clipboard.writeText(link);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create invite');
     } finally {
       setActionLoading(false);
+    }
+  }
+
+  async function handleCopyLink() {
+    if (!inviteLink) return;
+    try {
+      await navigator.clipboard.writeText(inviteLink);
+      setCopied(true);
+    } catch {
+      // Fallback: select the text for manual copy
+      const input = document.querySelector<HTMLInputElement>('#invite-link-input');
+      if (input) {
+        input.select();
+        input.setSelectionRange(0, 99999);
+      }
     }
   }
 
@@ -164,8 +181,28 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
           </button>
 
           {inviteLink && (
-            <div className="p-3 brutal-border bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-sm">
-              Invite link copied to clipboard!
+            <div className="p-3 brutal-border bg-gray-50 dark:bg-gray-800 space-y-2">
+              <div className="flex gap-2">
+                <input
+                  id="invite-link-input"
+                  type="text"
+                  readOnly
+                  value={inviteLink}
+                  className="flex-1 p-2 text-sm brutal-border bg-white dark:bg-gray-900 font-mono truncate"
+                  onClick={(e) => (e.target as HTMLInputElement).select()}
+                />
+                <button
+                  onClick={handleCopyLink}
+                  className="px-3 brutal-btn text-sm"
+                >
+                  {copied ? 'Copied!' : 'Copy'}
+                </button>
+              </div>
+              {copied && (
+                <p className="text-sm text-green-600 dark:text-green-400">
+                  Link copied to clipboard!
+                </p>
+              )}
             </div>
           )}
 
