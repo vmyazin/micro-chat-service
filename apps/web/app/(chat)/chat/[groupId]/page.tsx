@@ -4,7 +4,9 @@ import {
   type CurrentUser,
   type GroupId,
   type MessageListItem,
+  type MessagePayload,
   MicroChatClient,
+  uint8ArrayToBase64,
   type UserId,
   type WebSocketEvent,
 } from '@microchat/client';
@@ -13,6 +15,7 @@ import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import GroupSettings from '@/components/GroupSettings';
 import { MessageInput } from '@/components/MessageInput';
+import { VoiceMessagePlayer } from '@/components/VoiceMessagePlayer';
 
 export default function ConversationPage() {
   const params = useParams();
@@ -213,20 +216,53 @@ export default function ConversationPage() {
     const client = getClient();
     const result = await client.sendMessage(groupId as GroupId, content);
 
-    // Add the new message to the list optimistically
-    // The real-time WebSocket update will deduplicate by messageId
+    const payload: MessagePayload = { type: 'text', content };
     const newMessage: MessageListItem = {
       id: result.messageId,
       groupId: groupId as GroupId,
       senderId: (currentUser?.userId ?? 'me') as UserId,
       senderName: currentUser?.displayName ?? 'me',
-      encryptedContent: content,
+      encryptedContent: JSON.stringify(payload),
       createdAt: result.timestamp,
       deleted: false,
     };
     setMessages((prev) => {
       const exists = prev.some((m) => m.id === result.messageId);
       if (exists) return prev;
+      return [...prev, newMessage];
+    });
+  }
+
+  async function handleSendVoiceMessage(audioBlob: Blob, duration: number) {
+    if (!groupId) return;
+
+    const client = getClient();
+    const result = await client.sendVoiceMessage(
+      groupId as GroupId,
+      audioBlob,
+      duration,
+    );
+
+    const arrayBuffer = await audioBlob.arrayBuffer();
+    const base64 = uint8ArrayToBase64(new Uint8Array(arrayBuffer));
+    const payload: MessagePayload = {
+      type: 'audio',
+      data: base64,
+      duration,
+      mimeType: audioBlob.type,
+    };
+
+    const newMessage: MessageListItem = {
+      id: result.messageId,
+      groupId: groupId as GroupId,
+      senderId: (currentUser?.userId ?? 'me') as UserId,
+      senderName: currentUser?.displayName ?? 'me',
+      encryptedContent: JSON.stringify(payload),
+      createdAt: result.timestamp,
+      deleted: false,
+    };
+    setMessages((prev) => {
+      if (prev.some((m) => m.id === result.messageId)) return prev;
       return [...prev, newMessage];
     });
   }
@@ -404,7 +440,7 @@ export default function ConversationPage() {
           </>
         )}
       </div>
-      <MessageInput onSend={handleSendMessage} disabled={loading} />
+      <MessageInput onSend={handleSendMessage} onSendVoice={handleSendVoiceMessage} disabled={loading} />
       <GroupSettings
         groupId={groupId as GroupId}
         open={showSettings}
@@ -441,16 +477,19 @@ function MessageBubble({
 }: MessageBubbleProps) {
   const isSystem = message.senderId === ('system' as UserId);
 
-  // System messages: centered pill
+  // System messages: centered pill (always plain text)
   if (isSystem) {
     return (
       <div className="flex justify-center my-1">
         <span className="px-3 py-1 rounded-full text-xs text-[var(--text-muted)] bg-[var(--surface-muted)]">
-          {decodeContent(message.encryptedContent)}
+          {message.encryptedContent}
         </span>
       </div>
     );
   }
+
+  const decoded = decodeContent(message.encryptedContent);
+  const isAudio = typeof decoded === 'object' && decoded.type === 'audio';
 
   // Deleted message: subtle tombstone aligned to sender side
   if (message.deleted) {
@@ -512,7 +551,22 @@ function MessageBubble({
                   : undefined,
               }}
             >
-              {decodeContent(message.encryptedContent)}
+              {isAudio ? (
+                <VoiceMessagePlayer
+                  audioData={decoded.data}
+                  mimeType={decoded.mimeType}
+                  duration={decoded.duration}
+                  isOwn={isOwn}
+                />
+              ) : (
+                <>
+                  {typeof decoded === 'string'
+                    ? decoded
+                    : decoded.type === 'text'
+                      ? decoded.content
+                      : null}
+                </>
+              )}
 
               {/* Timestamp row */}
               <div
@@ -637,7 +691,19 @@ function avatarColor(name: string): string {
   return palette[Math.abs(hash) % palette.length];
 }
 
-function decodeContent(encryptedContent: string): string {
+function decodeContent(encryptedContent: string): MessagePayload | string {
+  try {
+    const parsed = JSON.parse(encryptedContent);
+    if (
+      parsed &&
+      typeof parsed === 'object' &&
+      (parsed.type === 'text' || parsed.type === 'audio')
+    ) {
+      return parsed as MessagePayload;
+    }
+  } catch {
+    // Not JSON — legacy plain text message
+  }
   return encryptedContent;
 }
 

@@ -1,5 +1,6 @@
 import type { EncryptedMessage, GroupCipher } from '@microchat/crypto';
-import type { GroupId, UserId } from '@microchat/shared';
+import { uint8ArrayToBase64 } from '@microchat/crypto';
+import type { GroupId, MessagePayload, UserId } from '@microchat/shared';
 
 export interface SendMessageResult {
   messageId: string;
@@ -79,6 +80,32 @@ export class MessageClient {
     content: string,
     epoch?: number,
   ): Promise<SendMessageResult> {
+    const payload: MessagePayload = { type: 'text', content };
+    return this.sendPayload(groupId, JSON.stringify(payload), epoch);
+  }
+
+  async sendVoiceMessage(
+    groupId: GroupId,
+    audioBlob: Blob,
+    duration: number,
+    epoch?: number,
+  ): Promise<SendMessageResult> {
+    const buffer = await audioBlob.arrayBuffer();
+    const base64 = uint8ArrayToBase64(new Uint8Array(buffer));
+    const payload: MessagePayload = {
+      type: 'audio',
+      data: base64,
+      duration,
+      mimeType: audioBlob.type,
+    };
+    return this.sendPayload(groupId, JSON.stringify(payload), epoch);
+  }
+
+  private async sendPayload(
+    groupId: GroupId,
+    serialized: string,
+    epoch?: number,
+  ): Promise<SendMessageResult> {
     let encryptedPayload: string;
     let nonce: string;
 
@@ -86,13 +113,13 @@ export class MessageClient {
       const encrypted: EncryptedMessage = await this.cipher.encrypt(
         groupId,
         epoch,
-        content,
+        serialized,
       );
       encryptedPayload = encrypted.ciphertext;
       nonce = encrypted.nonce;
     } else {
       // Fallback: no cipher configured, send plaintext (development only)
-      encryptedPayload = content;
+      encryptedPayload = serialized;
       nonce = crypto.randomUUID();
     }
 

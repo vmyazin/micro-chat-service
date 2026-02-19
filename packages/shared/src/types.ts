@@ -65,6 +65,10 @@ export const InviteConfig = {
   SINGLE_USE: true,
 } as const;
 
+export type MessagePayload =
+  | { type: 'text'; content: string }
+  | { type: 'audio'; data: string; duration: number; mimeType: string };
+
 export type WebSocketEvent =
   | {
       type: 'message';

@@ -1,5 +1,7 @@
 // Re-export shared types for convenience
-export type { GroupId, UserId } from '@microchat/shared';
+export type { GroupId, MessagePayload, UserId } from '@microchat/shared';
+export { MAX_VOICE_DURATION_MS, MAX_VOICE_SIZE_BYTES } from '@microchat/shared';
+export { uint8ArrayToBase64, base64ToUint8Array } from '@microchat/crypto';
 export {
   AuthClient,
   type AuthResult,

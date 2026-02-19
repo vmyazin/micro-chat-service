@@ -118,6 +118,14 @@ export class MicroChatClient {
     return this.messageClient.sendMessage(groupId, encryptedContent);
   }
 
+  sendVoiceMessage(
+    groupId: GroupId,
+    audioBlob: Blob,
+    duration: number,
+  ): Promise<SendMessageResult> {
+    return this.messageClient.sendVoiceMessage(groupId, audioBlob, duration);
+  }
+
   deleteMessage(groupId: GroupId, messageId: string): Promise<void> {
     return this.messageClient.deleteMessage(groupId, messageId);
   }
