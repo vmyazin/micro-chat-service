@@ -10,6 +10,8 @@ Use **pnpm** for all package management.
 - **Test:** `pnpm test`
 - **Typecheck:** `pnpm typecheck`
 - **Development:** `pnpm dev`
+- **D1 Migrations (local):** `cd packages/server && pnpm wrangler d1 migrations apply microchat-db --local`
+- **D1 Migrations (remote):** `cd packages/server && pnpm wrangler d1 migrations apply microchat-db --remote`
 
 ## Structure
 
@@ -48,6 +50,8 @@ Note: `server` is not imported by any other package (it's the runtime). All othe
 | DB row types | `packages/server/src/db/schema.ts` |
 | `EncryptedMessage` interface | `packages/crypto/src/group-cipher.ts` |
 | `KeyStore` interface | `packages/crypto/src/key-store.ts` |
+| Sealed Sender token utils | `packages/crypto/src/sealed-sender.ts` |
+| Client-side token pool | `packages/client/src/sender-token-store.ts` |
 
 ## Runtime Architecture
 
@@ -57,8 +61,11 @@ Note: `server` is not imported by any other package (it's the runtime). All othe
 
 **E2E Encryption:** AES-256-GCM per-group-epoch keys. Server stores only ciphertext + nonce (blind to content). `GroupCipher` handles encrypt/decrypt. See `packages/crypto/src/group-cipher.ts`.
 
+**Sealed Sender:** Token-based sender anonymity. Clients prefetch one-time tokens via `POST /api/groups/:id/sender-tokens`; server stores only SHA-256 hashes (unlinkable to user). Messages sent with a token have `sender_id = NULL` in DB. Sender identity is encrypted in `sealedSender` field, decryptable only by group members. See `packages/crypto/src/sealed-sender.ts` and `packages/client/src/sender-token-store.ts`.
+
 ## Conventions & Gotchas
 
+- **D1 migrations live in `packages/server/src/db/migrations/`** — run wrangler commands from `packages/server` directory
 - **Rate limiting is per-isolate** — not globally consistent across Workers instances
 - **`MessageClient` sends plaintext without an injected `GroupCipher`** — development mode fallback
 - **Group names are currently unencrypted** — stored as `encrypted_name` but sent as plaintext
