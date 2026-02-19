@@ -85,7 +85,13 @@ export default function ChatLayout({
           </div>
 
           {/* Sign Out button */}
-          <div className="p-4 border-t-[3px] border-[var(--border-color)]">
+          <div className="p-4 border-t-[3px] border-[var(--border-color)] space-y-2">
+            <a
+              href="/"
+              className="w-full flex items-center justify-center gap-2 p-2"
+            >
+              Home Page
+            </a>
             <button
               type="button"
               onClick={handleSignOut}
