@@ -1,6 +1,7 @@
 import type { EncryptedMessage, GroupCipher } from '@microchat/crypto';
 import { uint8ArrayToBase64 } from '@microchat/crypto';
 import type { GroupId, MessagePayload, UserId } from '@microchat/shared';
+import type { SenderTokenStore } from './sender-token-store';
 
 export interface SendMessageResult {
   messageId: string;
@@ -10,22 +11,33 @@ export interface SendMessageResult {
 export interface MessageListItem {
   id: string;
   groupId: GroupId;
-  senderId: UserId;
-  senderName: string;
+  senderId: UserId | null;
+  senderName: string | null;
   encryptedContent: string;
   createdAt: string;
   deleted: boolean;
+  sealedSender?: string;
 }
 
 interface ServerMessage {
   id: string;
-  senderId: UserId;
-  senderName: string;
+  senderId: UserId | null;
+  senderName: string | null;
   encryptedPayload: string;
   nonce: string;
   epoch?: number;
   createdAt: string;
   deleted: boolean;
+  sealedSender?: string;
+}
+
+export interface SendMessageOptions {
+  /** Use Sealed Sender to hide identity from server (default: false) */
+  sealedSender?: boolean;
+  /** User ID for creating encrypted sender identity (required if sealedSender=true) */
+  senderId?: UserId;
+  /** Sender display name for creating encrypted sender identity (required if sealedSender=true) */
+  senderName?: string;
 }
 
 export class MessageClient {
@@ -34,6 +46,7 @@ export class MessageClient {
   constructor(
     private baseUrl: string,
     cipher?: GroupCipher,
+    private tokenStore?: SenderTokenStore,
   ) {
     this.cipher = cipher ?? null;
   }
@@ -72,6 +85,7 @@ export class MessageClient {
       encryptedContent: msg.encryptedPayload,
       createdAt: msg.createdAt,
       deleted: msg.deleted,
+      sealedSender: msg.sealedSender,
     }));
   }
 
@@ -79,9 +93,10 @@ export class MessageClient {
     groupId: GroupId,
     content: string,
     epoch?: number,
+    options?: SendMessageOptions,
   ): Promise<SendMessageResult> {
     const payload: MessagePayload = { type: 'text', content };
-    return this.sendPayload(groupId, JSON.stringify(payload), epoch);
+    return this.sendPayload(groupId, JSON.stringify(payload), epoch, options);
   }
 
   async sendVoiceMessage(
@@ -89,6 +104,7 @@ export class MessageClient {
     audioBlob: Blob,
     duration: number,
     epoch?: number,
+    options?: SendMessageOptions,
   ): Promise<SendMessageResult> {
     const buffer = await audioBlob.arrayBuffer();
     const base64 = uint8ArrayToBase64(new Uint8Array(buffer));
@@ -98,13 +114,14 @@ export class MessageClient {
       duration,
       mimeType: audioBlob.type,
     };
-    return this.sendPayload(groupId, JSON.stringify(payload), epoch);
+    return this.sendPayload(groupId, JSON.stringify(payload), epoch, options);
   }
 
   private async sendPayload(
     groupId: GroupId,
     serialized: string,
     epoch?: number,
+    options?: SendMessageOptions,
   ): Promise<SendMessageResult> {
     let encryptedPayload: string;
     let nonce: string;
@@ -123,16 +140,49 @@ export class MessageClient {
       nonce = crypto.randomUUID();
     }
 
+    // Build request body
+    const requestBody: Record<string, unknown> = {
+      encryptedPayload,
+      nonce,
+      epoch,
+    };
+
+    // Handle Sealed Sender
+    const useSealedSender = options?.sealedSender ?? false;
+    if (useSealedSender && this.tokenStore) {
+      // Get an anonymous token
+      const token = await this.tokenStore.getToken(groupId);
+      if (!token) {
+        throw new Error(
+          'No sender tokens available. Try again or use regular send.',
+        );
+      }
+      requestBody.senderToken = token;
+
+      // Encrypt sender identity if cipher is available
+      if (
+        this.cipher &&
+        epoch !== undefined &&
+        options?.senderId &&
+        options?.senderName
+      ) {
+        const sealedSenderData = await this.tokenStore.encryptSenderIdentity(
+          options.senderId,
+          options.senderName,
+          this.cipher,
+          groupId,
+          epoch,
+        );
+        requestBody.sealedSender = sealedSenderData;
+      }
+    }
+
     const response = await fetch(
       `${this.baseUrl}/api/groups/${groupId}/messages`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          encryptedPayload,
-          nonce,
-          epoch,
-        }),
+        body: JSON.stringify(requestBody),
         credentials: 'include',
       },
     );

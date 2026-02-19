@@ -1,7 +1,8 @@
 // Re-export shared types for convenience
+
+export { base64ToUint8Array, uint8ArrayToBase64 } from '@microchat/crypto';
 export type { GroupId, MessagePayload, UserId } from '@microchat/shared';
 export { MAX_VOICE_DURATION_MS, MAX_VOICE_SIZE_BYTES } from '@microchat/shared';
-export { uint8ArrayToBase64, base64ToUint8Array } from '@microchat/crypto';
 export {
   AuthClient,
   type AuthResult,
@@ -26,8 +27,13 @@ export {
 export {
   MessageClient,
   type MessageListItem,
+  type SendMessageOptions,
   type SendMessageResult,
 } from './message-client';
+export {
+  SenderTokenStore,
+  type SenderTokenStoreOptions,
+} from './sender-token-store';
 export {
   WebSocketClient,
   type WebSocketEvent,

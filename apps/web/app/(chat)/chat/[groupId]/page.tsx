@@ -6,8 +6,8 @@ import {
   type MessageListItem,
   type MessagePayload,
   MicroChatClient,
-  uint8ArrayToBase64,
   type UserId,
+  uint8ArrayToBase64,
   type WebSocketEvent,
 } from '@microchat/client';
 import * as ContextMenu from '@radix-ui/react-context-menu';
@@ -15,8 +15,8 @@ import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import GroupSettings from '@/components/GroupSettings';
 import { MessageInput } from '@/components/MessageInput';
-import { useSfx } from '@/hooks/useSfx';
 import { VoiceMessagePlayer } from '@/components/VoiceMessagePlayer';
+import { useSfx } from '@/hooks/useSfx';
 
 export default function ConversationPage() {
   const params = useParams();
@@ -143,7 +143,10 @@ export default function ConversationPage() {
               if (exists) return prev;
               return [...prev, newMessage];
             });
-            if (document.hidden && event.senderId !== currentUserRef.current?.userId) {
+            if (
+              document.hidden &&
+              event.senderId !== currentUserRef.current?.userId
+            ) {
               playSfx('message');
             }
           }
@@ -298,6 +301,8 @@ export default function ConversationPage() {
   function isOwnMessage(message: MessageListItem): boolean {
     if (!currentUser) return false;
     // Check both actual user ID and optimistic 'me' placeholder
+    // Sealed Sender messages have null senderId and are treated as "other"
+    if (message.senderId === null) return false;
     return (
       message.senderId === currentUser.userId ||
       message.senderId === ('me' as UserId)
@@ -448,7 +453,11 @@ export default function ConversationPage() {
           </>
         )}
       </div>
-      <MessageInput onSend={handleSendMessage} onSendVoice={handleSendVoiceMessage} disabled={loading} />
+      <MessageInput
+        onSend={handleSendMessage}
+        onSendVoice={handleSendVoiceMessage}
+        disabled={loading}
+      />
       <GroupSettings
         groupId={groupId as GroupId}
         open={showSettings}
@@ -522,10 +531,10 @@ function MessageBubble({
           {!isOwn && (
             <div
               className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white select-none"
-              style={{ background: avatarColor(message.senderName) }}
+              style={{ background: avatarColor(message.senderName ?? 'Anonymous') }}
               aria-hidden="true"
             >
-              {message.senderName.charAt(0).toUpperCase()}
+              {(message.senderName ?? '?').charAt(0).toUpperCase()}
             </div>
           )}
 
@@ -536,9 +545,9 @@ function MessageBubble({
             {!isOwn && (
               <span
                 className="text-xs font-semibold mb-1 px-1"
-                style={{ color: avatarColor(message.senderName) }}
+                style={{ color: avatarColor(message.senderName ?? 'Anonymous') }}
               >
-                {message.senderName}
+                {message.senderName ?? 'Anonymous'}
               </span>
             )}
 

@@ -1,4 +1,9 @@
-import type { GroupId, UserId, WebSocketEvent } from '@microchat/shared';
+import type {
+  GroupId,
+  SealedSenderToken,
+  UserId,
+  WebSocketEvent,
+} from '@microchat/shared';
 import { InviteConfig } from '@microchat/shared';
 import { Hono } from 'hono';
 import { type D1Database, Database } from '../db/client';
@@ -47,6 +52,24 @@ function generateInviteCode(): string {
   const bytes = new Uint8Array(12);
   crypto.getRandomValues(bytes);
   return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+function generateSenderToken(): string {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+async function hashToken(token: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(token);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = new Uint8Array(hashBuffer);
+  return Array.from(hashArray)
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('');
 }
@@ -397,6 +420,58 @@ groupsRouter.delete('/api/groups/:id', requireAuth, async (c) => {
   return c.json({ success: true });
 });
 
+// Sealed Sender: Issue anonymous sender tokens
+groupsRouter.post('/api/groups/:id/sender-tokens', requireAuth, async (c) => {
+  const groupId = c.req.param('id') as GroupId;
+  const user = c.get('user');
+  const db = new Database(c.env.DB);
+
+  // Check membership
+  const membership = await db.query<{ id: string }>(
+    'SELECT id FROM group_members WHERE group_id = ? AND user_id = ?',
+    [groupId, user.id],
+  );
+
+  if (membership.length === 0) {
+    return c.json({ error: 'Not a member of this group' }, 403);
+  }
+
+  const body = await c.req.json<{ count?: number }>();
+  const count = Math.min(Math.max(body.count ?? 10, 1), 50); // 1-50 tokens per request
+
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hour expiry
+  const tokens: string[] = [];
+  const inserts: { sql: string; params: unknown[] }[] = [];
+
+  for (let i = 0; i < count; i++) {
+    const tokenId = generateMessageId();
+    const token = generateSenderToken();
+    const tokenHash = await hashToken(token);
+
+    tokens.push(token);
+    inserts.push({
+      sql: 'INSERT INTO sender_tokens (id, group_id, token_hash, used, expires_at, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+      params: [
+        tokenId,
+        groupId,
+        tokenHash,
+        0,
+        expiresAt.toISOString(),
+        now.toISOString(),
+      ],
+    });
+  }
+
+  // Batch insert all tokens
+  await db.batch(inserts);
+
+  return c.json({
+    tokens: tokens as SealedSenderToken[],
+    expiresAt: expiresAt.toISOString(),
+  });
+});
+
 // Messages endpoints
 
 groupsRouter.get('/api/groups/:id/messages', requireAuth, async (c) => {
@@ -421,9 +496,9 @@ groupsRouter.get('/api/groups/:id/messages', requireAuth, async (c) => {
 
   let query = `
     SELECT m.id, m.sender_id, m.encrypted_payload, m.nonce, m.created_at, m.deleted_at,
-           u.display_name as sender_name
+           m.sealed_sender, u.display_name as sender_name
     FROM messages m
-    INNER JOIN users u ON u.id = m.sender_id
+    LEFT JOIN users u ON u.id = m.sender_id
     WHERE m.group_id = ?
   `;
   const params: (string | number)[] = [groupId];
@@ -441,12 +516,13 @@ groupsRouter.get('/api/groups/:id/messages', requireAuth, async (c) => {
 
   const messages = await db.query<{
     id: string;
-    sender_id: UserId;
+    sender_id: UserId | null;
     encrypted_payload: string;
     nonce: string;
     created_at: string;
     deleted_at: string | null;
-    sender_name: string;
+    sealed_sender: string | null;
+    sender_name: string | null;
   }>(query, params);
 
   return c.json({
@@ -458,6 +534,7 @@ groupsRouter.get('/api/groups/:id/messages', requireAuth, async (c) => {
       nonce: m.nonce,
       createdAt: m.created_at,
       deleted: m.deleted_at !== null,
+      sealedSender: m.sealed_sender,
     })),
   });
 });
@@ -474,28 +551,85 @@ groupsRouter.post(
     const body = await c.req.json<{
       encryptedPayload: string;
       nonce: string;
+      senderToken?: string;
+      sealedSender?: string;
     }>();
 
     if (!body.encryptedPayload || !body.nonce) {
       return c.json({ error: 'encryptedPayload and nonce are required' }, 400);
     }
 
-    // Check membership
-    const membership = await db.query<{ id: string }>(
-      'SELECT id FROM group_members WHERE group_id = ? AND user_id = ?',
-      [groupId, user.id],
-    );
+    let senderId: UserId | null = user.id;
+    let senderName: string | null = user.displayName;
 
-    if (membership.length === 0) {
-      return c.json({ error: 'Not a member of this group' }, 403);
+    // Sealed Sender mode: use anonymous token instead of identity
+    if (body.senderToken) {
+      const tokenHash = await hashToken(body.senderToken);
+
+      // Check if token is valid and unused
+      const tokenRows = await db.query<{
+        id: string;
+        group_id: GroupId;
+        used: number;
+        expires_at: string;
+      }>(
+        'SELECT id, group_id, used, expires_at FROM sender_tokens WHERE token_hash = ?',
+        [tokenHash],
+      );
+
+      if (tokenRows.length === 0) {
+        return c.json({ error: 'Invalid sender token' }, 403);
+      }
+
+      const tokenRow = tokenRows[0];
+
+      if (tokenRow.group_id !== groupId) {
+        return c.json({ error: 'Token not valid for this group' }, 403);
+      }
+
+      if (tokenRow.used !== 0) {
+        return c.json({ error: 'Token already used' }, 403);
+      }
+
+      if (new Date(tokenRow.expires_at) < new Date()) {
+        return c.json({ error: 'Token expired' }, 403);
+      }
+
+      // Mark token as used
+      await db.execute(
+        'UPDATE sender_tokens SET used = 1, used_at = ? WHERE id = ?',
+        [new Date().toISOString(), tokenRow.id],
+      );
+
+      // Hide sender identity
+      senderId = null;
+      senderName = null;
+    } else {
+      // Regular mode: check membership via authenticated user
+      const membership = await db.query<{ id: string }>(
+        'SELECT id FROM group_members WHERE group_id = ? AND user_id = ?',
+        [groupId, user.id],
+      );
+
+      if (membership.length === 0) {
+        return c.json({ error: 'Not a member of this group' }, 403);
+      }
     }
 
     const messageId = generateMessageId();
     const now = new Date().toISOString();
 
     await db.execute(
-      'INSERT INTO messages (id, group_id, sender_id, encrypted_payload, nonce, created_at) VALUES (?, ?, ?, ?, ?, ?)',
-      [messageId, groupId, user.id, body.encryptedPayload, body.nonce, now],
+      'INSERT INTO messages (id, group_id, sender_id, encrypted_payload, nonce, created_at, sealed_sender) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [
+        messageId,
+        groupId,
+        senderId,
+        body.encryptedPayload,
+        body.nonce,
+        now,
+        body.sealedSender ?? null,
+      ],
     );
 
     // Update group last activity
@@ -511,10 +645,11 @@ groupsRouter.post(
       type: 'message',
       groupId,
       messageId,
-      senderId: user.id,
-      senderName: user.displayName,
+      senderId,
+      senderName,
       encryptedContent: body.encryptedPayload,
       timestamp: now,
+      sealedSender: body.sealedSender,
     };
     await hub.fetch('https://hub/broadcast', {
       method: 'POST',

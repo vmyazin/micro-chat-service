@@ -17,6 +17,7 @@ RP_ORIGIN = "https://microchat.smoxu.com"
 binding = "DB"
 database_name = "microchat-db"
 database_id = "a5b418d2-f9f5-4bdc-a1c8-f0c0d5a4f2af"
+migrations_dir = "src/db/migrations"
 
 [[env.production.d1_databases]]
 binding = "DB"

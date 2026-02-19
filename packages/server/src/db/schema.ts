@@ -41,12 +41,24 @@ export interface GroupMembersTable {
 export interface MessagesTable {
   id: string;
   group_id: GroupId;
-  sender_id: UserId;
+  sender_id: UserId | null;
   encrypted_payload: string;
   nonce: string;
   created_at: string;
   deleted_at: string | null;
   deleted_by: UserId | null;
+  /** Encrypted sender identity for Sealed Sender messages */
+  sealed_sender: string | null;
+}
+
+export interface SenderTokensTable {
+  id: string;
+  group_id: GroupId;
+  token_hash: string;
+  used: number;
+  expires_at: string;
+  created_at: string;
+  used_at: string | null;
 }
 
 export interface InvitesTable {
@@ -74,6 +86,7 @@ export interface DatabaseSchema {
   groups: GroupsTable;
   group_members: GroupMembersTable;
   messages: MessagesTable;
+  sender_tokens: SenderTokensTable;
   invites: InvitesTable;
   delivery_receipts: DeliveryReceiptsTable;
 }

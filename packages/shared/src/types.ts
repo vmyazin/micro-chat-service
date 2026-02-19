@@ -1,9 +1,22 @@
 export type GroupId = string & { readonly __brand: 'GroupId' };
 export type UserId = string & { readonly __brand: 'UserId' };
+export type SealedSenderToken = string & {
+  readonly __brand: 'SealedSenderToken';
+};
 
 export interface EncryptedBlob {
   ciphertext: Uint8Array;
   nonce: Uint8Array;
+}
+
+/**
+ * Encrypted sender identity for Sealed Sender messages
+ * The server cannot see who sent the message; only group members can decrypt this
+ */
+export interface SealedSenderPayload {
+  senderId: UserId;
+  senderName: string;
+  timestamp: string;
 }
 
 export interface GroupMetadata {
@@ -74,10 +87,12 @@ export type WebSocketEvent =
       type: 'message';
       groupId: GroupId;
       messageId: string;
-      senderId: UserId;
-      senderName: string;
+      senderId: UserId | null;
+      senderName: string | null;
       encryptedContent: string;
       timestamp: string;
+      /** Encrypted sender identity for Sealed Sender messages */
+      sealedSender?: string;
     }
   | {
       type: 'messageDeleted';

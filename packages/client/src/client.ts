@@ -17,8 +17,13 @@ import {
 import {
   MessageClient,
   type MessageListItem,
+  type SendMessageOptions,
   type SendMessageResult,
 } from './message-client';
+import {
+  SenderTokenStore,
+  type SenderTokenStoreOptions,
+} from './sender-token-store';
 import {
   WebSocketClient,
   type WebSocketEventHandler,
@@ -27,6 +32,10 @@ import {
 export interface MicroChatClientOptions {
   baseUrl: string;
   wsUrl?: string;
+  /** Enable Sealed Sender for anonymous message sending */
+  enableSealedSender?: boolean;
+  /** Options for sender token management */
+  senderTokenOptions?: SenderTokenStoreOptions;
 }
 
 export class MicroChatClient {
@@ -34,11 +43,21 @@ export class MicroChatClient {
   private groupClient: GroupClient;
   private messageClient: MessageClient;
   private wsClient: WebSocketClient;
+  private senderTokenStore?: SenderTokenStore;
 
   constructor(options: MicroChatClientOptions) {
     this.authClient = new AuthClient(options.baseUrl);
     this.groupClient = new GroupClient(options.baseUrl);
-    this.messageClient = new MessageClient(options.baseUrl);
+    this.senderTokenStore = options.enableSealedSender
+      ? new SenderTokenStore(
+          options.senderTokenOptions ?? { baseUrl: options.baseUrl },
+        )
+      : undefined;
+    this.messageClient = new MessageClient(
+      options.baseUrl,
+      undefined,
+      this.senderTokenStore,
+    );
     this.wsClient = new WebSocketClient(options.wsUrl ?? options.baseUrl);
   }
 
@@ -114,20 +133,45 @@ export class MicroChatClient {
   sendMessage(
     groupId: GroupId,
     encryptedContent: string,
+    epoch?: number,
+    options?: SendMessageOptions,
   ): Promise<SendMessageResult> {
-    return this.messageClient.sendMessage(groupId, encryptedContent);
+    return this.messageClient.sendMessage(
+      groupId,
+      encryptedContent,
+      epoch,
+      options,
+    );
   }
 
   sendVoiceMessage(
     groupId: GroupId,
     audioBlob: Blob,
     duration: number,
+    epoch?: number,
+    options?: SendMessageOptions,
   ): Promise<SendMessageResult> {
-    return this.messageClient.sendVoiceMessage(groupId, audioBlob, duration);
+    return this.messageClient.sendVoiceMessage(
+      groupId,
+      audioBlob,
+      duration,
+      epoch,
+      options,
+    );
   }
 
   deleteMessage(groupId: GroupId, messageId: string): Promise<void> {
     return this.messageClient.deleteMessage(groupId, messageId);
+  }
+
+  // Sealed Sender methods
+  async prefetchSenderTokens(groupId: GroupId): Promise<void> {
+    if (!this.senderTokenStore) {
+      throw new Error(
+        'Sealed Sender not enabled. Set enableSealedSender: true in options.',
+      );
+    }
+    await this.senderTokenStore.prefetchTokens(groupId);
   }
 
   // WebSocket methods
