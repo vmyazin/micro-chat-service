@@ -277,6 +277,12 @@ export default function Home() {
               Privacy Policy
             </a>
             <a
+              href="/changelog"
+              className="hover:text-blue-600 transition-colors cursor-pointer"
+            >
+              Changelog
+            </a>
+            <a
               href="https://github.com"
               className="hover:text-blue-600 transition-colors cursor-pointer"
             >

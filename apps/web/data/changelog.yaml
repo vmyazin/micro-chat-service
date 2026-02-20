@@ -1,0 +1,74 @@
+- category: Privacy & Security
+  icon: shield
+  color: blue
+  items:
+    - date: Feb 16, 2026
+      title: End-to-End Encryption
+      description: >
+        All group messages are now protected with AES-256-GCM encryption.
+        Nobody but your group members can read what you send.
+    - date: Feb 12, 2026
+      title: Passwordless Login (WebAuthn)
+      description: >
+        We abandoned passwords. You can now register and log in securely
+        using your device's built-in passkeys or biometrics.
+    - date: Feb 10, 2026
+      title: Ghost Courier (Sealed Sender)
+      description: >
+        Your messages are now routed anonymously. Our servers can no longer
+        see who is sending a message—you act as a ghost.
+    - date: Feb 05, 2026
+      title: Ephemeral Storage
+      description: >
+        Server-side messages are deleted immediately after successful
+        delivery to all recipients. No long-term logs kept.
+    - date: Feb 01, 2026
+      title: Transparent Security
+      description: >
+        We launched interactive Protocol and Security pages with Simple and
+        Engineer modes, breaking down our zero-trust architecture.
+
+- category: Rich Media
+  icon: image
+  color: purple
+  items:
+    - date: Jan 28, 2026
+      title: Image Upload & Pasting
+      description: >
+        Send pictures instantly! Paste images right from your clipboard or
+        upload them securely, protected by our retention limits.
+    - date: Jan 20, 2026
+      title: Voice Messages
+      description: >
+        Sometimes text isn't enough. Record, send, and listen to encrypted
+        voice messages right inside the chat window.
+
+- category: Refined Experience
+  icon: sparkles
+  color: green
+  items:
+    - date: Jan 15, 2026
+      title: Real-time Messaging & Audio Cues
+      description: >
+        Real-time WebSocket connection guarantees instant delivery,
+        complete with subtle sound effects for new messages and member joins.
+    - date: Jan 10, 2026
+      title: Dynamic Group Invites
+      description: >
+        Create private groups and share a simple invite link. New members
+        can join instantly using a dedicated landing page.
+    - date: Jan 05, 2026
+      title: Chat UI Overhaul
+      description: >
+        We refined our chat layout: softer shadows, thinner borders, new
+        avatar components, and visible sender names for better context.
+    - date: Dec 28, 2025
+      title: Message Controls
+      description: >
+        You're in full control. Highlight messages with a smart context
+        menu or delete them on the fly.
+    - date: Dec 20, 2025
+      title: New Color System
+      description: >
+        We migrated to a beautiful CSS variable-based palette that
+        perfectly balances contrast for stunning dark modes.
