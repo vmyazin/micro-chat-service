@@ -12,9 +12,7 @@ export function SiteHeader() {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/70 backdrop-blur-xl border-b border-gray-200/50">
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3 cursor-pointer group">
-          <div className="w-8 h-8 bg-foreground flex items-center justify-center rounded-sm transition-transform duration-300 group-hover:rotate-45">
-            <Lock className="w-5 h-5 text-white" />
-          </div>
+          <img src="/images/mc-logo-vector-8863.svg" alt="MicroChat Logo" className="h-12 w-auto transition-transform duration-300 group-hover:scale-105" />
           <span className="text-2xl tracking-tight font-semibold italic font-heading text-slate-900">MicroChat</span>
         </Link>
         

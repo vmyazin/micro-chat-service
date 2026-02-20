@@ -63,8 +63,8 @@ export default function ChatLayout({
       >
         <div className="flex flex-col h-full">
           {/* Sidebar header */}
-          <div className="flex items-center justify-between p-4 border-b border-[var(--border-color)]">
-            <h2 className="font-bold text-lg">Groups</h2>
+          <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--border-color)]">
+            <img src="/images/mc-logo-vector-8863.svg" alt="MicroChat Logo" className="h-12 w-auto" />
             <button
               type="button"
               onClick={() => setSidebarOpen(false)}
