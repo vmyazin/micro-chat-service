@@ -131,6 +131,15 @@ export function MessageInput({
     }
   }
 
+  function handlePreviewKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (!sending && !imagePicker.compressing) {
+        void handleSendPastedImage();
+      }
+    }
+  }
+
   if (isRecording) {
     return (
       <div className="p-4 border-t-[var(--border-thick)] border-[var(--border-color)] bg-[var(--surface-elevated)]">
@@ -187,7 +196,10 @@ export function MessageInput({
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50" />
           <Dialog.Content className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="relative brutal-card bg-[var(--background)] p-6 w-full max-w-lg">
+            <div
+              className="relative brutal-card bg-[var(--background)] p-6 w-full max-w-lg"
+              onKeyDown={handlePreviewKeyDown}
+            >
               <div className="flex items-center justify-between mb-4">
                 <Dialog.Title className="text-lg font-semibold">
                   Preview image
