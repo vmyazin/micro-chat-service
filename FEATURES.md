@@ -2,7 +2,7 @@
 
 ## Audio Messages (Voice Notes)
 
-**Status:** Easily adaptable with current architecture
+**Status:** Completed (implemented Feb 19, 2026)
 
 The existing AES-256-GCM encryption in `packages/crypto/src/group-cipher.ts` can encrypt binary data directly with minimal changes:
 
