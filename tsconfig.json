@@ -18,7 +18,8 @@
       "@microchat/client": ["packages/client/src"],
       "@microchat/crypto": ["packages/crypto/src"],
       "@microchat/shared": ["packages/shared/src"]
-    }
+    },
+    "disableReferencedProjectLoad": true
   },
   "references": [
     { "path": "packages/shared" },
@@ -26,5 +27,13 @@
     { "path": "packages/server" },
     { "path": "packages/client" }
   ],
-  "exclude": ["node_modules", "dist", "apps"]
+  "include": ["packages/**/src/**/*.ts", "packages/**/src/**/*.tsx"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "apps",
+    "packages/**/dist",
+    "packages/**/dist/**",
+    "packages/server/src/test-worker.ts"
+  ]
 }

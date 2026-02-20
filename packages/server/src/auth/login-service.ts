@@ -1,15 +1,14 @@
 import type { UserId } from '@microchat/shared';
-import type { AuthenticationResponseJSON } from '@simplewebauthn/server';
+import type {
+  AuthenticationResponseJSON,
+  VerifyAuthenticationResponseOpts,
+} from '@simplewebauthn/server';
 import type { Database } from '../db/client';
 import type { ChallengeStore } from './challenge-store';
 
-export type VerifyAuthenticationFn = (options: {
-  response: AuthenticationResponseJSON;
-  expectedChallenge: string;
-  expectedOrigin: string;
-  expectedRPID: string;
-  credential: { id: string; publicKey: Uint8Array; counter: number };
-}) => Promise<{ verified: boolean }>;
+export type VerifyAuthenticationFn = (
+  options: VerifyAuthenticationResponseOpts,
+) => Promise<{ verified: boolean }>;
 
 export interface VerifyLoginInput {
   response: AuthenticationResponseJSON;
@@ -77,6 +76,8 @@ export async function verifyLogin(
 
   const credential = credentials[0];
   const publicKeyBytes = base64ToUint8Array(credential.public_key);
+  const publicKeyArray = new Uint8Array(publicKeyBytes.length);
+  publicKeyArray.set(publicKeyBytes);
 
   const verification = await deps.verifyAuthentication({
     response: input.response,
@@ -85,7 +86,7 @@ export async function verifyLogin(
     expectedRPID: deps.rpId,
     credential: {
       id: credential.credential_id,
-      publicKey: publicKeyBytes,
+      publicKey: publicKeyArray,
       counter: 0,
     },
   });
