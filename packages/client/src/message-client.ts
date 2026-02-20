@@ -117,6 +117,54 @@ export class MessageClient {
     return this.sendPayload(groupId, JSON.stringify(payload), epoch, options);
   }
 
+  async sendImageMessage(
+    groupId: GroupId,
+    encryptedBlob: Blob,
+    width: number,
+    height: number,
+    epoch?: number,
+    options?: SendMessageOptions,
+  ): Promise<SendMessageResult & { r2Key: string }> {
+    // Upload encrypted image to R2 via server
+    const uploadResponse = await fetch(
+      `${this.baseUrl}/api/groups/${groupId}/images`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/octet-stream' },
+        body: encryptedBlob,
+        credentials: 'include',
+      },
+    );
+
+    if (!uploadResponse.ok) {
+      const error = await uploadResponse.json();
+      throw new Error(
+        (error as { error?: string }).error || 'Failed to upload image',
+      );
+    }
+
+    const { key: r2Key } = (await uploadResponse.json()) as { key: string };
+
+    // Build message payload referencing the R2 key
+    const nonce = crypto.randomUUID();
+    const payload: MessagePayload = {
+      type: 'image',
+      r2Key,
+      nonce,
+      width,
+      height,
+    };
+
+    const result = await this.sendPayload(
+      groupId,
+      JSON.stringify(payload),
+      epoch,
+      options,
+    );
+
+    return { ...result, r2Key };
+  }
+
   private async sendPayload(
     groupId: GroupId,
     serialized: string,

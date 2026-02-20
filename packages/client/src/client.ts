@@ -160,6 +160,24 @@ export class MicroChatClient {
     );
   }
 
+  sendImageMessage(
+    groupId: GroupId,
+    encryptedBlob: Blob,
+    width: number,
+    height: number,
+    epoch?: number,
+    options?: SendMessageOptions,
+  ): Promise<SendMessageResult & { r2Key: string }> {
+    return this.messageClient.sendImageMessage(
+      groupId,
+      encryptedBlob,
+      width,
+      height,
+      epoch,
+      options,
+    );
+  }
+
   deleteMessage(groupId: GroupId, messageId: string): Promise<void> {
     return this.messageClient.deleteMessage(groupId, messageId);
   }

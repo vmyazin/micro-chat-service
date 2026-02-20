@@ -80,7 +80,8 @@ export const InviteConfig = {
 
 export type MessagePayload =
   | { type: 'text'; content: string }
-  | { type: 'audio'; data: string; duration: number; mimeType: string };
+  | { type: 'audio'; data: string; duration: number; mimeType: string }
+  | { type: 'image'; r2Key: string; nonce: string; width: number; height: number };
 
 export type WebSocketEvent =
   | {

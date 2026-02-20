@@ -4,7 +4,7 @@ import type {
   UserId,
   WebSocketEvent,
 } from '@microchat/shared';
-import { InviteConfig } from '@microchat/shared';
+import { InviteConfig, MAX_IMAGE_SIZE_BYTES } from '@microchat/shared';
 import { Hono } from 'hono';
 import { type D1Database, Database } from '../db/client';
 import {
@@ -17,6 +17,7 @@ import { rateLimitMessages } from '../middleware/rate-limit';
 export interface GroupsEnv extends AuthMiddlewareEnv {
   DB: D1Database;
   CHAT_HUB: DurableObjectNamespace;
+  IMAGES: R2Bucket;
 }
 
 const groupsRouter = new Hono<{
@@ -24,45 +25,19 @@ const groupsRouter = new Hono<{
   Variables: AuthVariables;
 }>();
 
-function generateGroupId(): GroupId {
-  const bytes = new Uint8Array(16);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes)
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('') as GroupId;
-}
-
-function generateMemberId(): string {
-  const bytes = new Uint8Array(16);
+function generateHexId(byteLength: number): string {
+  const bytes = new Uint8Array(byteLength);
   crypto.getRandomValues(bytes);
   return Array.from(bytes)
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('');
 }
 
-function generateMessageId(): string {
-  const bytes = new Uint8Array(16);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes)
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
-}
-
-function generateInviteCode(): string {
-  const bytes = new Uint8Array(12);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes)
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
-}
-
-function generateSenderToken(): string {
-  const bytes = new Uint8Array(32);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes)
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
-}
+const generateGroupId = () => generateHexId(16) as GroupId;
+const generateMemberId = () => generateHexId(16);
+const generateMessageId = () => generateHexId(16);
+const generateInviteCode = () => generateHexId(12);
+const generateSenderToken = () => generateHexId(32);
 
 async function hashToken(token: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -409,8 +384,18 @@ groupsRouter.delete('/api/groups/:id', requireAuth, async (c) => {
     return c.json({ error: 'Only the group owner can delete the group' }, 403);
   }
 
+  // Delete R2 images for this group
+  const groupImages = await db.query<{ r2_key: string }>(
+    'SELECT r2_key FROM image_attachments WHERE group_id = ?',
+    [groupId],
+  );
+  for (const row of groupImages) {
+    await c.env.IMAGES.delete(row.r2_key);
+  }
+
   // Delete all group data atomically using batch
   await db.batch([
+    { sql: 'DELETE FROM image_attachments WHERE group_id = ?', params: [groupId] },
     { sql: 'DELETE FROM messages WHERE group_id = ?', params: [groupId] },
     { sql: 'DELETE FROM invites WHERE group_id = ?', params: [groupId] },
     { sql: 'DELETE FROM group_members WHERE group_id = ?', params: [groupId] },
@@ -663,6 +648,81 @@ groupsRouter.post(
   },
 );
 
+// Image upload: store encrypted image blob in R2
+groupsRouter.post('/api/groups/:id/images', requireAuth, async (c) => {
+  const groupId = c.req.param('id') as GroupId;
+  const user = c.get('user');
+  const db = new Database(c.env.DB);
+
+  // Check membership
+  const membership = await db.query<{ id: string }>(
+    'SELECT id FROM group_members WHERE group_id = ? AND user_id = ?',
+    [groupId, user.id],
+  );
+
+  if (membership.length === 0) {
+    return c.json({ error: 'Not a member of this group' }, 403);
+  }
+
+  const body = await c.req.arrayBuffer();
+  // Allow some overhead for encryption (nonce, tag, padding)
+  const maxEncryptedSize = MAX_IMAGE_SIZE_BYTES + 1024 * 64;
+  if (body.byteLength === 0 || body.byteLength > maxEncryptedSize) {
+    return c.json(
+      { error: `Image must be between 1 byte and ${MAX_IMAGE_SIZE_BYTES} bytes` },
+      400,
+    );
+  }
+
+  const attachmentId = generateHexId(16);
+  const r2Key = `groups/${groupId}/${attachmentId}.bin`;
+  const now = new Date().toISOString();
+
+  await c.env.IMAGES.put(r2Key, body);
+  await db.execute(
+    'INSERT INTO image_attachments (id, message_id, group_id, r2_key, created_at) VALUES (?, ?, ?, ?, ?)',
+    [attachmentId, '', groupId, r2Key, now],
+  );
+
+  return c.json({ key: r2Key });
+});
+
+// Image download: fetch encrypted image blob from R2
+// Used in local development; production uses public R2 URL directly
+groupsRouter.get('/api/groups/:id/images/:key{.+}', requireAuth, async (c) => {
+  const groupId = c.req.param('id') as GroupId;
+  const key = c.req.param('key');
+  const user = c.get('user');
+  const db = new Database(c.env.DB);
+
+  // Check membership
+  const membership = await db.query<{ id: string }>(
+    'SELECT id FROM group_members WHERE group_id = ? AND user_id = ?',
+    [groupId, user.id],
+  );
+
+  if (membership.length === 0) {
+    return c.json({ error: 'Not a member of this group' }, 403);
+  }
+
+  // Validate the key belongs to this group
+  if (!key.startsWith(`groups/${groupId}/`)) {
+    return c.json({ error: 'Invalid image key' }, 400);
+  }
+
+  const object = await c.env.IMAGES.get(key);
+  if (!object) {
+    return c.json({ error: 'Image not found' }, 404);
+  }
+
+  return new Response(object.body, {
+    headers: {
+      'Content-Type': 'application/octet-stream',
+      'Cache-Control': 'private, max-age=86400',
+    },
+  });
+});
+
 groupsRouter.delete(
   '/api/groups/:id/messages/:messageId',
   requireAuth,
@@ -693,6 +753,20 @@ groupsRouter.delete(
       'UPDATE messages SET deleted_at = ?, deleted_by = ? WHERE id = ?',
       [now, user.id, messageId],
     );
+
+    // Clean up any R2 image attachments linked to this message
+    const imageRows = await db.query<{ r2_key: string }>(
+      'SELECT r2_key FROM image_attachments WHERE message_id = ?',
+      [messageId],
+    );
+    for (const row of imageRows) {
+      await c.env.IMAGES.delete(row.r2_key);
+    }
+    if (imageRows.length > 0) {
+      await db.execute('DELETE FROM image_attachments WHERE message_id = ?', [
+        messageId,
+      ]);
+    }
 
     // Broadcast deletion to WebSocket subscribers
     const hubId = c.env.CHAT_HUB.idFromName('main');

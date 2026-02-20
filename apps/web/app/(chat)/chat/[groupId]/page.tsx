@@ -14,6 +14,7 @@ import * as ContextMenu from '@radix-ui/react-context-menu';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import GroupSettings from '@/components/GroupSettings';
+import { ImageMessage } from '@/components/ImageMessage';
 import { MessageInput } from '@/components/MessageInput';
 import { VoiceMessagePlayer } from '@/components/VoiceMessagePlayer';
 import { useSfx } from '@/hooks/useSfx';
@@ -278,6 +279,40 @@ export default function ConversationPage() {
     });
   }
 
+  async function handleSendImage(blob: Blob, width: number, height: number) {
+    if (!groupId) return;
+
+    const client = getClient();
+    const result = await client.sendImageMessage(
+      groupId as GroupId,
+      blob,
+      width,
+      height,
+    );
+
+    const payload: MessagePayload = {
+      type: 'image',
+      r2Key: result.r2Key,
+      nonce: '',
+      width,
+      height,
+    };
+
+    const newMessage: MessageListItem = {
+      id: result.messageId,
+      groupId: groupId as GroupId,
+      senderId: (currentUser?.userId ?? 'me') as UserId,
+      senderName: currentUser?.displayName ?? 'me',
+      encryptedContent: JSON.stringify(payload),
+      createdAt: result.timestamp,
+      deleted: false,
+    };
+    setMessages((prev) => {
+      if (prev.some((m) => m.id === result.messageId)) return prev;
+      return [...prev, newMessage];
+    });
+  }
+
   async function handleDeleteMessage(messageId: string) {
     if (!groupId) return;
 
@@ -456,6 +491,7 @@ export default function ConversationPage() {
       <MessageInput
         onSend={handleSendMessage}
         onSendVoice={handleSendVoiceMessage}
+        onSendImage={handleSendImage}
         disabled={loading}
       />
       <GroupSettings
@@ -507,6 +543,7 @@ function MessageBubble({
 
   const decoded = decodeContent(message.encryptedContent);
   const isAudio = typeof decoded === 'object' && decoded.type === 'audio';
+  const isImage = typeof decoded === 'object' && decoded.type === 'image';
 
   // Deleted message: subtle tombstone aligned to sender side
   if (message.deleted) {
@@ -573,6 +610,14 @@ function MessageBubble({
                   audioData={decoded.data}
                   mimeType={decoded.mimeType}
                   duration={decoded.duration}
+                  isOwn={isOwn}
+                />
+              ) : isImage ? (
+                <ImageMessage
+                  groupId={message.groupId}
+                  r2Key={decoded.r2Key}
+                  width={decoded.width}
+                  height={decoded.height}
                   isOwn={isOwn}
                 />
               ) : (
@@ -714,7 +759,7 @@ function decodeContent(encryptedContent: string): MessagePayload | string {
     if (
       parsed &&
       typeof parsed === 'object' &&
-      (parsed.type === 'text' || parsed.type === 'audio')
+      (parsed.type === 'text' || parsed.type === 'audio' || parsed.type === 'image')
     ) {
       return parsed as MessagePayload;
     }

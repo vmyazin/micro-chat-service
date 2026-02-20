@@ -1,25 +1,40 @@
 'use client';
 
-import { Mic, Square, X } from 'lucide-react';
+import { Image, Mic, Square, X } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
+import { useImagePicker } from '@/hooks/useImagePicker';
 import { formatDuration } from '@/components/VoiceMessagePlayer';
 
 export interface MessageInputProps {
   onSend: (content: string) => Promise<void>;
   onSendVoice?: (blob: Blob, duration: number) => Promise<void>;
+  onSendImage?: (blob: Blob, width: number, height: number) => Promise<void>;
   disabled?: boolean;
 }
 
 export function MessageInput({
   onSend,
   onSendVoice,
+  onSendImage,
   disabled = false,
 }: MessageInputProps) {
   const [content, setContent] = useState('');
   const [sending, setSending] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const [recorderState, recorderControls] = useAudioRecorder();
+
+  const imagePicker = useImagePicker({
+    onReady: async (blob, width, height) => {
+      if (!onSendImage) return;
+      try {
+        setSending(true);
+        await onSendImage(blob, width, height);
+      } finally {
+        setSending(false);
+      }
+    },
+  });
 
   const isRecording = recorderState.status === 'recording';
 
@@ -115,7 +130,19 @@ export function MessageInput({
 
   return (
     <div className="p-4 border-t-[var(--border-thick)] border-[var(--border-color)] bg-[var(--surface-elevated)]">
+      <input {...imagePicker.inputProps} />
       <div className="flex gap-2">
+        {onSendImage && (
+          <button
+            type="button"
+            onClick={imagePicker.pickImage}
+            disabled={isDisabled || imagePicker.compressing}
+            className="px-3 py-2 brutal-btn bg-[var(--surface-muted)] hover:bg-[var(--accent)] hover:text-white font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label="Send image"
+          >
+            {imagePicker.compressing ? <SendingSpinner /> : <Image className="w-5 h-5" />}
+          </button>
+        )}
         <input
           ref={inputRef}
           type="text"
@@ -146,8 +173,8 @@ export function MessageInput({
           </button>
         )}
       </div>
-      {recorderState.error && (
-        <p className="mt-2 text-xs text-red-500">{recorderState.error}</p>
+      {(recorderState.error || imagePicker.error) && (
+        <p className="mt-2 text-xs text-red-500">{recorderState.error || imagePicker.error}</p>
       )}
     </div>
   );

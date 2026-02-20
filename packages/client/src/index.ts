@@ -2,7 +2,7 @@
 
 export { base64ToUint8Array, uint8ArrayToBase64 } from '@microchat/crypto';
 export type { GroupId, MessagePayload, UserId } from '@microchat/shared';
-export { MAX_VOICE_DURATION_MS, MAX_VOICE_SIZE_BYTES } from '@microchat/shared';
+export { MAX_VOICE_DURATION_MS, MAX_VOICE_SIZE_BYTES, MAX_IMAGE_SIZE_BYTES, MAX_IMAGE_HEIGHT } from '@microchat/shared';
 export {
   AuthClient,
   type AuthResult,

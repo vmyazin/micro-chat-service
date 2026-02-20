@@ -79,6 +79,14 @@ export interface DeliveryReceiptsTable {
   read_at: string | null;
 }
 
+export interface ImageAttachmentsTable {
+  id: string;
+  message_id: string;
+  group_id: GroupId;
+  r2_key: string;
+  created_at: string;
+}
+
 export interface DatabaseSchema {
   users: UsersTable;
   sessions: SessionsTable;
@@ -89,4 +97,5 @@ export interface DatabaseSchema {
   sender_tokens: SenderTokensTable;
   invites: InvitesTable;
   delivery_receipts: DeliveryReceiptsTable;
+  image_attachments: ImageAttachmentsTable;
 }
