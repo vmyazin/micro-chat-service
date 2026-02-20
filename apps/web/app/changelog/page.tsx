@@ -4,6 +4,7 @@ import path from 'node:path';
 import yaml from 'js-yaml';
 import { History } from 'lucide-react';
 import { SiteHeader } from '@/components/site-header';
+import { SiteFooter } from '@/components/site-footer';
 import { ChangelogList } from '@/components/ChangelogList';
 
 export interface ChangelogItem {
@@ -53,6 +54,7 @@ export default function ChangelogPage() {
       </header>
 
       <ChangelogList updates={updates} />
+      <SiteFooter />
     </div>
   );
 }

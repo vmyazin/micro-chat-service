@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { SiteHeader } from '@/components/site-header';
+import { SiteFooter } from '@/components/site-footer';
 
 export default function Home() {
   const features = [
@@ -245,56 +246,7 @@ export default function Home() {
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="py-20 border-t border-gray-100 px-6">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
-          <div className="flex items-center gap-3">
-            <div className="w-6 h-6 bg-foreground flex items-center justify-center rounded-sm">
-              <Lock className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-xl font-bold tracking-tight italic font-heading">
-              MicroChat
-            </span>
-          </div>
-
-          <div className="flex gap-10 text-xs font-bold text-gray-400 uppercase tracking-widest">
-            <a
-              href="/security"
-              className="hover:text-blue-600 transition-colors cursor-pointer"
-            >
-              Security Whitepaper
-            </a>
-            <a
-              href="/security"
-              className="hover:text-blue-600 transition-colors cursor-pointer"
-            >
-              Threat Model
-            </a>
-            <a
-              href="/security"
-              className="hover:text-blue-600 transition-colors cursor-pointer"
-            >
-              Privacy Policy
-            </a>
-            <a
-              href="/changelog"
-              className="hover:text-blue-600 transition-colors cursor-pointer"
-            >
-              Changelog
-            </a>
-            <a
-              href="https://github.com"
-              className="hover:text-blue-600 transition-colors cursor-pointer"
-            >
-              <Github className="w-4 h-4" />
-            </a>
-          </div>
-
-          <div className="text-xs text-gray-400 font-mono">
-            &copy; 2026 MicroChat
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
