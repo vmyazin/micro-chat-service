@@ -6,6 +6,7 @@ import {
   type LoginOptions,
   type RegisterOptions,
 } from './auth-client';
+import { CallClient } from './call-client';
 import {
   type AcceptInviteResult,
   type CreateGroupResult,
@@ -34,6 +35,8 @@ export interface MicroChatClientOptions {
   wsUrl?: string;
   /** Enable Sealed Sender for anonymous message sending */
   enableSealedSender?: boolean;
+  /** Enable voice call signaling client */
+  enableVoiceCalls?: boolean;
   /** Options for sender token management */
   senderTokenOptions?: SenderTokenStoreOptions;
 }
@@ -44,6 +47,7 @@ export class MicroChatClient {
   private messageClient: MessageClient;
   private wsClient: WebSocketClient;
   private senderTokenStore?: SenderTokenStore;
+  readonly calls?: CallClient;
 
   constructor(options: MicroChatClientOptions) {
     this.authClient = new AuthClient(options.baseUrl);
@@ -59,6 +63,9 @@ export class MicroChatClient {
       this.senderTokenStore,
     );
     this.wsClient = new WebSocketClient(options.wsUrl ?? options.baseUrl);
+    this.calls = options.enableVoiceCalls
+      ? new CallClient(this.wsClient)
+      : undefined;
   }
 
   // Auth methods

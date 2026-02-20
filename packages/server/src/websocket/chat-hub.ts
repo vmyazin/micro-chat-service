@@ -1,4 +1,9 @@
-import type { GroupId, UserId, WebSocketEvent } from '@microchat/shared';
+import type {
+  CallId,
+  GroupId,
+  UserId,
+  WebSocketEvent,
+} from '@microchat/shared';
 import type { D1Database } from '../db/client';
 import { Database } from '../db/client';
 
@@ -15,6 +20,10 @@ interface WebSocketSession {
  */
 export class ChatHub implements DurableObject {
   private sessions = new Map<WebSocket, WebSocketSession>();
+  private calls = new Map<
+    CallId,
+    { callerId: UserId; calleeId: UserId; groupId: GroupId }
+  >();
   private db: Database | null = null;
 
   constructor(
@@ -95,6 +104,8 @@ export class ChatHub implements DurableObject {
         await this.handleSubscribe(session, data.groupId as GroupId);
       } else if (data.action === 'unsubscribe' && data.groupId) {
         session.groups.delete(data.groupId as GroupId);
+      } else if (this.isCallEvent(data)) {
+        await this.handleCallEvent(session, data as WebSocketEvent);
       }
     } catch {
       this.sendTo(session.ws, {
@@ -154,6 +165,120 @@ export class ChatHub implements DurableObject {
     } catch {
       // Connection may be closed
       this.sessions.delete(ws);
+    }
+  }
+
+  private sendToUser(userId: UserId, event: WebSocketEvent): number {
+    let delivered = 0;
+
+    for (const session of this.sessions.values()) {
+      if (session.userId === userId) {
+        this.sendTo(session.ws, event);
+        delivered++;
+      }
+    }
+
+    return delivered;
+  }
+
+  private isCallEvent(data: unknown): data is WebSocketEvent {
+    if (!data || typeof data !== 'object') {
+      return false;
+    }
+
+    const type = (data as { type?: string }).type;
+    return (
+      type === 'callOffer' ||
+      type === 'callAnswer' ||
+      type === 'iceCandidate' ||
+      type === 'callEnd' ||
+      type === 'callRinging'
+    );
+  }
+
+  private async handleCallEvent(
+    session: WebSocketSession,
+    event: WebSocketEvent,
+  ): Promise<void> {
+    switch (event.type) {
+      case 'callOffer':
+        this.handleCallOffer(session, event);
+        return;
+      case 'callAnswer':
+      case 'iceCandidate':
+      case 'callEnd':
+      case 'callRinging':
+        this.handleCallRelay(session, event);
+        return;
+    }
+  }
+
+  private handleCallOffer(
+    session: WebSocketSession,
+    event: Extract<WebSocketEvent, { type: 'callOffer' }>,
+  ): void {
+    const { callId, groupId, toUserId } = event;
+    const callerId = session.userId;
+
+    this.calls.set(callId, { callerId, calleeId: toUserId, groupId });
+
+    const delivered = this.sendToUser(toUserId, event);
+
+    if (delivered === 0) {
+      this.calls.delete(callId);
+      this.sendToUser(callerId, {
+        type: 'callEnd',
+        groupId,
+        callId,
+        fromUserId: null,
+        reason: 'missed',
+      });
+    }
+  }
+
+  private handleCallRelay(
+    session: WebSocketSession,
+    event: Extract<
+      WebSocketEvent,
+      { type: 'callAnswer' | 'iceCandidate' | 'callEnd' | 'callRinging' }
+    >,
+  ): void {
+    if (!('callId' in event)) {
+      return;
+    }
+
+    const callId = event.callId as CallId;
+    const call = this.calls.get(callId);
+
+    if (!call) {
+      this.sendTo(session.ws, {
+        type: 'error',
+        error: 'Call not found',
+      });
+      return;
+    }
+
+    const senderId = session.userId;
+    let targetUserId: UserId | null = null;
+
+    if (senderId === call.callerId) {
+      targetUserId = call.calleeId;
+    } else if (senderId === call.calleeId) {
+      targetUserId = call.callerId;
+    }
+
+    if (!targetUserId) {
+      this.sendTo(session.ws, {
+        type: 'error',
+        error: 'Not a participant in this call',
+      });
+      return;
+    }
+
+    this.sendToUser(targetUserId, event);
+
+    if (event.type === 'callEnd') {
+      this.calls.delete(callId);
     }
   }
 }

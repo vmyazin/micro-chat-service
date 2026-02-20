@@ -89,6 +89,10 @@ export class WebSocketClient {
     return () => this.handlers.delete(handler);
   }
 
+  sendEvent(event: WebSocketEvent): void {
+    this.send(event);
+  }
+
   private send(data: object): void {
     if (this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(data));

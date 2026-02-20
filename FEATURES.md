@@ -16,51 +16,168 @@ The existing AES-256-GCM encryption in `packages/crypto/src/group-cipher.ts` can
 - Crypto: Extend GroupCipher to handle binary payloads
 - UI: Add voice note recording/playback interface
 
-## VOIP Calls
+## Voice Calls (1-to-1)
 
-**Status:** Possible but requires significant additions
+**Status:** Phase 1 complete (Feb 20, 2026) — WebRTC not yet implemented
 
-### Current Architecture Limitations
-- WebSocket is for signaling only, not media transport
-- No peer-to-peer connection handling
-- No real-time media encryption (SRTP)
+End-to-end encrypted audio calls between two members of a group using WebRTC.
 
-### Required Additions
+### Scope
 
-1. **WebRTC Integration**
-   - Peer connections for bidirectional audio streams
-   - MediaStream handling for microphone input
+| Aspect | Decision |
+|--------|----------|
+| Call type | 1-to-1 audio only (no video, no group calls) |
+| Call button | Hidden in groups with >2 members |
+| Signaling privacy | Sealed-sender (caller identity hidden from server) |
+| Missed calls | Synthetic system message in chat |
+| TURN credentials | Fresh per call via `GET /api/calls/ice-servers` |
 
-2. **Signaling Extensions**
-   - New WebSocket event types: `call-offer`, `call-answer`, `ice-candidate`
-   - Call coordination messages
+### Phase 1 — Types + Signaling Plumbing (Completed Feb 20, 2026)
 
-3. **Media Encryption**
-   - DTLS-SRTP (built into WebRTC) provides end-to-end encrypted audio
-   - Ephemeral keys negotiated per call
+- Added call signaling types (`CallId`, `CallState`, and WebSocket event variants).
+- ChatHub now relays `callOffer`, `callAnswer`, `iceCandidate`, and `callEnd` and bounces missed calls.
+- `GET /api/calls/ice-servers` returns public STUN (Google) only.
+- Client `CallClient` stub sends fake SDP and logs incoming call events.
+- Web UI renders the call button for 1:1 groups and logs incoming call events.
 
-4. **Call State Management**
-   - Ring, accept, reject, hangup flows
-   - Call duration tracking
+### Architecture
 
-5. **Infrastructure**
-   - STUN/TURN servers for NAT traversal
-   - New Durable Object for call session coordination
+```
+Caller                 ChatHub DO                  Callee
+  │                       │                          │
+  │── callOffer ─────────▶ (sealed-sender token)   │
+  │                       │── callOffer ────────────▶│
+  │                       │◀── callAnswer ───────────│
+  │◀── callAnswer ────────│                          │
+  │◀──── iceCandidate ────│── iceCandidate ─────────▶│
+  │                                                   │
+  │◀══════════ WebRTC P2P (DTLS-SRTP audio) ═════════▶│
+```
 
-### Architecture Compatibility
+The `ChatHub` Durable Object acts as a **signaling relay only**. Media flows peer-to-peer via DTLS-SRTP (built into WebRTC).
 
-| Component | Compatibility |
-|-----------|--------------|
-| Existing group keys | Can derive DTLS certificates |
-| WebSocket events | Can signal call setup |
-| Authentication | Already in place |
-| Durable Objects | New DO needed for call coordination |
+### Components
 
-**Note:** The MLS-based key management supports both use cases—text messages reuse group keys, while VOIP calls would negotiate ephemeral SRTP keys per call via the existing key infrastructure.
+**1. Shared Types (`packages/shared/src/types.ts`)**
+
+```ts
+export type CallId = string & { readonly __brand: 'CallId' };
+export type CallState = 'idle' | 'ringing-out' | 'ringing-in' | 'connecting' | 'active' | 'ended';
+
+// WebSocketEvent additions:
+| { type: 'callOffer';    groupId: GroupId; callId: CallId; toUserId: UserId;
+    fromUserId: UserId | null; sealedSender?: string; sdp: string; timestamp: string; }
+| { type: 'callAnswer';   groupId: GroupId; callId: CallId;
+    fromUserId: UserId | null; sealedSender?: string; sdp: string; }
+| { type: 'iceCandidate'; groupId: GroupId; callId: CallId;
+    fromUserId: UserId | null; sealedSender?: string; candidate: RTCIceCandidateInit; }
+| { type: 'callEnd';      groupId: GroupId; callId: CallId;
+    fromUserId: UserId | null; sealedSender?: string;
+    reason: 'hangup' | 'rejected' | 'missed' | 'error'; }
+| { type: 'callRinging';  groupId: GroupId; callId: CallId; }
+```
+
+**2. Server Signaling (`packages/server/src/websocket/chat-hub.ts`)**
+
+- Add `sendToUser(targetUserId, event)` for unicast delivery
+- Relay call events to specific recipient only (not broadcast)
+- Bounce `callEnd { reason: 'missed' }` to caller if callee offline
+
+**3. ICE Server Endpoint (`packages/server/src/routes/calls.ts`)**
+
+```
+GET /api/calls/ice-servers
+→ { iceServers: RTCIceServer[], ttl: number }
+```
+
+Generates fresh Cloudflare Calls TURN credentials on each request. Returns merged list:
+- Primary: Cloudflare Calls TURN
+- Fallbacks: Self-hosted coturn on Hetzner/OVH (resilient to CF/GCP blocking)
+- Public STUN: `stun.l.google.com:19302`
+
+**4. Call Cipher (`packages/crypto/src/call-cipher.ts`)** — new file
+
+```ts
+deriveCallSigningKey(groupCipher, groupId, epoch, callId): Promise<CryptoKey>
+encryptCallerId(callerId, callerName, key): Promise<string>
+decryptCallerId(sealed, key): Promise<SealedSenderPayload>
+```
+
+Derives an ephemeral AES-256-GCM key from the group epoch key + callId via HKDF. Used for sealed-sender call signaling (encrypting caller identity).
+
+**5. Call Client (`packages/client/src/call-client.ts`)** — new file
+
+```ts
+class CallClient {
+  startCall(groupId, targetUserId, cipher, epoch): Promise<CallSession>
+  onIncomingCall(handler): () => void
+  onMissedCall(handler): () => void
+}
+
+class CallSession {
+  callId: CallId
+  groupId: GroupId
+  direction: 'outgoing' | 'incoming'
+  remoteUserId: UserId | null
+  remoteUserName: string | null
+  localStream: MediaStream
+  remoteStream: MediaStream
+  state: CallState
+
+  accept(): Promise<void>   // incoming only
+  reject(): Promise<void>   // incoming only
+  hangup(): Promise<void>
+}
+```
+
+WebRTC orchestration: `getUserMedia`, `RTCPeerConnection`, ICE trickle, SDP exchange, state management.
+
+**6. Web UI**
+
+| Component | Purpose |
+|-----------|---------|
+| `CallButton.tsx` | Phone icon in conversation header (hidden if group >2 members) |
+| `IncomingCallModal.tsx` | Full-screen ring screen: caller name, accept/reject, 30s timeout |
+| `ActiveCallOverlay.tsx` | In-call bar: mute toggle, duration timer, hangup |
+| `useCall.ts` | React hook wrapping `CallClient` state and events |
+
+Missed calls render as synthetic system messages: `"Missed call from X"`.
+
+### Infrastructure
+
+**Environment variables (`wrangler.toml`):**
+
+```toml
+CLOUDFLARE_CALLS_APP_ID = "..."
+CLOUDFLARE_CALLS_TOKEN  = "..."   # secret
+ICE_FALLBACK_SERVERS    = '[{"urls":"turn:...","username":"...","credential":"..."}]'
+```
+
+**No new Durable Objects.** The existing `ChatHub` handles signaling relay. Call state is entirely client-managed.
+
+**No D1 schema changes.** Calls are ephemeral (no persistent call history).
+
+### State Transitions
+
+```
+idle → ringing-out → connecting → active → ended   (outgoing)
+idle → ringing-in  → connecting → active → ended   (incoming, accepted)
+idle → ringing-in  → ended                         (incoming, rejected/missed)
+```
+
+### Out of Scope
+
+- Call history / CDRs
+- Video
+- Group calls (>2 participants)
+- Screen sharing
+- Call recording
+- Push notifications for incoming calls
 
 ## Technical Considerations
 
 - **Audio Messages:** Leverage existing `EncryptedMessage` interface; minimal crypto changes
-- **VOIP Calls:** Require new infrastructure layer; WebRTC is the standard approach
-- **Security:** Both maintain end-to-end encryption. Audio messages use group keys; VOIP uses DTLS-SRTP
-- **Server Load:** Audio messages stored like text; VOIP is peer-to-peer after setup
+- **Voice Calls:** WebRTC with DTLS-SRTP for E2E encrypted media; sealed-sender for signaling privacy
+- **Security:** Audio messages use group keys; voice calls use DTLS-SRTP (WebRTC-native) + sealed-sender signaling
+- **Server Load:** Audio messages stored like text; voice calls are peer-to-peer after signaling
+- **NAT Traversal:** Multi-provider TURN (Cloudflare + self-hosted) for resilience in restricted networks

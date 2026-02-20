@@ -3,9 +3,10 @@
 import { AuthClient } from '@microchat/client';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import GroupList from '@/components/GroupList';
 import NewGroupDialog from '@/components/NewGroupDialog';
+import { useCall } from '@/hooks/useCall';
 
 export default function ChatLayout({
   children,
@@ -20,6 +21,14 @@ export default function ChatLayout({
   const [isSigningOut, setIsSigningOut] = useState(false);
 
   const selectedGroupId = params?.groupId as string | undefined;
+  const { incomingCall } = useCall();
+
+  useEffect(() => {
+    if (incomingCall) {
+      console.log('incoming call');
+      console.log(incomingCall);
+    }
+  }, [incomingCall]);
 
   function handleNewGroup() {
     setShowNewGroupDialog(true);

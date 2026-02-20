@@ -1,6 +1,6 @@
 import { verifyAuthenticationResponse } from '@simplewebauthn/server';
 
-type Env = {};
+type Env = object;
 
 export default {
   async fetch(_req: Request, _env: Env, _ctx: ExecutionContext) {

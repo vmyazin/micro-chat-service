@@ -1,7 +1,22 @@
 export type GroupId = string & { readonly __brand: 'GroupId' };
 export type UserId = string & { readonly __brand: 'UserId' };
+export type CallId = string & { readonly __brand: 'CallId' };
+export type CallState =
+  | 'idle'
+  | 'ringing-out'
+  | 'ringing-in'
+  | 'connecting'
+  | 'active'
+  | 'ended';
 export type SealedSenderToken = string & {
   readonly __brand: 'SealedSenderToken';
+};
+
+export type RTCIceCandidateInit = {
+  candidate: string;
+  sdpMid?: string | null;
+  sdpMLineIndex?: number | null;
+  usernameFragment?: string | null;
 };
 
 export interface EncryptedBlob {
@@ -114,6 +129,41 @@ export type WebSocketEvent =
       displayName: string;
     }
   | { type: 'memberLeft'; groupId: GroupId; userId: UserId }
+  | {
+      type: 'callOffer';
+      groupId: GroupId;
+      callId: CallId;
+      toUserId: UserId;
+      fromUserId: UserId | null;
+      sealedSender?: string;
+      sdp: string;
+      timestamp: string;
+    }
+  | {
+      type: 'callAnswer';
+      groupId: GroupId;
+      callId: CallId;
+      fromUserId: UserId | null;
+      sealedSender?: string;
+      sdp: string;
+    }
+  | {
+      type: 'iceCandidate';
+      groupId: GroupId;
+      callId: CallId;
+      fromUserId: UserId | null;
+      sealedSender?: string;
+      candidate: RTCIceCandidateInit;
+    }
+  | {
+      type: 'callEnd';
+      groupId: GroupId;
+      callId: CallId;
+      fromUserId: UserId | null;
+      sealedSender?: string;
+      reason: 'hangup' | 'rejected' | 'missed' | 'error';
+    }
+  | { type: 'callRinging'; groupId: GroupId; callId: CallId }
   | { type: 'connected' }
   | { type: 'disconnected' }
   | { type: 'error'; error: string };

@@ -1,7 +1,13 @@
 // Re-export shared types for convenience
 
 export { base64ToUint8Array, uint8ArrayToBase64 } from '@microchat/crypto';
-export type { GroupId, MessagePayload, UserId } from '@microchat/shared';
+export type {
+  CallId,
+  CallState,
+  GroupId,
+  MessagePayload,
+  UserId,
+} from '@microchat/shared';
 export {
   IMAGE_QUALITY,
   MAX_IMAGE_HEIGHT,
@@ -17,6 +23,7 @@ export {
   type LoginOptions,
   type RegisterOptions,
 } from './auth-client';
+export { CallClient } from './call-client';
 export {
   MicroChatClient,
   MicroChatClient as default,

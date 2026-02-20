@@ -3,9 +3,10 @@ import { getCookie } from 'hono/cookie';
 import { Database } from './db/client';
 import { rateLimitApi, rateLimitAuth } from './middleware/rate-limit';
 import { type AuthEnv, authRouter } from './routes/auth';
+import { type CallsEnv, callsRouter } from './routes/calls';
 import { type GroupsEnv, groupsRouter } from './routes/groups';
 
-export interface AppEnv extends AuthEnv, GroupsEnv {
+export interface AppEnv extends AuthEnv, GroupsEnv, CallsEnv {
   CHAT_HUB: DurableObjectNamespace;
 }
 
@@ -26,6 +27,7 @@ app.use('/api/auth/*', async (c, next) => {
   return rateLimitAuth()(c, next);
 });
 app.use('/api/groups/*', rateLimitApi());
+app.use('/api/calls/*', rateLimitApi());
 
 // WebSocket upgrade endpoint
 app.get('/ws', async (c) => {
@@ -75,5 +77,6 @@ app.get('/ws', async (c) => {
 
 app.route('', authRouter);
 app.route('', groupsRouter);
+app.route('', callsRouter);
 
 export { app };
