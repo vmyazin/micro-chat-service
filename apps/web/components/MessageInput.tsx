@@ -1,5 +1,6 @@
 'use client';
 
+import * as Dialog from '@radix-ui/react-dialog';
 import { Image, Mic, Square, X } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
@@ -21,6 +22,8 @@ export function MessageInput({
 }: MessageInputProps) {
   const [content, setContent] = useState('');
   const [sending, setSending] = useState(false);
+  const [pastedImageFile, setPastedImageFile] = useState<File | null>(null);
+  const [pastedImageUrl, setPastedImageUrl] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [recorderState, recorderControls] = useAudioRecorder();
 
@@ -43,6 +46,14 @@ export function MessageInput({
       inputRef.current?.focus();
     }
   }, [sending, disabled, isRecording]);
+
+  useEffect(() => {
+    return () => {
+      if (pastedImageUrl) {
+        URL.revokeObjectURL(pastedImageUrl);
+      }
+    };
+  }, [pastedImageUrl]);
 
   // When recording finishes (status becomes 'recorded'), send the audio
   const { status, audioBlob, duration } = recorderState;
@@ -83,7 +94,42 @@ export function MessageInput({
     }
   }
 
+  function handlePaste(e: React.ClipboardEvent<HTMLInputElement>) {
+    if (!onSendImage || isDisabled) return;
+    const file = extractClipboardImage(e.clipboardData);
+    if (!file) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    openImagePreview(file);
+  }
+
   const isDisabled = sending || disabled;
+
+  function openImagePreview(file: File) {
+    setPastedImageFile(file);
+    setPastedImageUrl((prev) => {
+      if (prev) {
+        URL.revokeObjectURL(prev);
+      }
+      return URL.createObjectURL(file);
+    });
+    imagePicker.clearError();
+  }
+
+  function closeImagePreview() {
+    setPastedImageFile(null);
+    setPastedImageUrl(null);
+    imagePicker.clearError();
+  }
+
+  async function handleSendPastedImage() {
+    if (!pastedImageFile || !onSendImage) return;
+    const success = await imagePicker.processFile(pastedImageFile);
+    if (success) {
+      closeImagePreview();
+    }
+  }
 
   if (isRecording) {
     return (
@@ -130,6 +176,61 @@ export function MessageInput({
 
   return (
     <div className="p-4 border-t-[var(--border-thick)] border-[var(--border-color)] bg-[var(--surface-elevated)]">
+      <Dialog.Root
+        open={Boolean(pastedImageFile && pastedImageUrl)}
+        onOpenChange={(open) => {
+          if (!open) {
+            closeImagePreview();
+          }
+        }}
+      >
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50" />
+          <Dialog.Content className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="relative brutal-card bg-[var(--background)] p-6 w-full max-w-lg">
+              <div className="flex items-center justify-between mb-4">
+                <Dialog.Title className="text-lg font-semibold">
+                  Preview image
+                </Dialog.Title>
+                <Dialog.Close asChild>
+                  <button
+                    type="button"
+                    className="p-2 brutal-border hover:bg-[var(--surface-muted)]"
+                    aria-label="Close image preview"
+                    disabled={sending || imagePicker.compressing}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </Dialog.Close>
+              </div>
+              {pastedImageUrl && (
+                <div className="brutal-border bg-[var(--surface-muted)] p-2 mb-4">
+                  <img
+                    src={pastedImageUrl}
+                    alt="Image preview"
+                    className="w-full max-h-[60vh] object-contain"
+                  />
+                </div>
+              )}
+              {imagePicker.error && (
+                <div className="mb-4 p-3 brutal-border bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm">
+                  {imagePicker.error}
+                </div>
+              )}
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={handleSendPastedImage}
+                  disabled={sending || imagePicker.compressing}
+                  className="px-4 py-2 brutal-btn bg-[var(--accent)] text-white font-semibold disabled:opacity-50 flex items-center gap-2"
+                >
+                  {(sending || imagePicker.compressing) ? <SendingSpinner /> : 'Send'}
+                </button>
+              </div>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
       <input {...imagePicker.inputProps} />
       <div className="flex gap-2">
         {onSendImage && (
@@ -149,6 +250,7 @@ export function MessageInput({
           value={content}
           onChange={(e) => setContent(e.target.value)}
           onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
           placeholder="Type a message..."
           disabled={isDisabled}
           className="flex-1 px-4 py-2 brutal-border bg-[var(--surface-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] disabled:opacity-50 disabled:cursor-not-allowed"
@@ -178,6 +280,28 @@ export function MessageInput({
       )}
     </div>
   );
+}
+
+function extractClipboardImage(clipboard: DataTransfer | null): File | null {
+  if (!clipboard) return null;
+
+  let file: File | null = null;
+  const items = Array.from(clipboard.items || []);
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      file = item.getAsFile();
+      if (file) break;
+    }
+  }
+
+  if (!file && clipboard.files?.length) {
+    const candidate = clipboard.files[0];
+    if (candidate && candidate.type.startsWith('image/')) {
+      file = candidate;
+    }
+  }
+
+  return file;
 }
 
 function SendingSpinner() {

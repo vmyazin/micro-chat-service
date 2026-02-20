@@ -19,8 +19,10 @@ interface UseImagePickerOptions {
 
 interface UseImagePickerReturn {
   pickImage: () => void;
+  processFile: (file: File) => Promise<boolean>;
   compressing: boolean;
   error: string | null;
+  clearError: () => void;
   inputProps: {
     ref: React.RefObject<HTMLInputElement | null>;
     type: 'file';
@@ -38,16 +40,18 @@ export function useImagePicker({
   const [error, setError] = useState<string | null>(null);
 
   const processFile = useCallback(
-    async (file: File) => {
+    async (file: File): Promise<boolean> => {
       setError(null);
+      let success = false;
 
-      if (!ACCEPTED_TYPES.has(file.type)) {
-        setError('Unsupported image format. Use JPEG, PNG, GIF, or WebP.');
-        return;
-      }
-
-      setCompressing(true);
       try {
+        if (!ACCEPTED_TYPES.has(file.type)) {
+          setError('Unsupported image format. Use JPEG, PNG, GIF, or WebP.');
+          return false;
+        }
+
+        setCompressing(true);
+
         const bitmap = await createImageBitmap(file);
         let { width, height } = bitmap;
 
@@ -62,7 +66,7 @@ export function useImagePicker({
         const ctx = canvas.getContext('2d');
         if (!ctx) {
           setError('Canvas not supported in this browser.');
-          return;
+          return false;
         }
 
         ctx.drawImage(bitmap, 0, 0, width, height);
@@ -76,10 +80,11 @@ export function useImagePicker({
         // Check compressed size
         if (webpBlob.size > MAX_IMAGE_SIZE_BYTES) {
           setError(`Compressed image too large (${(webpBlob.size / 1024).toFixed(0)} KB). Try a simpler image.`);
-          return;
+          return false;
         }
 
         await onReady(webpBlob, width, height);
+        success = true;
       } catch (err) {
         setError(
           err instanceof Error ? err.message : 'Failed to process image.',
@@ -91,6 +96,8 @@ export function useImagePicker({
           inputRef.current.value = '';
         }
       }
+
+      return success;
     },
     [onReady],
   );
@@ -111,8 +118,10 @@ export function useImagePicker({
 
   return {
     pickImage,
+    processFile,
     compressing,
     error,
+    clearError: () => setError(null),
     inputProps: {
       ref: inputRef,
       type: 'file' as const,
