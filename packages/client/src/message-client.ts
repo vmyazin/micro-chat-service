@@ -1,6 +1,11 @@
 import type { EncryptedMessage, GroupCipher } from '@microchat/crypto';
 import { uint8ArrayToBase64 } from '@microchat/crypto';
-import type { GroupId, MessagePayload, UserId } from '@microchat/shared';
+import {
+  MAX_VOICE_SIZE_BYTES,
+  type GroupId,
+  type MessagePayload,
+  type UserId,
+} from '@microchat/shared';
 import type { SenderTokenStore } from './sender-token-store';
 
 export interface SendMessageResult {
@@ -14,6 +19,7 @@ export interface MessageListItem {
   senderId: UserId | null;
   senderName: string | null;
   encryptedContent: string;
+  nonce?: string;
   createdAt: string;
   deleted: boolean;
   sealedSender?: string;
@@ -83,6 +89,7 @@ export class MessageClient {
       senderId: msg.senderId,
       senderName: msg.senderName,
       encryptedContent: msg.encryptedPayload,
+      nonce: msg.nonce,
       createdAt: msg.createdAt,
       deleted: msg.deleted,
       sealedSender: msg.sealedSender,
@@ -106,6 +113,9 @@ export class MessageClient {
     epoch?: number,
     options?: SendMessageOptions,
   ): Promise<SendMessageResult> {
+    if (audioBlob.size > MAX_VOICE_SIZE_BYTES) {
+      throw new Error('Voice message exceeds the maximum size limit.');
+    }
     const buffer = await audioBlob.arrayBuffer();
     const base64 = uint8ArrayToBase64(new Uint8Array(buffer));
     const payload: MessagePayload = {
@@ -255,7 +265,7 @@ export class MessageClient {
 
     return this.cipher.decrypt(groupId, {
       ciphertext: message.encryptedContent,
-      nonce: message.encryptedContent, // nonce is not in MessageListItem yet
+      nonce: message.nonce ?? '',
       epoch,
     });
   }

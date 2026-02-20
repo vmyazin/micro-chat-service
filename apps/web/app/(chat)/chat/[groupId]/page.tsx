@@ -26,6 +26,7 @@ export default function ConversationPage() {
   const [messages, setMessages] = useState<MessageListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sendError, setSendError] = useState<string | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<
     'connected' | 'disconnected' | 'reconnecting'
   >('disconnected');
@@ -248,35 +249,44 @@ export default function ConversationPage() {
   async function handleSendVoiceMessage(audioBlob: Blob, duration: number) {
     if (!groupId) return;
 
-    const client = getClient();
-    const result = await client.sendVoiceMessage(
-      groupId as GroupId,
-      audioBlob,
-      duration,
-    );
+    setSendError(null);
 
-    const arrayBuffer = await audioBlob.arrayBuffer();
-    const base64 = uint8ArrayToBase64(new Uint8Array(arrayBuffer));
-    const payload: MessagePayload = {
-      type: 'audio',
-      data: base64,
-      duration,
-      mimeType: audioBlob.type,
-    };
+    try {
+      const client = getClient();
+      const result = await client.sendVoiceMessage(
+        groupId as GroupId,
+        audioBlob,
+        duration,
+      );
 
-    const newMessage: MessageListItem = {
-      id: result.messageId,
-      groupId: groupId as GroupId,
-      senderId: (currentUser?.userId ?? 'me') as UserId,
-      senderName: currentUser?.displayName ?? 'me',
-      encryptedContent: JSON.stringify(payload),
-      createdAt: result.timestamp,
-      deleted: false,
-    };
-    setMessages((prev) => {
-      if (prev.some((m) => m.id === result.messageId)) return prev;
-      return [...prev, newMessage];
-    });
+      const arrayBuffer = await audioBlob.arrayBuffer();
+      const base64 = uint8ArrayToBase64(new Uint8Array(arrayBuffer));
+      const payload: MessagePayload = {
+        type: 'audio',
+        data: base64,
+        duration,
+        mimeType: audioBlob.type,
+      };
+
+      const newMessage: MessageListItem = {
+        id: result.messageId,
+        groupId: groupId as GroupId,
+        senderId: (currentUser?.userId ?? 'me') as UserId,
+        senderName: currentUser?.displayName ?? 'me',
+        encryptedContent: JSON.stringify(payload),
+        createdAt: result.timestamp,
+        deleted: false,
+      };
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === result.messageId)) return prev;
+        return [...prev, newMessage];
+      });
+    } catch (err) {
+      console.error('Failed to send voice message:', err);
+      setSendError(
+        err instanceof Error ? err.message : 'Failed to send voice message',
+      );
+    }
   }
 
   async function handleSendImage(blob: Blob, width: number, height: number) {
@@ -433,6 +443,18 @@ export default function ConversationPage() {
       {connectionStatus === 'reconnecting' && (
         <div className="px-4 py-2 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 text-sm text-center">
           Reconnecting to real-time updates...
+        </div>
+      )}
+      {sendError && (
+        <div className="px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 text-sm text-center">
+          <span>{sendError}</span>
+          <button
+            type="button"
+            onClick={() => setSendError(null)}
+            className="ml-3 text-xs underline hover:no-underline"
+          >
+            Dismiss
+          </button>
         </div>
       )}
       <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-3 space-y-1.5">
