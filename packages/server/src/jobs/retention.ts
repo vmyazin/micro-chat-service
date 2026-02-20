@@ -1,5 +1,5 @@
+import { ChallengeStore } from '../auth/challenge-store';
 import { Database } from '../db/client';
-import { ChallengeStore } from '../routes/auth';
 
 export interface RetentionEnv {
   DB: D1Database;

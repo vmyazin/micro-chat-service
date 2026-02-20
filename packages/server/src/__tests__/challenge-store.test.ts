@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { ChallengeStore } from '../routes/auth';
+import { ChallengeStore } from '../auth/challenge-store';
 import { MockD1Database } from './mock-d1';
 
 describe('ChallengeStore', () => {

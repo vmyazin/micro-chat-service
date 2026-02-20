@@ -11,77 +11,10 @@ import {
 } from '@simplewebauthn/server';
 import { Hono } from 'hono';
 import { setCookie } from 'hono/cookie';
+import { ChallengeStore } from '../auth/challenge-store';
+import { verifyLogin } from '../auth/login-service';
 import type { D1Database } from '../db/client';
 import { Database } from '../db/client';
-
-export interface ChallengeData {
-  challenge: string;
-  userId?: string;
-  displayName?: string;
-  expiresAt: number;
-  type: 'registration' | 'authentication';
-}
-
-export class ChallengeStore {
-  private db: Database;
-
-  constructor(d1: D1Database) {
-    this.db = new Database(d1);
-  }
-
-  async set(data: ChallengeData): Promise<void> {
-    const expiresAtIso = new Date(data.expiresAt).toISOString();
-    await this.db.execute(
-      'INSERT INTO challenges (challenge, user_id, display_name, type, expires_at) VALUES (?, ?, ?, ?, ?)',
-      [
-        data.challenge,
-        data.userId ?? null,
-        data.displayName ?? null,
-        data.type,
-        expiresAtIso,
-      ],
-    );
-  }
-
-  async get(challenge: string): Promise<ChallengeData | null> {
-    const rows = await this.db.query<{
-      challenge: string;
-      user_id: string | null;
-      display_name: string | null;
-      type: 'registration' | 'authentication';
-      expires_at: string;
-    }>(
-      'SELECT challenge, user_id, display_name, type, expires_at FROM challenges WHERE challenge = ?',
-      [challenge],
-    );
-
-    if (rows.length === 0) return null;
-
-    const row = rows[0];
-    return {
-      challenge: row.challenge,
-      userId: row.user_id ?? undefined,
-      displayName: row.display_name ?? undefined,
-      type: row.type,
-      expiresAt: new Date(row.expires_at).getTime(),
-    };
-  }
-
-  async delete(challenge: string): Promise<void> {
-    await this.db.execute('DELETE FROM challenges WHERE challenge = ?', [
-      challenge,
-    ]);
-  }
-
-  async deleteExpired(): Promise<number> {
-    const now = new Date().toISOString();
-    const result = await this.db.execute(
-      'DELETE FROM challenges WHERE expires_at < ?',
-      [now],
-    );
-    return result.meta?.changes ?? 0;
-  }
-}
 
 export interface AuthEnv {
   DB: D1Database;
@@ -122,15 +55,6 @@ function uint8ArrayToBase64(bytes: Uint8Array): string {
     binary += String.fromCharCode(bytes[i]);
   }
   return btoa(binary);
-}
-
-function base64ToUint8Array(base64: string): Uint8Array {
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  return bytes;
 }
 
 authRouter.post('/api/auth/register/options', async (c) => {
@@ -385,82 +309,24 @@ authRouter.post('/api/auth/login/verify', async (c) => {
     return c.json({ error: 'response and challenge are required' }, 400);
   }
 
-  const challengeStore = new ChallengeStore(c.env.DB);
-  const storedChallenge = await challengeStore.get(body.challenge);
-
-  if (!storedChallenge) {
-    return c.json({ error: 'Challenge not found or expired' }, 400);
-  }
-
-  if (storedChallenge.type !== 'authentication') {
-    return c.json({ error: 'Invalid challenge type' }, 400);
-  }
-
-  if (storedChallenge.expiresAt < Date.now()) {
-    await challengeStore.delete(body.challenge);
-    return c.json({ error: 'Challenge expired' }, 400);
-  }
-
   try {
-    const db = new Database(c.env.DB);
-
-    const credentials = await db.query<{
-      id: string;
-      user_id: string;
-      credential_id: string;
-      public_key: string;
-    }>(
-      'SELECT id, user_id, credential_id, public_key FROM credentials WHERE credential_id = ?',
-      [body.response.id],
-    );
-
-    if (credentials.length === 0) {
-      return c.json({ error: 'Credential not found' }, 400);
-    }
-
-    const credential = credentials[0];
-    const publicKeyBytes = base64ToUint8Array(credential.public_key);
-    const publicKeyBuffer = new Uint8Array(
-      publicKeyBytes.buffer.slice(0),
-    ) as Uint8Array<ArrayBuffer>;
-
-    const verification = await verifyAuthenticationResponse({
-      response: body.response,
-      expectedChallenge: storedChallenge.challenge,
-      expectedOrigin: c.env.RP_ORIGIN || 'http://localhost:3000',
-      expectedRPID: c.env.RP_ID || 'localhost',
-      credential: {
-        id: credential.credential_id,
-        publicKey: publicKeyBuffer,
-        counter: 0,
+    const result = await verifyLogin(
+      { response: body.response, challenge: body.challenge },
+      {
+        db: new Database(c.env.DB),
+        challengeStore: new ChallengeStore(c.env.DB),
+        verifyAuthentication: verifyAuthenticationResponse,
+        rpOrigin: c.env.RP_ORIGIN || 'http://localhost:3000',
+        rpId: c.env.RP_ID || 'localhost',
+        generateSessionId,
       },
-    });
-
-    if (!verification.verified) {
-      return c.json({ error: 'Authentication verification failed' }, 400);
-    }
-
-    await challengeStore.delete(body.challenge);
-
-    const now = new Date().toISOString();
-    const userId = credential.user_id as UserId;
-
-    await db.execute('UPDATE credentials SET last_used_at = ? WHERE id = ?', [
-      now,
-      credential.id,
-    ]);
-
-    const sessionId = generateSessionId();
-    const expiresAt = new Date(
-      Date.now() + 30 * 24 * 60 * 60 * 1000,
-    ).toISOString();
-
-    await db.execute(
-      'INSERT INTO sessions (id, user_id, expires_at, device_info, created_at) VALUES (?, ?, ?, ?, ?)',
-      [sessionId, userId, expiresAt, '', now],
     );
 
-    setCookie(c, 'session', sessionId, {
+    if (!result.ok) {
+      return c.json({ error: result.error }, result.status);
+    }
+
+    setCookie(c, 'session', result.sessionId, {
       path: '/',
       httpOnly: true,
       secure: c.env.RP_ORIGIN?.startsWith('https') ?? false,
@@ -470,7 +336,7 @@ authRouter.post('/api/auth/login/verify', async (c) => {
 
     return c.json({
       verified: true,
-      userId,
+      userId: result.userId,
     });
   } catch (error) {
     const message =
