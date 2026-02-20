@@ -73,6 +73,45 @@ Note: `server` is not imported by any other package (it's the runtime). All othe
 - **Use `db.batch([...])` for atomic multi-table operations** — e.g., cascading delete on group removal
 - **`packages/server` runs on Cloudflare Workers** — target environment is `wrangler dev` / `wrangler deploy`, not Node.js
 
+### API and Business Logic Testing Guidelines
+
+- Split endpoints into `route -> controller -> service`:
+- Route: thin, uses `createApiHandler`; do not test framework plumbing.
+- Controller: orchestrates inputs/user context; minimal tests where logic exists.
+- Service: contains pure, testable logic;
+	- handle impure services (mock the dependency, test the logic around it).
+- Test behaviors, not trivial implementation details:
+- Good: access validation outcomes, null/edge short-circuits, result parsing.
+- Avoid: asserting string concatenation, default `.trim()` behavior, or framework defaults (e.g., auth required by default).
+- Don't test routes — they're thin wrappers; test services instead
+- Don't test syntax — avoid checking SQL strings or internal implementation details
+- Don't test API integration at all
+- Test outcomes — given proper inputs and mocked dependencies, does the function return correct results?
+- File naming/location convention — `*.test.ts` colocated in `/features` or alongside routes
+
 ## Commits
 
 Provide a concise and descriptive commit message after finishing a job in a markdown snippet. Do not automatically commit changes.
+
+## HTML Semantic Structure and Class Naming Conventions
+
+When creating HTML elements, follow these guidelines:
+
+1. **Use semantic HTML elements** whenever possible (`header`, `nav`, `main`, `section`, `article`, etc.)
+2. **Apply descriptive class names** that indicate purpose
+3. **Use single dash as separator** for improved readability
+4. **Keep class names simple and intuitive**
+
+**Class Naming Pattern:**
+- `{component}-{element}`
+- `{purpose}-{variant}`
+
+**Examples:**
+- `sidebar-nav`, `sidebar-item`, `sidebar-header`
+- `gallery-grid`, `gallery-item`, `gallery-thumbnail`
+- `card-featured`, `card-compact`
+
+## Linting
+
+- Always run linting first with `pnpm lint` before proceeding to build
+- Never run a build automatically — instead, suggest "Run `pnpm build` to build the project."
