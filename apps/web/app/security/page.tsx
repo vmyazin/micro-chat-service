@@ -24,7 +24,7 @@ export default function SecurityPage() {
       <SiteHeader />
 
       {/* Hero */}
-      <header className="pt-20 pb-16 px-6 text-center max-w-4xl mx-auto">
+      <header className="pt-40 pb-24 px-6 text-center max-w-4xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}

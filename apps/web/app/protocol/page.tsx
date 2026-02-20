@@ -10,6 +10,7 @@ import {
   Shield,
   Terminal,
   Users,
+  Ghost,
 } from 'lucide-react';
 import { useState } from 'react';
 import { SiteHeader } from '@/components/site-header';
@@ -23,7 +24,7 @@ export default function ProtocolPage() {
       <SiteHeader />
 
       {/* Hero */}
-      <header className="pt-20 pb-16 px-6 text-center max-w-4xl mx-auto">
+      <header className="pt-40 pb-24 px-6 text-center max-w-4xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -157,6 +158,30 @@ function LaymanContent() {
           <LaymanRatchetDemo />
         </div>
       </section>
+
+      {/* Concept 3: The Ghost Courier */}
+      <section className="grid lg:grid-cols-2 gap-16 items-center">
+        <div>
+          <div className="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center mb-6">
+            <Ghost className="w-6 h-6" />
+          </div>
+          <h2
+            className="text-3xl md:text-4xl mb-6 font-bold text-slate-900"
+            style={{ fontFamily: 'var(--font-bodoni)' }}
+          >
+            The Ghost Courier
+          </h2>
+          <p className="text-lg text-slate-600 leading-relaxed mb-6 font-light">
+            Normally, the stranger carrying your box (our server) knows exactly who sent it and who it's going to. 
+          </p>
+          <p className="text-lg text-slate-600 leading-relaxed font-light">
+            In MicroChat, we use a system called <strong>Sealed Sender</strong>. You take an anonymous delivery token and drop off the box. The server verifies the token but has no idea who you actually are. You are a ghost.
+          </p>
+        </div>
+        <div className="h-80 bg-white rounded-3xl border border-purple-100 shadow-xl flex items-center justify-center overflow-hidden relative">
+          <LaymanGhostDemo />
+        </div>
+      </section>
     </motion.div>
   );
 }
@@ -176,17 +201,26 @@ function NerdContent() {
     >
       {/* Intro Stats */}
       <div className="grid md:grid-cols-3 gap-6">
-        <div className="bg-slate-900 text-white p-8 rounded-2xl shadow-xl">
+        <div className="bg-slate-900 text-white p-8 rounded-2xl shadow-xl relative overflow-hidden">
+          <div className="absolute top-4 right-4 bg-amber-500/20 text-amber-500 text-[10px] font-bold px-2 py-1 rounded tracking-widest uppercase">
+            In Progress
+          </div>
           <div className="text-blue-400 font-mono text-sm mb-2">Protocol</div>
           <div className="text-3xl font-bold mb-2">MLS</div>
           <div className="text-slate-400 text-sm">RFC 9420 Standard</div>
         </div>
-        <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-lg">
+        <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-lg relative overflow-hidden">
+          <div className="absolute top-4 right-4 bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-1 rounded tracking-widest uppercase">
+            In Progress
+          </div>
           <div className="text-blue-600 font-mono text-sm mb-2">Topology</div>
           <div className="text-3xl font-bold mb-2 text-slate-900">TreeKEM</div>
           <div className="text-slate-500 text-sm">Logarithmic Efficiency</div>
         </div>
-        <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-lg">
+        <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-lg relative overflow-hidden">
+          <div className="absolute top-4 right-4 bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-1 rounded tracking-widest uppercase">
+            In Progress
+          </div>
           <div className="text-blue-600 font-mono text-sm mb-2">Primitives</div>
           <div className="text-3xl font-bold mb-2 text-slate-900">HPKE</div>
           <div className="text-slate-500 text-sm">Hybrid Public Key Enc.</div>
@@ -208,6 +242,9 @@ function NerdContent() {
           >
             TreeKEM & Continuous Group Key Agreement
           </h2>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-amber-100 text-amber-700 text-xs font-bold uppercase tracking-wider mb-6">
+            Currently In Development
+          </div>
           <div className="prose prose-slate text-slate-600 font-light prose-lg">
             <p className="mb-4">
               MicroChat implements{' '}
@@ -302,6 +339,58 @@ function NerdContent() {
               locking out the attacker from future messages.
             </p>
           </div>
+        </div>
+      </section>
+
+      {/* Technical Deep Dive 3: Sealed Sender */}
+      <section className="grid lg:grid-cols-2 gap-16">
+        <div className="lg:order-2">
+          <div className="flex items-center gap-3 mb-6">
+            <Ghost className="w-6 h-6 text-purple-600" />
+            <span className="font-mono text-purple-600 font-bold uppercase tracking-wider">
+              Anonymity
+            </span>
+          </div>
+          <h2
+            className="text-3xl md:text-5xl mb-8 font-bold text-slate-900"
+            style={{ fontFamily: 'var(--font-bodoni)' }}
+          >
+            Sealed Sender Routing
+          </h2>
+          <div className="prose prose-slate text-slate-600 font-light prose-lg">
+            <p className="mb-4">
+              MicroChat implements <strong>Sealed Sender</strong> to decouple message routing from sender identity. Network metadata is often as sensitive as the message contents.
+            </p>
+            <p className="mb-4">
+              Our implementation issues cryptographic blinding tokens to clients representing "the right to send one message".
+            </p>
+            <ul className="list-none space-y-3 pl-0 mb-6">
+              <li className="flex gap-3">
+                <span className="text-purple-600 font-bold">1.</span>
+                <span>
+                  <strong>Token Issuance:</strong> Clients fetch batches of 32-byte secure random tokens.
+                </span>
+              </li>
+              <li className="flex gap-3">
+                <span className="text-purple-600 font-bold">2.</span>
+                <span>
+                  <strong>Server Blindness:</strong> The server only stores the SHA-256 hash of tokens. It cannot link a token back to the requesting user.
+                </span>
+              </li>
+              <li className="flex gap-3">
+                <span className="text-purple-600 font-bold">3.</span>
+                <span>
+                  <strong>Anonymous Delivery:</strong> Messages are sent with <code>sender_id = NULL</code> and a valid plaintext token.
+                </span>
+              </li>
+            </ul>
+            <p>
+              The true sender identity is embedded inside the AES-GCM encrypted payload, accessible only by group members with the current epoch key.
+            </p>
+          </div>
+        </div>
+        <div className="bg-purple-50 rounded-3xl p-8 shadow-inner flex items-center justify-center w-full min-h-[500px] border border-purple-100 lg:order-1 relative overflow-hidden">
+          <NerdGhostDemo />
         </div>
       </section>
     </motion.div>
@@ -579,6 +668,58 @@ function NerdTreeDemo() {
           delay: 1.5,
         }}
       />
+    </div>
+  );
+}
+
+function LaymanGhostDemo() {
+  return (
+    <div className="relative w-full h-full flex flex-col items-center justify-center bg-slate-50 px-8">
+      <motion.div 
+        className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center border-2 border-purple-200 z-10"
+        initial={{ opacity: 1 }}
+        animate={{ opacity: [1, 0.2, 1], filter: ['blur(0px)', 'blur(4px)', 'blur(0px)'] }}
+        transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+      >
+        <Ghost className="w-8 h-8 text-purple-600" />
+      </motion.div>
+      <div className="mt-8 text-sm font-mono text-purple-600 bg-purple-50 border border-purple-100 px-4 py-2 rounded-full flex items-center gap-2">
+        <Key className="w-4 h-4" />
+        One-Time Delivery Token
+      </div>
+    </div>
+  );
+}
+
+function NerdGhostDemo() {
+  return (
+    <div className="flex flex-col items-center justify-center gap-6 w-full text-center">
+      <div className="flex items-center gap-4">
+        <div className="p-4 bg-white rounded-xl shadow-sm border border-gray-100">
+          <div className="text-xs text-slate-400 font-mono mb-1">Client</div>
+          <div className="text-sm font-bold">Token: 8f4a...2bc9</div>
+        </div>
+        <motion.div 
+          animate={{ x: [0, 40, 0], opacity: [0, 1, 0] }}
+          transition={{ duration: 3, repeat: Infinity }}
+          className="text-purple-500"
+        >
+          ➔
+        </motion.div>
+        <div className="p-4 bg-slate-900 rounded-xl shadow-sm text-white">
+          <div className="text-xs text-slate-400 font-mono mb-1">Server DB</div>
+          <div className="text-sm font-mono text-green-400">SHA256(Token)</div>
+        </div>
+      </div>
+      <div className="mt-8 p-6 bg-white rounded-xl shadow-lg border border-gray-100 text-left w-full max-w-sm">
+        <div className="text-xs font-mono text-slate-400 mb-2 border-b pb-2">POST /api/messages</div>
+        <div className="font-mono text-sm space-y-1 mt-2">
+          <div><span className="text-blue-500">group_id:</span> "cf8a-..."</div>
+          <div><span className="text-blue-500">sender_id:</span> <span className="text-purple-600 font-bold italic">null</span></div>
+          <div><span className="text-blue-500">token:</span> "8f4a...2bc9"</div>
+          <div><span className="text-blue-500">payload:</span> "U2FsdGVk..."</div>
+        </div>
+      </div>
     </div>
   );
 }
