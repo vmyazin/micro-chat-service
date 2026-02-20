@@ -13,8 +13,8 @@ import {
   Users,
 } from 'lucide-react';
 import { useState } from 'react';
-import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
+import { SiteHeader } from '@/components/site-header';
 
 export default function ProtocolPage() {
   const [mode, setMode] = useState<'layman' | 'nerd'>('layman');

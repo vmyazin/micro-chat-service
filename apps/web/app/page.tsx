@@ -6,14 +6,13 @@ import {
   AlertTriangle,
   Check,
   ChevronRight,
-  Github,
   Lock,
   Shield,
   Trash2,
 } from 'lucide-react';
 import Link from 'next/link';
-import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
+import { SiteHeader } from '@/components/site-header';
 
 export default function Home() {
   const features = [
