@@ -1,6 +1,6 @@
 'use client';
 
-import { MAX_IMAGE_HEIGHT, MAX_IMAGE_SIZE_BYTES } from '@microchat/client';
+import { IMAGE_QUALITY, MAX_IMAGE_HEIGHT, MAX_IMAGE_SIZE_BYTES, MAX_IMAGE_WIDTH } from '@microchat/client';
 import { useCallback, useRef, useState } from 'react';
 
 const ACCEPTED_TYPES = new Set([
@@ -46,21 +46,16 @@ export function useImagePicker({
         return;
       }
 
-      if (file.size > MAX_IMAGE_SIZE_BYTES) {
-        setError(`Image too large. Maximum size is ${MAX_IMAGE_SIZE_BYTES / (1024 * 1024)} MB.`);
-        return;
-      }
-
       setCompressing(true);
       try {
         const bitmap = await createImageBitmap(file);
         let { width, height } = bitmap;
 
-        // Scale down if height exceeds limit, maintaining aspect ratio
-        if (height > MAX_IMAGE_HEIGHT) {
-          const scale = MAX_IMAGE_HEIGHT / height;
+        // Scale down to fit within max dimensions, maintaining aspect ratio
+        const scale = Math.min(1, MAX_IMAGE_WIDTH / width, MAX_IMAGE_HEIGHT / height);
+        if (scale < 1) {
           width = Math.round(width * scale);
-          height = MAX_IMAGE_HEIGHT;
+          height = Math.round(height * scale);
         }
 
         const canvas = new OffscreenCanvas(width, height);
@@ -75,8 +70,14 @@ export function useImagePicker({
 
         const webpBlob = await canvas.convertToBlob({
           type: 'image/webp',
-          quality: 0.85,
+          quality: IMAGE_QUALITY,
         });
+
+        // Check compressed size
+        if (webpBlob.size > MAX_IMAGE_SIZE_BYTES) {
+          setError(`Compressed image too large (${(webpBlob.size / 1024).toFixed(0)} KB). Try a simpler image.`);
+          return;
+        }
 
         await onReady(webpBlob, width, height);
       } catch (err) {
