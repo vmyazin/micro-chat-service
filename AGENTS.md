@@ -72,3 +72,7 @@ Note: `server` is not imported by any other package (it's the runtime). All othe
 - **Next.js rewrites `/api/*` to Workers** — no CORS config needed; the web app only talks to its own origin
 - **Use `db.batch([...])` for atomic multi-table operations** — e.g., cascading delete on group removal
 - **`packages/server` runs on Cloudflare Workers** — target environment is `wrangler dev` / `wrangler deploy`, not Node.js
+
+## Commits
+
+Provide a concise and descriptive commit message after finishing a job in a markdown snippet. Do not automatically commit changes.
