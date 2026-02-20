@@ -7,10 +7,15 @@ class MockR2Bucket {
   private objects = new Map<string, ArrayBuffer>();
   deleted: string[] = [];
 
-  async put(key: string, value: ArrayBuffer | ReadableStream | string): Promise<void> {
+  async put(
+    key: string,
+    value: ArrayBuffer | ReadableStream | string,
+  ): Promise<void> {
     this.objects.set(
       key,
-      typeof value === 'string' ? new TextEncoder().encode(value).buffer as ArrayBuffer : value as ArrayBuffer,
+      typeof value === 'string'
+        ? (new TextEncoder().encode(value).buffer as ArrayBuffer)
+        : (value as ArrayBuffer),
     );
   }
 
@@ -71,7 +76,11 @@ describe('Retention cleanup with image attachments', () => {
       },
     ]);
 
-    const result = await runRetentionCleanup(db, mockD1 as unknown as D1Database, r2 as unknown as R2Bucket);
+    const result = await runRetentionCleanup(
+      db,
+      mockD1 as unknown as D1Database,
+      r2 as unknown as R2Bucket,
+    );
 
     expect(result.expiredImagesDeleted).toBe(1);
     expect(r2.deleted).toContain(r2Key);
@@ -94,7 +103,11 @@ describe('Retention cleanup with image attachments', () => {
       },
     ]);
 
-    const result = await runRetentionCleanup(db, mockD1 as unknown as D1Database, r2 as unknown as R2Bucket);
+    const result = await runRetentionCleanup(
+      db,
+      mockD1 as unknown as D1Database,
+      r2 as unknown as R2Bucket,
+    );
 
     expect(result.expiredImagesDeleted).toBe(0);
     expect(r2.deleted).toHaveLength(0);
@@ -130,7 +143,11 @@ describe('Retention cleanup with image attachments', () => {
       },
     ]);
 
-    const result = await runRetentionCleanup(db, mockD1 as unknown as D1Database, r2 as unknown as R2Bucket);
+    const result = await runRetentionCleanup(
+      db,
+      mockD1 as unknown as D1Database,
+      r2 as unknown as R2Bucket,
+    );
 
     expect(result.expiredImagesDeleted).toBe(1);
     expect(r2.deleted).toEqual([oldKey]);
@@ -153,7 +170,10 @@ describe('Retention cleanup with image attachments', () => {
       },
     ]);
 
-    const result = await runRetentionCleanup(db, mockD1 as unknown as D1Database);
+    const result = await runRetentionCleanup(
+      db,
+      mockD1 as unknown as D1Database,
+    );
 
     // Should not crash; images left untouched
     expect(result.expiredImagesDeleted).toBe(0);
@@ -172,23 +192,59 @@ describe('Image attachment cleanup on group deletion', () => {
 
   it('deletes image_attachments in batch alongside other group data', async () => {
     mockD1._seed('image_attachments', [
-      { id: 'ia1', message_id: 'msg1', group_id: 'g1', r2_key: 'groups/g1/a.bin', created_at: '2024-01-01' },
-      { id: 'ia2', message_id: 'msg2', group_id: 'g1', r2_key: 'groups/g1/b.bin', created_at: '2024-01-02' },
-      { id: 'ia3', message_id: 'msg3', group_id: 'g2', r2_key: 'groups/g2/c.bin', created_at: '2024-01-01' },
+      {
+        id: 'ia1',
+        message_id: 'msg1',
+        group_id: 'g1',
+        r2_key: 'groups/g1/a.bin',
+        created_at: '2024-01-01',
+      },
+      {
+        id: 'ia2',
+        message_id: 'msg2',
+        group_id: 'g1',
+        r2_key: 'groups/g1/b.bin',
+        created_at: '2024-01-02',
+      },
+      {
+        id: 'ia3',
+        message_id: 'msg3',
+        group_id: 'g2',
+        r2_key: 'groups/g2/c.bin',
+        created_at: '2024-01-01',
+      },
     ]);
     mockD1._seed('messages', [
-      { id: 'msg1', group_id: 'g1', sender_id: 'u1', encrypted_payload: '...', nonce: 'n1', created_at: '2024-01-01', deleted_at: null, deleted_by: null },
+      {
+        id: 'msg1',
+        group_id: 'g1',
+        sender_id: 'u1',
+        encrypted_payload: '...',
+        nonce: 'n1',
+        created_at: '2024-01-01',
+        deleted_at: null,
+        deleted_by: null,
+      },
     ]);
     mockD1._seed('invites', []);
     mockD1._seed('group_members', [
       { id: 'm1', group_id: 'g1', user_id: 'u1', joined_at: '2024-01-01' },
     ]);
     mockD1._seed('groups', [
-      { id: 'g1', encrypted_name: 'test', owner_id: 'u1', created_at: '2024-01-01', last_activity_at: '2024-01-01' },
+      {
+        id: 'g1',
+        encrypted_name: 'test',
+        owner_id: 'u1',
+        created_at: '2024-01-01',
+        last_activity_at: '2024-01-01',
+      },
     ]);
 
     const results = await db.batch([
-      { sql: 'DELETE FROM image_attachments WHERE group_id = ?', params: ['g1'] },
+      {
+        sql: 'DELETE FROM image_attachments WHERE group_id = ?',
+        params: ['g1'],
+      },
       { sql: 'DELETE FROM messages WHERE group_id = ?', params: ['g1'] },
       { sql: 'DELETE FROM invites WHERE group_id = ?', params: ['g1'] },
       { sql: 'DELETE FROM group_members WHERE group_id = ?', params: ['g1'] },
@@ -218,8 +274,20 @@ describe('Image attachment cleanup on message deletion', () => {
 
   it('deletes image_attachments for a specific message', async () => {
     mockD1._seed('image_attachments', [
-      { id: 'ia1', message_id: 'msg1', group_id: 'g1', r2_key: 'groups/g1/a.bin', created_at: '2024-01-01' },
-      { id: 'ia2', message_id: 'msg2', group_id: 'g1', r2_key: 'groups/g1/b.bin', created_at: '2024-01-02' },
+      {
+        id: 'ia1',
+        message_id: 'msg1',
+        group_id: 'g1',
+        r2_key: 'groups/g1/a.bin',
+        created_at: '2024-01-01',
+      },
+      {
+        id: 'ia2',
+        message_id: 'msg2',
+        group_id: 'g1',
+        r2_key: 'groups/g1/b.bin',
+        created_at: '2024-01-02',
+      },
     ]);
 
     // Simulate what the delete message handler does: query then delete
@@ -231,7 +299,9 @@ describe('Image attachment cleanup on message deletion', () => {
     expect(rows).toHaveLength(1);
     expect(rows[0].r2_key).toBe('groups/g1/a.bin');
 
-    await db.execute('DELETE FROM image_attachments WHERE message_id = ?', ['msg1']);
+    await db.execute('DELETE FROM image_attachments WHERE message_id = ?', [
+      'msg1',
+    ]);
 
     const remaining = mockD1._getTable('image_attachments');
     expect(remaining).toHaveLength(1);

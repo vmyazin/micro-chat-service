@@ -1,17 +1,36 @@
 import { verifyAuthenticationResponse } from '@simplewebauthn/server';
+
+type Env = {};
+
 export default {
-  async fetch(req, env, ctx) {
+  async fetch(_req: Request, _env: Env, _ctx: ExecutionContext) {
     try {
       await verifyAuthenticationResponse({
-        response: { id: "test", rawId: "test", type: "public-key", response: { authenticatorData: "a", clientDataJSON: "b", signature: "c", userHandle: "d" }},
-        expectedChallenge: "chal",
-        expectedOrigin: "http://localhost",
-        expectedRPID: "localhost",
-        credential: { id: "test", publicKey: new Uint8Array([1,2,3]), counter: 0 }
+        response: {
+          id: 'test',
+          rawId: 'test',
+          type: 'public-key',
+          clientExtensionResults: {},
+          response: {
+            authenticatorData: 'a',
+            clientDataJSON: 'b',
+            signature: 'c',
+            userHandle: 'd',
+          },
+        },
+        expectedChallenge: 'chal',
+        expectedOrigin: 'http://localhost',
+        expectedRPID: 'localhost',
+        credential: {
+          id: 'test',
+          publicKey: new Uint8Array([1, 2, 3]),
+          counter: 0,
+        },
       });
-      return new Response("OK");
-    } catch(e) {
-      return new Response(e.stack || e.message);
+      return new Response('OK');
+    } catch (error: unknown) {
+      console.error('Test worker auth verification failed', error);
+      return new Response('Internal Server Error', { status: 500 });
     }
-  }
-}
+  },
+};

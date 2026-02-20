@@ -1,6 +1,7 @@
 'use client';
 
 import { AuthClient } from '@microchat/client';
+import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import GroupList from '@/components/GroupList';
@@ -64,7 +65,14 @@ export default function ChatLayout({
         <div className="flex flex-col h-full">
           {/* Sidebar header */}
           <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--border-color)]">
-            <img src="/images/mc-logo-vector-8863.svg" alt="MicroChat Logo" className="h-12 w-auto" />
+            <Image
+              src="/images/mc-logo-vector-8863.svg"
+              alt="MicroChat Logo"
+              width={48}
+              height={48}
+              className="h-12 w-auto"
+              priority
+            />
             <button
               type="button"
               onClick={() => setSidebarOpen(false)}

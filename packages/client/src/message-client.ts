@@ -1,8 +1,8 @@
 import type { EncryptedMessage, GroupCipher } from '@microchat/crypto';
 import { uint8ArrayToBase64 } from '@microchat/crypto';
 import {
-  MAX_VOICE_SIZE_BYTES,
   type GroupId,
+  MAX_VOICE_SIZE_BYTES,
   type MessagePayload,
   type UserId,
 } from '@microchat/shared';

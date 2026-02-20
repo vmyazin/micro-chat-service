@@ -28,7 +28,9 @@ export default function InvitePage() {
       })
       .catch((err) => {
         setState('error');
-        setError(err instanceof Error ? err.message : 'Failed to accept invite');
+        setError(
+          err instanceof Error ? err.message : 'Failed to accept invite',
+        );
       });
   }, [params.code, router]);
 
@@ -61,6 +63,7 @@ export default function InvitePage() {
               {error}
             </div>
             <button
+              type="button"
               onClick={() => router.push('/chat')}
               className="brutal-btn"
             >

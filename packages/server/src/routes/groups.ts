@@ -395,7 +395,10 @@ groupsRouter.delete('/api/groups/:id', requireAuth, async (c) => {
 
   // Delete all group data atomically using batch
   await db.batch([
-    { sql: 'DELETE FROM image_attachments WHERE group_id = ?', params: [groupId] },
+    {
+      sql: 'DELETE FROM image_attachments WHERE group_id = ?',
+      params: [groupId],
+    },
     { sql: 'DELETE FROM messages WHERE group_id = ?', params: [groupId] },
     { sql: 'DELETE FROM invites WHERE group_id = ?', params: [groupId] },
     { sql: 'DELETE FROM group_members WHERE group_id = ?', params: [groupId] },
@@ -669,7 +672,9 @@ groupsRouter.post('/api/groups/:id/images', requireAuth, async (c) => {
   const maxEncryptedSize = MAX_IMAGE_SIZE_BYTES + 1024 * 64;
   if (body.byteLength === 0 || body.byteLength > maxEncryptedSize) {
     return c.json(
-      { error: `Image must be between 1 byte and ${MAX_IMAGE_SIZE_BYTES} bytes` },
+      {
+        error: `Image must be between 1 byte and ${MAX_IMAGE_SIZE_BYTES} bytes`,
+      },
       400,
     );
   }

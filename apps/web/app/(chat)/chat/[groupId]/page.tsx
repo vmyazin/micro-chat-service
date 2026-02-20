@@ -212,7 +212,7 @@ export default function ConversationPage() {
       unsubscribe();
       client.unsubscribe(groupId as GroupId);
     };
-  }, [groupId, getClient, connectionStatus]);
+  }, [groupId, getClient, connectionStatus, playSfx]);
 
   useEffect(() => {
     return () => {
@@ -590,7 +590,9 @@ function MessageBubble({
           {!isOwn && (
             <div
               className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white select-none"
-              style={{ background: avatarColor(message.senderName ?? 'Anonymous') }}
+              style={{
+                background: avatarColor(message.senderName ?? 'Anonymous'),
+              }}
               aria-hidden="true"
             >
               {(message.senderName ?? '?').charAt(0).toUpperCase()}
@@ -604,7 +606,9 @@ function MessageBubble({
             {!isOwn && (
               <span
                 className="text-xs font-semibold mb-1 px-1"
-                style={{ color: avatarColor(message.senderName ?? 'Anonymous') }}
+                style={{
+                  color: avatarColor(message.senderName ?? 'Anonymous'),
+                }}
               >
                 {message.senderName ?? 'Anonymous'}
               </span>
@@ -642,15 +646,11 @@ function MessageBubble({
                   height={decoded.height}
                   isOwn={isOwn}
                 />
-              ) : (
-                <>
-                  {typeof decoded === 'string'
-                    ? decoded
-                    : decoded.type === 'text'
-                      ? decoded.content
-                      : null}
-                </>
-              )}
+              ) : typeof decoded === 'string' ? (
+                decoded
+              ) : decoded.type === 'text' ? (
+                decoded.content
+              ) : null}
 
               {/* Timestamp row */}
               <div
@@ -714,6 +714,7 @@ function MessageBubble({
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
+              <title>Highlight message</title>
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -737,6 +738,7 @@ function MessageBubble({
                   stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
+                  <title>Delete message</title>
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -781,7 +783,9 @@ function decodeContent(encryptedContent: string): MessagePayload | string {
     if (
       parsed &&
       typeof parsed === 'object' &&
-      (parsed.type === 'text' || parsed.type === 'audio' || parsed.type === 'image')
+      (parsed.type === 'text' ||
+        parsed.type === 'audio' ||
+        parsed.type === 'image')
     ) {
       return parsed as MessagePayload;
     }

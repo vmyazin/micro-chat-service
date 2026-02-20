@@ -2,8 +2,8 @@ import type { AuthenticationResponseJSON } from '@simplewebauthn/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChallengeStore } from '../auth/challenge-store';
 import {
-  verifyLogin,
   type VerifyAuthenticationFn,
+  verifyLogin,
 } from '../auth/login-service';
 import { Database } from '../db/client';
 import { MockD1Database } from './mock-d1';
@@ -258,7 +258,11 @@ describe('verifyLogin', () => {
       },
     );
 
-    expect(result).toEqual({ ok: true, userId: 'user-1', sessionId: 'session-1' });
+    expect(result).toEqual({
+      ok: true,
+      userId: 'user-1',
+      sessionId: 'session-1',
+    });
     expect(mockD1._getTable('challenges')).toHaveLength(0);
 
     const credentials = mockD1._getTable('credentials');

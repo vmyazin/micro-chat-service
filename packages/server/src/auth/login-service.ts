@@ -102,10 +102,10 @@ export async function verifyLogin(
   await deps.challengeStore.delete(input.challenge);
 
   const nowIso = now.toISOString();
-  await deps.db.execute('UPDATE credentials SET last_used_at = ? WHERE id = ?', [
-    nowIso,
-    credential.id,
-  ]);
+  await deps.db.execute(
+    'UPDATE credentials SET last_used_at = ? WHERE id = ?',
+    [nowIso, credential.id],
+  );
 
   const sessionId = deps.generateSessionId();
   const expiresAt = new Date(now.getTime() + SESSION_TTL_MS).toISOString();

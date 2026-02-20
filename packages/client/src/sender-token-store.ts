@@ -55,17 +55,18 @@ export class SenderTokenStore {
       new Date() < new Date(pool.expiresAt.getTime() - TOKEN_EXPIRY_BUFFER)
     ) {
       if (pool.tokens.length > 0) {
-        const token = pool.tokens.pop()!;
+        const token = pool.tokens.pop();
+        if (token) {
+          // Trigger async refill if running low
+          if (
+            pool.tokens.length <=
+            (this.options.minThreshold ?? MIN_TOKEN_THRESHOLD)
+          ) {
+            this.maybeRefill(groupId);
+          }
 
-        // Trigger async refill if running low
-        if (
-          pool.tokens.length <=
-          (this.options.minThreshold ?? MIN_TOKEN_THRESHOLD)
-        ) {
-          this.maybeRefill(groupId);
+          return token;
         }
-
-        return token;
       }
     }
 
@@ -74,7 +75,10 @@ export class SenderTokenStore {
     pool = this.pools.get(groupId);
 
     if (pool && pool.tokens.length > 0) {
-      return pool.tokens.pop()!;
+      const token = pool.tokens.pop();
+      if (token) {
+        return token;
+      }
     }
 
     return null;

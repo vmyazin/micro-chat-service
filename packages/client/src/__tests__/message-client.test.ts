@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { GroupId } from '@microchat/shared';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MessageClient } from '../message-client';
 
 // Track all fetch calls
@@ -7,7 +7,12 @@ let fetchCalls: Array<{ url: string; init: RequestInit }> = [];
 
 function mockFetch(handlers: Record<string, () => Response>) {
   return vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
-    const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+    const url =
+      typeof input === 'string'
+        ? input
+        : input instanceof URL
+          ? input.toString()
+          : input.url;
     fetchCalls.push({ url, init: init ?? {} });
 
     for (const [pattern, handler] of Object.entries(handlers)) {
@@ -63,9 +68,9 @@ describe('MessageClient.sendImageMessage', () => {
     const uploadCall = fetchCalls[0];
     expect(uploadCall.url).toContain(`/api/groups/${groupId}/images`);
     expect(uploadCall.init.method).toBe('POST');
-    expect((uploadCall.init.headers as Record<string, string>)['Content-Type']).toBe(
-      'application/octet-stream',
-    );
+    expect(
+      (uploadCall.init.headers as Record<string, string>)['Content-Type'],
+    ).toBe('application/octet-stream');
 
     // Verify the message request contains the image payload
     const messageCall = fetchCalls[1];
@@ -84,8 +89,7 @@ describe('MessageClient.sendImageMessage', () => {
 
   it('throws when image upload fails', async () => {
     globalThis.fetch = mockFetch({
-      '/images': () =>
-        jsonResponse({ error: 'Image too large' }, 400),
+      '/images': () => jsonResponse({ error: 'Image too large' }, 400),
     });
 
     const blob = new Blob([new Uint8Array(64)]);

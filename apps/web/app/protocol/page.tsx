@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   FileCode,
+  Ghost,
   Key,
   Lock,
   RefreshCw,
@@ -10,7 +11,6 @@ import {
   Shield,
   Terminal,
   Users,
-  Ghost,
 } from 'lucide-react';
 import { useState } from 'react';
 import { SiteHeader } from '@/components/site-header';
@@ -172,10 +172,14 @@ function LaymanContent() {
             The Ghost Courier
           </h2>
           <p className="text-lg text-slate-600 leading-relaxed mb-6 font-light">
-            Normally, the stranger carrying your box (our server) knows exactly who sent it and who it's going to. 
+            Normally, the stranger carrying your box (our server) knows exactly
+            who sent it and who it's going to.
           </p>
           <p className="text-lg text-slate-600 leading-relaxed font-light">
-            In MicroChat, we use a system called <strong>Sealed Sender</strong>. You take an anonymous delivery token and drop off the box. The server verifies the token but has no idea who you actually are. You are a ghost.
+            In MicroChat, we use a system called <strong>Sealed Sender</strong>.
+            You take an anonymous delivery token and drop off the box. The
+            server verifies the token but has no idea who you actually are. You
+            are a ghost.
           </p>
         </div>
         <div className="h-80 bg-white rounded-3xl border border-purple-100 shadow-xl flex items-center justify-center overflow-hidden relative">
@@ -359,33 +363,42 @@ function NerdContent() {
           </h2>
           <div className="prose prose-slate text-slate-600 font-light prose-lg">
             <p className="mb-4">
-              MicroChat implements <strong>Sealed Sender</strong> to decouple message routing from sender identity. Network metadata is often as sensitive as the message contents.
+              MicroChat implements <strong>Sealed Sender</strong> to decouple
+              message routing from sender identity. Network metadata is often as
+              sensitive as the message contents.
             </p>
             <p className="mb-4">
-              Our implementation issues cryptographic blinding tokens to clients representing "the right to send one message".
+              Our implementation issues cryptographic blinding tokens to clients
+              representing "the right to send one message".
             </p>
             <ul className="list-none space-y-3 pl-0 mb-6">
               <li className="flex gap-3">
                 <span className="text-purple-600 font-bold">1.</span>
                 <span>
-                  <strong>Token Issuance:</strong> Clients fetch batches of 32-byte secure random tokens.
+                  <strong>Token Issuance:</strong> Clients fetch batches of
+                  32-byte secure random tokens.
                 </span>
               </li>
               <li className="flex gap-3">
                 <span className="text-purple-600 font-bold">2.</span>
                 <span>
-                  <strong>Server Blindness:</strong> The server only stores the SHA-256 hash of tokens. It cannot link a token back to the requesting user.
+                  <strong>Server Blindness:</strong> The server only stores the
+                  SHA-256 hash of tokens. It cannot link a token back to the
+                  requesting user.
                 </span>
               </li>
               <li className="flex gap-3">
                 <span className="text-purple-600 font-bold">3.</span>
                 <span>
-                  <strong>Anonymous Delivery:</strong> Messages are sent with <code>sender_id = NULL</code> and a valid plaintext token.
+                  <strong>Anonymous Delivery:</strong> Messages are sent with{' '}
+                  <code>sender_id = NULL</code> and a valid plaintext token.
                 </span>
               </li>
             </ul>
             <p>
-              The true sender identity is embedded inside the AES-GCM encrypted payload, accessible only by group members with the current epoch key.
+              The true sender identity is embedded inside the AES-GCM encrypted
+              payload, accessible only by group members with the current epoch
+              key.
             </p>
           </div>
         </div>
@@ -675,10 +688,13 @@ function NerdTreeDemo() {
 function LaymanGhostDemo() {
   return (
     <div className="relative w-full h-full flex flex-col items-center justify-center bg-slate-50 px-8">
-      <motion.div 
+      <motion.div
         className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center border-2 border-purple-200 z-10"
         initial={{ opacity: 1 }}
-        animate={{ opacity: [1, 0.2, 1], filter: ['blur(0px)', 'blur(4px)', 'blur(0px)'] }}
+        animate={{
+          opacity: [1, 0.2, 1],
+          filter: ['blur(0px)', 'blur(4px)', 'blur(0px)'],
+        }}
         transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
       >
         <Ghost className="w-8 h-8 text-purple-600" />
@@ -699,7 +715,7 @@ function NerdGhostDemo() {
           <div className="text-xs text-slate-400 font-mono mb-1">Client</div>
           <div className="text-sm font-bold">Token: 8f4a...2bc9</div>
         </div>
-        <motion.div 
+        <motion.div
           animate={{ x: [0, 40, 0], opacity: [0, 1, 0] }}
           transition={{ duration: 3, repeat: Infinity }}
           className="text-purple-500"
@@ -712,12 +728,23 @@ function NerdGhostDemo() {
         </div>
       </div>
       <div className="mt-8 p-6 bg-white rounded-xl shadow-lg border border-gray-100 text-left w-full max-w-sm">
-        <div className="text-xs font-mono text-slate-400 mb-2 border-b pb-2">POST /api/messages</div>
+        <div className="text-xs font-mono text-slate-400 mb-2 border-b pb-2">
+          POST /api/messages
+        </div>
         <div className="font-mono text-sm space-y-1 mt-2">
-          <div><span className="text-blue-500">group_id:</span> "cf8a-..."</div>
-          <div><span className="text-blue-500">sender_id:</span> <span className="text-purple-600 font-bold italic">null</span></div>
-          <div><span className="text-blue-500">token:</span> "8f4a...2bc9"</div>
-          <div><span className="text-blue-500">payload:</span> "U2FsdGVk..."</div>
+          <div>
+            <span className="text-blue-500">group_id:</span> "cf8a-..."
+          </div>
+          <div>
+            <span className="text-blue-500">sender_id:</span>{' '}
+            <span className="text-purple-600 font-bold italic">null</span>
+          </div>
+          <div>
+            <span className="text-blue-500">token:</span> "8f4a...2bc9"
+          </div>
+          <div>
+            <span className="text-blue-500">payload:</span> "U2FsdGVk..."
+          </div>
         </div>
       </div>
     </div>
