@@ -27,17 +27,24 @@ export function ImageMessage({
     let cancelled = false;
 
     async function fetchImage() {
+      // Use public R2 URL in production, API proxy in local dev
+      const r2BaseUrl = process.env.NEXT_PUBLIC_R2_PUBLIC_URL;
+      const url = r2BaseUrl
+        ? `${r2BaseUrl}/${r2Key}`
+        : `/api/groups/${groupId}/images/${r2Key}`;
+
+      // If we have a public URL, use it directly in <img> to avoid CORS fetch issues
+      if (r2BaseUrl) {
+        setSrc(url);
+        // Loading is handled by img onLoad
+        return;
+      }
+
       try {
         setLoading(true);
         setError(null);
 
-        // Use public R2 URL in production, API proxy in local dev
-        const r2BaseUrl = process.env.NEXT_PUBLIC_R2_PUBLIC_URL;
-        const url = r2BaseUrl
-          ? `${r2BaseUrl}/${r2Key}`
-          : `/api/groups/${groupId}/images/${r2Key}`;
-
-        const response = await fetch(url, r2BaseUrl ? undefined : { credentials: 'include' });
+        const response = await fetch(url, { credentials: 'include' });
 
         if (!response.ok) {
           throw new Error('Failed to load image');
@@ -126,6 +133,11 @@ export function ImageMessage({
             height={renderHeight}
             className="block rounded-lg object-cover"
             style={{ width: renderWidth, height: renderHeight }}
+            onLoad={() => setLoading(false)}
+            onError={() => {
+              setError('Failed to load image');
+              setLoading(false);
+            }}
           />
         )}
       </div>
