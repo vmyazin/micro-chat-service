@@ -84,6 +84,7 @@ export default function ConversationPage() {
         baseUrl: process.env.NEXT_PUBLIC_API_URL || '',
         wsUrl: process.env.NEXT_PUBLIC_WS_URL,
         enableVoiceCalls: true,
+        enableSealedSender: true,
       });
     }
     return clientRef.current;
@@ -318,6 +319,8 @@ export default function ConversationPage() {
         groupId: groupId as GroupId,
         toUserId: targetUserId,
         remoteUserName: targetUserId,
+        callerId: currentUser?.userId ?? null,
+        callerName: currentUser?.displayName ?? null,
       });
 
       setActiveSession(session);

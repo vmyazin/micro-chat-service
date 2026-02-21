@@ -1,5 +1,6 @@
 // MLS wrapper - will integrate with openmls/mls-rs
 
+export * from './call-cipher';
 export * from './crypto-erasure';
 export * from './group-cipher';
 export * from './key-management';

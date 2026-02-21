@@ -7,11 +7,17 @@ compatibility_flags = ["nodejs_compat"]
 RP_ID = "localhost"
 RP_NAME = "MicroChat"
 RP_ORIGIN = "http://localhost:3000"
+CLOUDFLARE_CALLS_APP_ID = "..."
+CLOUDFLARE_CALLS_TOKEN = "..."
+ICE_FALLBACK_SERVERS = "[]"
 
 [env.production.vars]
 RP_ID = "microchat.smoxu.com"
 RP_NAME = "MicroChat"
 RP_ORIGIN = "https://microchat.smoxu.com"
+CLOUDFLARE_CALLS_APP_ID = "..."
+CLOUDFLARE_CALLS_TOKEN = "..."
+ICE_FALLBACK_SERVERS = "[]"
 
 [[d1_databases]]
 binding = "DB"

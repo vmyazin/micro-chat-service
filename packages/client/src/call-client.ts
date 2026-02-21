@@ -1,10 +1,18 @@
+import type { GroupCipher } from '@microchat/crypto';
+import {
+  decryptCallerId,
+  deriveCallSigningKey,
+  encryptCallerId,
+} from '@microchat/crypto';
 import type {
   CallId,
   CallState,
   GroupId,
+  SealedSenderToken,
   UserId,
   WebSocketEvent,
 } from '@microchat/shared';
+import type { SenderTokenStore } from './sender-token-store';
 import type { WebSocketClient } from './websocket-client';
 
 export type IncomingCallHandler = (session: IncomingCallSession) => void;
@@ -14,6 +22,14 @@ export type MissedCallHandler = (event: {
   fromUserId: UserId | null;
 }) => void;
 export type CallStateChangeHandler = (state: CallState) => void;
+
+interface CallClientOptions {
+  baseUrl?: string;
+  iceServers?: RTCIceServer[];
+  tokenStore?: SenderTokenStore;
+  callCipher?: GroupCipher;
+  getGroupEpoch?: (groupId: GroupId) => number | Promise<number>;
+}
 
 export interface CallSession {
   callId: CallId;
@@ -49,6 +65,12 @@ const DEFAULT_ICE_SERVERS: RTCIceServer[] = [
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
 ];
+
+interface OutgoingSignalOptions {
+  fromUserId: UserId | null;
+  sealedSender?: string;
+  senderToken?: SealedSenderToken;
+}
 
 class CallSessionImpl implements CallSession {
   callId: CallId;
@@ -95,7 +117,10 @@ class CallSessionImpl implements CallSession {
     }
   }
 
-  async initOutgoing(targetUserId: UserId): Promise<void> {
+  async initOutgoing(
+    targetUserId: UserId,
+    signalOptions: OutgoingSignalOptions,
+  ): Promise<void> {
     this.setState('ringing-out');
 
     try {
@@ -160,8 +185,9 @@ class CallSessionImpl implements CallSession {
         groupId: this.groupId,
         callId: this.callId,
         toUserId: targetUserId,
-        fromUserId: null,
-        sealedSender: undefined,
+        fromUserId: signalOptions.fromUserId,
+        senderToken: signalOptions.senderToken,
+        sealedSender: signalOptions.sealedSender,
         sdp: offer.sdp,
         timestamp: new Date().toISOString(),
       });
@@ -356,11 +382,25 @@ export class CallClient {
   private incomingHandlers = new Set<IncomingCallHandler>();
   private missedHandlers = new Set<MissedCallHandler>();
   private activeSession: CallSessionImpl | null = null;
+  private cachedIceServers: {
+    servers: RTCIceServer[];
+    expiresAt: number;
+  } | null = null;
+  private iceServersOverride?: RTCIceServer[];
+  private tokenStore?: SenderTokenStore;
+  private callCipher?: GroupCipher;
+  private getGroupEpoch?: (groupId: GroupId) => number | Promise<number>;
+  private baseUrl?: string;
 
   constructor(
     private wsClient: WebSocketClient,
-    private iceServers?: RTCIceServer[],
+    options: CallClientOptions = {},
   ) {
+    this.iceServersOverride = options.iceServers;
+    this.tokenStore = options.tokenStore;
+    this.callCipher = options.callCipher;
+    this.getGroupEpoch = options.getGroupEpoch;
+    this.baseUrl = options.baseUrl;
     this.wsClient.onEvent(this.handleEvent);
   }
 
@@ -368,12 +408,16 @@ export class CallClient {
     groupId: GroupId;
     toUserId: UserId;
     remoteUserName?: string | null;
+    callerId?: UserId | null;
+    callerName?: string | null;
+    epoch?: number;
   }): Promise<CallSession> {
     if (this.activeSession) {
       throw new Error('Already in a call');
     }
 
     const callId = generateCallId();
+    const iceServers = await this.getIceServers();
 
     const session = new CallSessionImpl({
       callId,
@@ -382,7 +426,7 @@ export class CallClient {
       remoteUserId: options.toUserId,
       remoteUserName: options.remoteUserName ?? null,
       wsClient: this.wsClient,
-      iceServers: this.iceServers,
+      iceServers,
     });
 
     this.activeSession = session;
@@ -394,7 +438,15 @@ export class CallClient {
       }
     });
 
-    await session.initOutgoing(options.toUserId);
+    const signalOptions = await this.buildOutgoingSignalOptions({
+      groupId: options.groupId,
+      callId,
+      callerId: options.callerId ?? null,
+      callerName: options.callerName ?? null,
+      epoch: options.epoch,
+    });
+
+    await session.initOutgoing(options.toUserId, signalOptions);
 
     return session;
   }
@@ -413,46 +465,225 @@ export class CallClient {
     return () => this.missedHandlers.delete(handler);
   }
 
+  private async handleIncomingOffer(
+    event: Extract<WebSocketEvent, { type: 'callOffer' }>,
+  ): Promise<void> {
+    if (this.activeSession) {
+      console.log('[call] Ignoring incoming call (already in a call)');
+      return;
+    }
+
+    const iceServers = await this.getIceServers();
+
+    if (this.activeSession) {
+      return;
+    }
+
+    const session = new CallSessionImpl({
+      callId: event.callId,
+      groupId: event.groupId,
+      direction: 'incoming',
+      remoteUserId: event.fromUserId,
+      remoteUserName: event.fromUserId,
+      wsClient: this.wsClient,
+      iceServers,
+    });
+
+    this.activeSession = session;
+
+    // Auto-cleanup when session ends
+    session.onStateChange((state) => {
+      if (state === 'ended') {
+        this.activeSession = null;
+      }
+    });
+
+    const callerIdentity = await this.tryDecryptCallerIdentity(
+      event.groupId,
+      event.callId,
+      event.sealedSender,
+    );
+
+    if (callerIdentity) {
+      session.remoteUserId = callerIdentity.senderId;
+      session.remoteUserName = callerIdentity.senderName;
+    }
+
+    // Handle the offer (this sets up the peer connection but doesn't send answer yet)
+    try {
+      await session.handleIncomingOffer({ type: 'offer', sdp: event.sdp });
+    } catch (err) {
+      console.error('[call] Failed to handle incoming offer:', err);
+      this.activeSession = null;
+      return;
+    }
+
+    // Notify listeners
+    for (const handler of this.incomingHandlers) {
+      handler(session as IncomingCallSession);
+    }
+  }
+
+  private async buildOutgoingSignalOptions(options: {
+    groupId: GroupId;
+    callId: CallId;
+    callerId: UserId | null;
+    callerName: string | null;
+    epoch?: number;
+  }): Promise<OutgoingSignalOptions> {
+    let sealedSender: string | undefined;
+    let senderToken: SealedSenderToken | undefined;
+    let fromUserId = options.callerId ?? null;
+
+    if (this.tokenStore) {
+      const token = await this.tokenStore.getToken(options.groupId);
+      if (token) {
+        senderToken = token;
+      }
+    }
+
+    const callKey = await this.tryDeriveCallKey(
+      options.groupId,
+      options.callId,
+      options.epoch,
+    );
+
+    if (callKey && options.callerId && options.callerName) {
+      sealedSender = await encryptCallerId(
+        options.callerId,
+        options.callerName,
+        callKey,
+      );
+      fromUserId = null;
+    }
+
+    return {
+      fromUserId,
+      sealedSender,
+      senderToken,
+    };
+  }
+
+  private async tryDeriveCallKey(
+    groupId: GroupId,
+    callId: CallId,
+    epoch?: number,
+  ): Promise<CryptoKey | null> {
+    if (!this.callCipher) {
+      return null;
+    }
+
+    const resolvedEpoch =
+      epoch !== undefined ? epoch : await this.resolveGroupEpoch(groupId);
+
+    if (resolvedEpoch === null) {
+      return null;
+    }
+
+    try {
+      return await deriveCallSigningKey(
+        this.callCipher,
+        groupId,
+        resolvedEpoch,
+        callId,
+      );
+    } catch (error) {
+      console.error('[call] Failed to derive call key', error);
+      return null;
+    }
+  }
+
+  private async tryDecryptCallerIdentity(
+    groupId: GroupId,
+    callId: CallId,
+    sealedSender?: string,
+  ): Promise<{
+    senderId: UserId;
+    senderName: string;
+  } | null> {
+    if (!sealedSender) {
+      return null;
+    }
+
+    const callKey = await this.tryDeriveCallKey(groupId, callId);
+    if (!callKey) {
+      return null;
+    }
+
+    try {
+      const payload = await decryptCallerId(sealedSender, callKey);
+      return { senderId: payload.senderId, senderName: payload.senderName };
+    } catch (error) {
+      console.error('[call] Failed to decrypt caller identity', error);
+      return null;
+    }
+  }
+
+  private async resolveGroupEpoch(groupId: GroupId): Promise<number | null> {
+    if (!this.getGroupEpoch) {
+      return null;
+    }
+
+    try {
+      return await this.getGroupEpoch(groupId);
+    } catch (error) {
+      console.error('[call] Failed to resolve group epoch', error);
+      return null;
+    }
+  }
+
+  private async getIceServers(): Promise<RTCIceServer[]> {
+    if (this.iceServersOverride) {
+      return this.iceServersOverride;
+    }
+
+    if (this.cachedIceServers && Date.now() < this.cachedIceServers.expiresAt) {
+      return this.cachedIceServers.servers;
+    }
+
+    if (!this.baseUrl) {
+      return DEFAULT_ICE_SERVERS;
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/api/calls/ice-servers`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        console.error('[call] Failed to fetch ICE servers', response.status);
+        return DEFAULT_ICE_SERVERS;
+      }
+
+      const data = (await response.json()) as {
+        iceServers?: RTCIceServer[];
+        ttl?: number;
+      };
+
+      const servers =
+        Array.isArray(data.iceServers) && data.iceServers.length > 0
+          ? data.iceServers
+          : DEFAULT_ICE_SERVERS;
+
+      if (typeof data.ttl === 'number' && data.ttl > 0) {
+        this.cachedIceServers = {
+          servers,
+          expiresAt: Date.now() + data.ttl * 1000,
+        };
+      }
+
+      return servers;
+    } catch (error) {
+      console.error('[call] Failed to fetch ICE servers', error);
+      return DEFAULT_ICE_SERVERS;
+    }
+  }
+
   private handleEvent = (event: WebSocketEvent): void => {
     switch (event.type) {
       case 'callOffer': {
-        // Ignore if already in a call
-        if (this.activeSession) {
-          console.log('[call] Ignoring incoming call (already in a call)');
-          return;
-        }
-
-        const session = new CallSessionImpl({
-          callId: event.callId,
-          groupId: event.groupId,
-          direction: 'incoming',
-          remoteUserId: event.fromUserId,
-          remoteUserName: event.fromUserId, // Will be decrypted in Phase 3
-          wsClient: this.wsClient,
-          iceServers: this.iceServers,
-        });
-
-        this.activeSession = session;
-
-        // Auto-cleanup when session ends
-        session.onStateChange((state) => {
-          if (state === 'ended') {
-            this.activeSession = null;
-          }
-        });
-
-        // Handle the offer (this sets up the peer connection but doesn't send answer yet)
-        session
-          .handleIncomingOffer({ type: 'offer', sdp: event.sdp })
-          .catch((err) => {
-            console.error('[call] Failed to handle incoming offer:', err);
-            this.activeSession = null;
-          });
-
-        // Notify listeners
-        for (const handler of this.incomingHandlers) {
-          handler(session as IncomingCallSession);
-        }
+        void this.handleIncomingOffer(event);
         break;
       }
 

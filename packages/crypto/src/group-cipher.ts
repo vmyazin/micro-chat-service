@@ -171,6 +171,15 @@ export class GroupCipher {
       );
     }
   }
+
+  /**
+   * Retrieve raw group key bytes for a given epoch.
+   * Used for deriving ephemeral call signaling keys.
+   */
+  async getRawKey(groupId: GroupId, epoch: number): Promise<Uint8Array | null> {
+    const stored = await this.keyStore.getKey(groupId, epoch);
+    return stored ? new Uint8Array(stored.key) : null;
+  }
 }
 
 export class GroupCipherError extends Error {

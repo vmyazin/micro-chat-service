@@ -1,3 +1,4 @@
+import type { GroupCipher } from '@microchat/crypto';
 import type { GroupId, UserId } from '@microchat/shared';
 import {
   AuthClient,
@@ -37,6 +38,10 @@ export interface MicroChatClientOptions {
   enableSealedSender?: boolean;
   /** Enable voice call signaling client */
   enableVoiceCalls?: boolean;
+  /** Group cipher for sealed-sender call identity */
+  callCipher?: GroupCipher;
+  /** Resolve the active group epoch for sealed-sender calls */
+  getGroupEpoch?: (groupId: GroupId) => number | Promise<number>;
   /** Options for sender token management */
   senderTokenOptions?: SenderTokenStoreOptions;
 }
@@ -64,7 +69,12 @@ export class MicroChatClient {
     );
     this.wsClient = new WebSocketClient(options.wsUrl ?? options.baseUrl);
     this.calls = options.enableVoiceCalls
-      ? new CallClient(this.wsClient)
+      ? new CallClient(this.wsClient, {
+          baseUrl: options.baseUrl,
+          tokenStore: this.senderTokenStore,
+          callCipher: options.callCipher,
+          getGroupEpoch: options.getGroupEpoch,
+        })
       : undefined;
   }
 

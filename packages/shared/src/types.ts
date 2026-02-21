@@ -135,6 +135,7 @@ export type WebSocketEvent =
       callId: CallId;
       toUserId: UserId;
       fromUserId: UserId | null;
+      senderToken?: SealedSenderToken;
       sealedSender?: string;
       sdp: string;
       timestamp: string;

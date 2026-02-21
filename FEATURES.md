@@ -18,7 +18,7 @@ The existing AES-256-GCM encryption in `packages/crypto/src/group-cipher.ts` can
 
 ## Voice Calls (1-to-1)
 
-**Status:** Phase 2 complete (Feb 20, 2026) — Real WebRTC audio working (no sealed-sender, no TURN yet)
+**Status:** Completed (Feb 20, 2026) — Full implementation with sealed-sender and TURN
 
 End-to-end encrypted audio calls between two members of a group using WebRTC.
 
@@ -49,6 +49,16 @@ End-to-end encrypted audio calls between two members of a group using WebRTC.
 - **Missed call system messages**: Synthetic message appears in chat when call ends with `reason: 'missed'`.
 - **Caller identity plaintext**: Sent as `fromUserId` in signaling (sealed-sender in Phase 3).
 - **Public STUN only**: `stun.l.google.com` (TURN infrastructure in Phase 3).
+
+### Phase 3 — Sealed Sender + TURN Infrastructure (Completed Feb 20, 2026)
+
+- **Multi-provider TURN**: Cloudflare Calls API (primary) + coturn fallbacks on Hetzner/OVH.
+- **Fresh credentials per call**: `GET /api/calls/ice-servers` generates short-lived TURN credentials.
+- **ICE server caching**: Client caches ICE servers with TTL expiration.
+- **Sealed-sender call signaling**: Caller identity encrypted via AES-GCM with HKDF-derived ephemeral keys.
+- **Call cipher**: `deriveCallSigningKey()` derives per-call keys from group epoch keys.
+- **Graceful degradation**: Calls work without sealed-sender if `callCipher` not provided; caller identity shown as plaintext.
+- **Caller identity decryption**: Incoming calls decrypt `sealedSender` field to display caller name in modal.
 
 ### Architecture
 
