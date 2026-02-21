@@ -15,7 +15,6 @@ import { GroupCipher, MemoryKeyStore } from '@microchat/crypto';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActiveCallOverlay } from '@/components/ActiveCallOverlay';
 import { CallButton } from '@/components/CallButton';
 import GroupSettings from '@/components/GroupSettings';
 import { ImageMessage } from '@/components/ImageMessage';
@@ -80,8 +79,10 @@ export default function ConversationPage() {
   const [incomingSession, setIncomingSession] = useState<CallSession | null>(
     null,
   );
+  const [isCalling, setIsCalling] = useState(false);
   const [targetUserId, setTargetUserId] = useState<UserId | null>(null);
   const [memberCount, setMemberCount] = useState<number | null>(null);
+  const [targetUserName, setTargetUserName] = useState<string | null>(null);
 
   // Load highlighted IDs from sessionStorage
   useEffect(() => {
@@ -283,9 +284,11 @@ export default function ConversationPage() {
         if (state === 'active') {
           setActiveSession(session);
           setIncomingSession(null);
+          setIsCalling(false);
         } else if (state === 'ended') {
           setActiveSession(null);
           setIncomingSession(null);
+          setIsCalling(false);
           offState();
         }
       });
@@ -320,6 +323,7 @@ export default function ConversationPage() {
     if (!groupId) {
       setTargetUserId(null);
       setMemberCount(null);
+      setTargetUserName(null);
       return;
     }
 
@@ -332,11 +336,13 @@ export default function ConversationPage() {
           (m) => m.userId !== currentUser?.userId,
         );
         setTargetUserId(otherMember?.userId ?? null);
+        setTargetUserName(otherMember?.displayName ?? null);
       })
       .catch((err) => {
         console.error('[call] Failed to load members:', err);
         setTargetUserId(null);
         setMemberCount(null);
+        setTargetUserName(null);
       });
   }, [groupId, currentUser?.userId, getClient]);
 
@@ -358,22 +364,30 @@ export default function ConversationPage() {
       const session = await client.calls.startCall({
         groupId: groupId as GroupId,
         toUserId: targetUserId,
-        remoteUserName: targetUserId,
+        remoteUserName: targetUserName,
         callerId: currentUser?.userId ?? null,
         callerName: currentUser?.displayName ?? null,
       });
 
       setActiveSession(session);
+      setIsCalling(true);
 
       let offState = () => {};
       offState = session.onStateChange((state) => {
+        if (state === 'active') {
+          setIsCalling(false);
+        }
         if (state === 'ended') {
           setActiveSession(null);
+          setIsCalling(false);
           offState();
         }
       });
     } catch (err) {
       console.error('[call] Failed to start call:', err);
+      if (err instanceof Error && err.message.includes('Already in a call')) {
+        setIsCalling(true);
+      }
     }
   }
 
@@ -567,19 +581,19 @@ export default function ConversationPage() {
       {/* Incoming Call Modal */}
       <IncomingCallModal
         session={incomingSession}
-        onAccept={() => incomingSession?.accept()}
-        onReject={() => incomingSession?.reject()}
+        onAccept={() => {
+          incomingSession?.accept().catch(console.error);
+        }}
+        onReject={() => {
+          incomingSession?.reject().catch(console.error);
+          setIncomingSession(null);
+        }}
       />
 
-      {/* Active Call Overlay */}
-      <ActiveCallOverlay
-        session={activeSession}
-        onHangup={() => activeSession?.hangup()}
-      />
 
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-        <h1 className="text-lg font-bold truncate">Group Chat</h1>
-        <div className="flex items-center gap-2">
+      <header className="chat-header flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+        <h1 className="chat-title text-lg font-bold truncate">Group Chat</h1>
+        <div className="chat-actions flex items-center gap-2">
           <CallButton
             client={getClient()}
             groupId={groupId as GroupId}
@@ -587,16 +601,18 @@ export default function ConversationPage() {
             onStartCall={handleStartCall}
             memberCount={memberCount}
             targetUserId={targetUserId}
+            calling={isCalling}
+            activeSession={activeSession}
           />
           <button
             type="button"
             onClick={() => setShowSettings(true)}
-            className="p-2 brutal-border hover:bg-gray-100 dark:hover:bg-gray-800"
+            className="chat-action-settings p-2 brutal-border hover:bg-gray-100 dark:hover:bg-gray-800"
             aria-label="Group Settings"
           >
             <svg
               aria-hidden="true"
-              className="w-5 h-5"
+              className="chat-action-icon w-5 h-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -616,7 +632,7 @@ export default function ConversationPage() {
             </svg>
           </button>
         </div>
-      </div>
+      </header>
       {connectionStatus === 'reconnecting' && (
         <div className="px-4 py-2 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 text-sm text-center">
           Reconnecting to real-time updates...

@@ -251,6 +251,10 @@ export class ChatHub implements DurableObject {
     const call = this.calls.get(callId);
 
     if (!call) {
+      if (event.type === 'callEnd') {
+        // Call already ended on the other side; ignore late hangup/reject.
+        return;
+      }
       this.sendTo(session.ws, {
         type: 'error',
         error: 'Call not found',

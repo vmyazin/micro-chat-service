@@ -18,6 +18,11 @@ export function IncomingCallModal({ session, onAccept, onReject }: IncomingCallM
       return;
     }
 
+    if (session.state === 'ended') {
+      onReject();
+      return;
+    }
+
     const interval = setInterval(() => {
       setElapsed((prev) => prev + 1);
     }, 1000);
@@ -27,9 +32,16 @@ export function IncomingCallModal({ session, onAccept, onReject }: IncomingCallM
       onReject();
     }, 30000);
 
+    const offState = session.onStateChange((state) => {
+      if (state === 'ended') {
+        onReject();
+      }
+    });
+
     return () => {
       clearInterval(interval);
       clearTimeout(timeout);
+      offState();
     };
   }, [session, onReject]);
 
@@ -39,12 +51,12 @@ export function IncomingCallModal({ session, onAccept, onReject }: IncomingCallM
     session.remoteUserName ?? session.remoteUserId ?? 'Unknown';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-      <div className="bg-[var(--surface-elevated)] brutal-border rounded-2xl p-8 max-w-sm w-full mx-4 text-center">
-        <div className="mb-6">
-          <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+    <div className="call-modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+      <section className="call-modal-dialog bg-[var(--surface-elevated)] brutal-border rounded-2xl p-8 max-w-sm w-full mx-4 text-center">
+        <header className="call-modal-header mb-6">
+          <div className="call-avatar-container w-20 h-20 mx-auto mb-4 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
             <svg
-              className="w-10 h-10 text-green-600 dark:text-green-400 animate-pulse"
+              className="call-avatar-icon w-10 h-10 text-green-600 dark:text-green-400 animate-pulse"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -57,18 +69,18 @@ export function IncomingCallModal({ session, onAccept, onReject }: IncomingCallM
               />
             </svg>
           </div>
-          <h2 className="text-xl font-bold mb-1">{callerName}</h2>
-          <p className="text-[var(--text-muted)]">Incoming call...</p>
-          <p className="text-sm text-[var(--text-muted)] mt-2">{elapsed}s</p>
-        </div>
+          <h2 className="call-caller-name text-xl font-bold mb-1">{callerName}</h2>
+          <p className="call-status-text text-[var(--text-muted)]">Incoming call...</p>
+          <p className="call-elapsed-time text-sm text-[var(--text-muted)] mt-2">{elapsed}s</p>
+        </header>
 
-        <div className="flex gap-4">
+        <div className="call-actions flex gap-4">
           <button
             type="button"
             onClick={onReject}
-            className="flex-1 py-3 px-4 rounded-xl bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 font-semibold hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors flex items-center justify-center gap-2"
+            className="call-action-reject flex-1 py-3 px-4 rounded-xl bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 font-semibold hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors flex items-center justify-center gap-2"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="call-action-icon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -81,9 +93,9 @@ export function IncomingCallModal({ session, onAccept, onReject }: IncomingCallM
           <button
             type="button"
             onClick={onAccept}
-            className="flex-1 py-3 px-4 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+            className="call-action-accept flex-1 py-3 px-4 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="call-action-icon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -94,7 +106,7 @@ export function IncomingCallModal({ session, onAccept, onReject }: IncomingCallM
             Accept
           </button>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

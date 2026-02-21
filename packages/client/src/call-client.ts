@@ -206,6 +206,14 @@ class CallSessionImpl implements CallSession {
         audio: true,
       });
 
+      if (this._state === 'ended') {
+        for (const track of this.localStream.getTracks()) {
+          track.stop();
+        }
+        this.localStream = null;
+        return;
+      }
+
       this.pc = new RTCPeerConnection({ iceServers: this.iceServers });
 
       // Add local tracks
@@ -259,6 +267,9 @@ class CallSessionImpl implements CallSession {
   }
 
   async accept(): Promise<void> {
+    if (this._state === 'ended') {
+      return;
+    }
     if (!this.pc || this.direction !== 'incoming') {
       throw new Error('Can only accept incoming calls');
     }
@@ -288,6 +299,9 @@ class CallSessionImpl implements CallSession {
   }
 
   async reject(): Promise<void> {
+    if (this._state === 'ended') {
+      return;
+    }
     if (this.direction !== 'incoming') {
       throw new Error('Can only reject incoming calls');
     }
@@ -515,6 +529,10 @@ export class CallClient {
     } catch (err) {
       console.error('[call] Failed to handle incoming offer:', err);
       this.activeSession = null;
+      return;
+    }
+
+    if (this.activeSession !== session || session.state === 'ended') {
       return;
     }
 
