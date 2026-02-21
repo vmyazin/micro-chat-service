@@ -208,7 +208,7 @@ authRouter.post('/api/auth/login/options', async (c) => {
 
   const db = new Database(c.env.DB);
 
-  let allowCredentials: { id: Uint8Array; type: 'public-key' }[] = [];
+  let allowCredentials: { id: string; type: 'public-key' }[] = [];
 
   if (body.username) {
     const users = await db.query<{ id: string }>(
@@ -225,8 +225,10 @@ authRouter.post('/api/auth/login/options', async (c) => {
       allowCredentials = credentials
         .map((cred) => {
           try {
+            const bytes = base64urlToUint8Array(cred.credential_id);
+            const rawId = uint8ArrayToBase64(bytes);
             return {
-              id: base64urlToUint8Array(cred.credential_id),
+              id: rawId,
               type: 'public-key' as const,
             };
           } catch (error) {
@@ -235,8 +237,7 @@ authRouter.post('/api/auth/login/options', async (c) => {
           }
         })
         .filter(
-          (cred): cred is { id: Uint8Array; type: 'public-key' } =>
-            cred !== null,
+          (cred): cred is { id: string; type: 'public-key' } => cred !== null,
         );
     }
   }
