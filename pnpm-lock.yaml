@@ -20,6 +20,9 @@ importers:
       '@microchat/client':
         specifier: workspace:*
         version: link:../../packages/client
+      '@microchat/crypto':
+        specifier: workspace:*
+        version: link:../../packages/crypto
       '@radix-ui/react-context-menu':
         specifier: ^2.2.16
         version: 2.2.16(@types/react-dom@19.2.3(@types/react@19.2.9))(@types/react@19.2.9)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)

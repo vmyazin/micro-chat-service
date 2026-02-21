@@ -11,6 +11,7 @@ import {
   uint8ArrayToBase64,
   type WebSocketEvent,
 } from '@microchat/client';
+import { GroupCipher, MemoryKeyStore } from '@microchat/crypto';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -22,6 +23,35 @@ import { IncomingCallModal } from '@/components/IncomingCallModal';
 import { MessageInput } from '@/components/MessageInput';
 import { VoiceMessagePlayer } from '@/components/VoiceMessagePlayer';
 import { useSfx } from '@/hooks/useSfx';
+
+const callKeyStore = new MemoryKeyStore();
+const callCipher = new GroupCipher(callKeyStore);
+const initializedCallGroups = new Set<string>();
+
+async function deriveCallGroupKey(groupId: GroupId): Promise<Uint8Array> {
+  const encoder = new TextEncoder();
+  const hashBuffer = await crypto.subtle.digest(
+    'SHA-256',
+    encoder.encode(`microchat-call-key-${groupId}`),
+  );
+  return new Uint8Array(hashBuffer).slice(0, 32);
+}
+
+async function ensureCallKey(groupId: GroupId): Promise<void> {
+  if (initializedCallGroups.has(groupId)) {
+    return;
+  }
+
+  const rawKey = await callCipher.getRawKey(groupId, 0);
+  if (rawKey) {
+    initializedCallGroups.add(groupId);
+    return;
+  }
+
+  const derivedKey = await deriveCallGroupKey(groupId);
+  await callCipher.importGroupKey(groupId, 0, derivedKey);
+  initializedCallGroups.add(groupId);
+}
 
 export default function ConversationPage() {
   const params = useParams();
@@ -85,6 +115,8 @@ export default function ConversationPage() {
         wsUrl: process.env.NEXT_PUBLIC_WS_URL,
         enableVoiceCalls: true,
         enableSealedSender: true,
+        callCipher,
+        getGroupEpoch: () => 0,
       });
     }
     return clientRef.current;
@@ -122,6 +154,14 @@ export default function ConversationPage() {
       fetchCurrentUser();
     }
   }, [groupId, fetchCurrentUser, fetchMessages]);
+
+  useEffect(() => {
+    if (!groupId) return;
+
+    ensureCallKey(groupId as GroupId).catch((err) => {
+      console.error('[call] Failed to initialize call cipher', err);
+    });
+  }, [groupId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
