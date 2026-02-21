@@ -11,6 +11,12 @@ VPS_PATH="/home/vasily/websites/micro-chat-service"
 
 cd "$ROOT_DIR"
 
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+if [ "$CURRENT_BRANCH" != "main" ]; then
+  echo -e "⚠️  Attention! Deployments must be run from the main branch. Current branch is: \033[94m$CURRENT_BRANCH\033[0m"
+  exit 0
+fi
+
 echo "==> Running pre-deploy checks..."
 pnpm typecheck
 pnpm build
