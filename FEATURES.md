@@ -18,7 +18,7 @@ The existing AES-256-GCM encryption in `packages/crypto/src/group-cipher.ts` can
 
 ## Voice Calls (1-to-1)
 
-**Status:** Phase 1 complete (Feb 20, 2026) — WebRTC not yet implemented
+**Status:** Phase 2 complete (Feb 20, 2026) — Real WebRTC audio working (no sealed-sender, no TURN yet)
 
 End-to-end encrypted audio calls between two members of a group using WebRTC.
 
@@ -39,6 +39,16 @@ End-to-end encrypted audio calls between two members of a group using WebRTC.
 - `GET /api/calls/ice-servers` returns public STUN (Google) only.
 - Client `CallClient` stub sends fake SDP and logs incoming call events.
 - Web UI renders the call button for 1:1 groups and logs incoming call events.
+
+### Phase 2 — WebRTC Audio (Completed Feb 20, 2026)
+
+- **Real WebRTC peer-to-peer audio**: `RTCPeerConnection`, `getUserMedia`, ICE trickle, SDP exchange.
+- **IncomingCallModal**: Full-screen ring screen with caller name, Accept/Reject buttons, 30s timeout.
+- **ActiveCallOverlay**: In-call bar with mute toggle, duration timer (MM:SS), hangup button.
+- **CallSession state machine**: `idle → ringing-out → connecting → active → ended` for outgoing, `idle → ringing-in → connecting → active → ended` for incoming.
+- **Missed call system messages**: Synthetic message appears in chat when call ends with `reason: 'missed'`.
+- **Caller identity plaintext**: Sent as `fromUserId` in signaling (sealed-sender in Phase 3).
+- **Public STUN only**: `stun.l.google.com` (TURN infrastructure in Phase 3).
 
 ### Architecture
 

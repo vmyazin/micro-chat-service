@@ -7,35 +7,69 @@ interface CallButtonProps {
   client: MicroChatClient;
   groupId: GroupId;
   currentUserId?: UserId | null;
+  onStartCall?: () => void;
+  memberCount?: number | null;
+  targetUserId?: UserId | null;
 }
 
 export function CallButton({
   client,
   groupId,
   currentUserId,
+  onStartCall,
+  memberCount: memberCountProp,
+  targetUserId: targetUserIdProp,
 }: CallButtonProps) {
-  const [memberCount, setMemberCount] = useState<number | null>(null);
-  const [targetUserId, setTargetUserId] = useState<UserId | null>(null);
+  const [memberCount, setMemberCount] = useState<number | null>(
+    memberCountProp ?? null,
+  );
+  const [targetUserId, setTargetUserId] = useState<UserId | null>(
+    targetUserIdProp ?? null,
+  );
 
   useEffect(() => {
+    if (memberCountProp !== undefined) {
+      setMemberCount(memberCountProp);
+    }
+  }, [memberCountProp]);
+
+  useEffect(() => {
+    if (targetUserIdProp !== undefined) {
+      setTargetUserId(targetUserIdProp);
+    }
+  }, [targetUserIdProp]);
+
+  useEffect(() => {
+    const shouldFetch =
+      memberCountProp === undefined || targetUserIdProp === undefined;
+    if (!shouldFetch) {
+      return;
+    }
+
     let active = true;
 
     client
       .getMembers(groupId)
       .then((result) => {
         if (!active) return;
-        setMemberCount(result.members.length);
+        if (memberCountProp === undefined) {
+          setMemberCount(result.members.length);
+        }
 
         const fallbackTarget = result.members[0]?.userId ?? null;
         if (!currentUserId) {
-          setTargetUserId(fallbackTarget);
+          if (targetUserIdProp === undefined) {
+            setTargetUserId(fallbackTarget);
+          }
           return;
         }
 
         const otherMember = result.members.find(
           (member) => member.userId !== currentUserId,
         );
-        setTargetUserId(otherMember?.userId ?? null);
+        if (targetUserIdProp === undefined) {
+          setTargetUserId(otherMember?.userId ?? null);
+        }
       })
       .catch((err) => {
         if (!active) return;
@@ -47,19 +81,25 @@ export function CallButton({
     return () => {
       active = false;
     };
-  }, [client, currentUserId, groupId]);
+  }, [client, currentUserId, groupId, memberCountProp, targetUserIdProp]);
 
   if (!client.calls) return null;
   if (memberCount === null) return null;
   if (memberCount > 2) return null;
   if (!targetUserId) return null;
 
+  const handleClick = () => {
+    if (onStartCall) {
+      onStartCall();
+    } else if (client.calls && targetUserId) {
+      client.calls.startCall({ groupId, toUserId: targetUserId });
+    }
+  };
+
   return (
     <button
       type="button"
-      onClick={() =>
-        client.calls?.startCall({ groupId, toUserId: targetUserId })
-      }
+      onClick={handleClick}
       className="p-2 brutal-border hover:bg-gray-100 dark:hover:bg-gray-800"
       aria-label="Start call"
     >

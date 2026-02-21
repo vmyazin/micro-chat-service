@@ -23,7 +23,11 @@ export {
   type LoginOptions,
   type RegisterOptions,
 } from './auth-client';
-export { CallClient } from './call-client';
+export {
+  CallClient,
+  type CallSession,
+  type IncomingCallSession,
+} from './call-client';
 export {
   MicroChatClient,
   MicroChatClient as default,

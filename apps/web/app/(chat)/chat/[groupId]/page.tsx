@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  type CallSession,
   type CurrentUser,
   type GroupId,
   type MessageListItem,
@@ -13,9 +14,11 @@ import {
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { ActiveCallOverlay } from '@/components/ActiveCallOverlay';
 import { CallButton } from '@/components/CallButton';
 import GroupSettings from '@/components/GroupSettings';
 import { ImageMessage } from '@/components/ImageMessage';
+import { IncomingCallModal } from '@/components/IncomingCallModal';
 import { MessageInput } from '@/components/MessageInput';
 import { VoiceMessagePlayer } from '@/components/VoiceMessagePlayer';
 import { useSfx } from '@/hooks/useSfx';
@@ -41,6 +44,14 @@ export default function ConversationPage() {
   const currentUserRef = useRef(currentUser);
   currentUserRef.current = currentUser;
   const playSfx = useSfx();
+
+  // Call-related state
+  const [activeSession, setActiveSession] = useState<CallSession | null>(null);
+  const [incomingSession, setIncomingSession] = useState<CallSession | null>(
+    null,
+  );
+  const [targetUserId, setTargetUserId] = useState<UserId | null>(null);
+  const [memberCount, setMemberCount] = useState<number | null>(null);
 
   // Load highlighted IDs from sessionStorage
   useEffect(() => {
@@ -216,6 +227,78 @@ export default function ConversationPage() {
     };
   }, [groupId, getClient, connectionStatus, playSfx]);
 
+  // Setup call event listeners
+  useEffect(() => {
+    const client = getClient();
+    if (!client.calls) return;
+
+    const offIncoming = client.calls.onIncomingCall((session) => {
+      console.log('[call] Incoming call received', session);
+      setIncomingSession(session);
+
+      // Subscribe to state changes
+      let offState = () => {};
+      offState = session.onStateChange((state) => {
+        if (state === 'active') {
+          setActiveSession(session);
+          setIncomingSession(null);
+        } else if (state === 'ended') {
+          setActiveSession(null);
+          setIncomingSession(null);
+          offState();
+        }
+      });
+    });
+
+    const offMissed = client.calls.onMissedCall((event) => {
+      console.log('[call] Missed call', event);
+
+      // Add system message for missed call
+      if (event.groupId === groupId) {
+        const systemMessage: MessageListItem = {
+          id: `system-missed-call-${event.callId}-${Date.now()}`,
+          groupId: event.groupId,
+          senderId: 'system' as UserId,
+          senderName: 'system',
+          encryptedContent: `Missed call from ${event.fromUserId ?? 'Unknown'}`,
+          createdAt: new Date().toISOString(),
+          deleted: false,
+        };
+        setMessages((prev) => [...prev, systemMessage]);
+      }
+    });
+
+    return () => {
+      offIncoming();
+      offMissed();
+    };
+  }, [groupId, getClient]);
+
+  // Load target user for calling
+  useEffect(() => {
+    if (!groupId) {
+      setTargetUserId(null);
+      setMemberCount(null);
+      return;
+    }
+
+    const client = getClient();
+    client
+      .getMembers(groupId as GroupId)
+      .then((result) => {
+        setMemberCount(result.members.length);
+        const otherMember = result.members.find(
+          (m) => m.userId !== currentUser?.userId,
+        );
+        setTargetUserId(otherMember?.userId ?? null);
+      })
+      .catch((err) => {
+        console.error('[call] Failed to load members:', err);
+        setTargetUserId(null);
+        setMemberCount(null);
+      });
+  }, [groupId, currentUser?.userId, getClient]);
+
   useEffect(() => {
     return () => {
       if (clientRef.current) {
@@ -224,6 +307,32 @@ export default function ConversationPage() {
       }
     };
   }, []);
+
+  // Handle call button click
+  async function handleStartCall() {
+    const client = getClient();
+    if (!client.calls || !targetUserId || !groupId) return;
+
+    try {
+      const session = await client.calls.startCall({
+        groupId: groupId as GroupId,
+        toUserId: targetUserId,
+        remoteUserName: targetUserId,
+      });
+
+      setActiveSession(session);
+
+      let offState = () => {};
+      offState = session.onStateChange((state) => {
+        if (state === 'ended') {
+          setActiveSession(null);
+          offState();
+        }
+      });
+    } catch (err) {
+      console.error('[call] Failed to start call:', err);
+    }
+  }
 
   async function handleSendMessage(content: string) {
     if (!groupId) return;
@@ -412,6 +521,19 @@ export default function ConversationPage() {
 
   return (
     <div className="flex flex-col h-full">
+      {/* Incoming Call Modal */}
+      <IncomingCallModal
+        session={incomingSession}
+        onAccept={() => incomingSession?.accept()}
+        onReject={() => incomingSession?.reject()}
+      />
+
+      {/* Active Call Overlay */}
+      <ActiveCallOverlay
+        session={activeSession}
+        onHangup={() => activeSession?.hangup()}
+      />
+
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
         <h1 className="text-lg font-bold truncate">Group Chat</h1>
         <div className="flex items-center gap-2">
@@ -419,6 +541,9 @@ export default function ConversationPage() {
             client={getClient()}
             groupId={groupId as GroupId}
             currentUserId={currentUser?.userId}
+            onStartCall={handleStartCall}
+            memberCount={memberCount}
+            targetUserId={targetUserId}
           />
           <button
             type="button"
