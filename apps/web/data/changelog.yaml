@@ -2,6 +2,16 @@
   icon: shield
   color: blue
   items:
+    - date: Feb 21, 2026
+      title: Live Voice Calls
+      description: >
+        Jump into real-time, end-to-end encrypted voice calls with your groups. 
+        Your calls are routed securely and anonymously, protecting your privacy just like your messages.
+    - date: Feb 19, 2026
+      title: Secure Logout
+      description: >
+        You can now easily and securely log out of your session directly from the app, 
+        ensuring your account stays safe on shared devices.
     - date: Feb 16, 2026
       title: End-to-End Encryption
       description: >
@@ -47,6 +57,11 @@
   icon: sparkles
   color: green
   items:
+    - date: Feb 20, 2026
+      title: New Branding & Changelog
+      description: >
+        We introduced a fresh MicroChat logo across the website and added this 
+        dedicated Changelog page so you can playfully track all our new updates.
     - date: Jan 15, 2026
       title: Real-time Messaging & Audio Cues
       description: >
