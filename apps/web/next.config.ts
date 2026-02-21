@@ -1,5 +1,5 @@
 // apps/web/next.config.ts
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next';
 
 const apiUrl = process.env.API_URL || 'http://localhost:8787';
 
