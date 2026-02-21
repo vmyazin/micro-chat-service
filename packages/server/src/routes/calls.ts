@@ -26,6 +26,9 @@ interface CloudflareIceResponse {
 }
 
 const TURN_TTL_SECONDS = 3600;
+const STUN_FALLBACK: IceServer = {
+  urls: ['stun:stun.l.google.com:19302'],
+};
 
 function parseFallbackServers(raw?: string): IceServer[] {
   if (!raw) return [];
@@ -76,14 +79,21 @@ callsRouter.get('/api/calls/ice-servers', requireAuth, async (c) => {
     },
   );
 
+  const fallbackServers = parseFallbackServers(c.env.ICE_FALLBACK_SERVERS);
+
   if (!response.ok) {
     const errorText = await response.text();
     console.error('[calls] Cloudflare TURN credentials failed', errorText);
-    return c.json({ error: 'Failed to generate TURN credentials' }, 502);
+    return c.json(
+      {
+        iceServers: [STUN_FALLBACK, ...fallbackServers],
+        ttl: TURN_TTL_SECONDS,
+      },
+      200,
+    );
   }
 
   const data = (await response.json()) as CloudflareIceResponse;
-  const fallbackServers = parseFallbackServers(c.env.ICE_FALLBACK_SERVERS);
 
   const cloudflareServers: IceServer[] = [];
   if (Array.isArray(data.iceServers)) {
@@ -96,7 +106,7 @@ callsRouter.get('/api/calls/ice-servers', requireAuth, async (c) => {
     });
   }
 
-  const iceServers = [...cloudflareServers, ...fallbackServers];
+  const iceServers = [...cloudflareServers, ...fallbackServers, STUN_FALLBACK];
   const ttl = typeof data.ttl === 'number' ? data.ttl : TURN_TTL_SECONDS;
 
   return c.json({ iceServers, ttl });
