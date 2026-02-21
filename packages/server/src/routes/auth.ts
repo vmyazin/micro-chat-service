@@ -57,6 +57,18 @@ function uint8ArrayToBase64(bytes: Uint8Array): string {
   return btoa(binary);
 }
 
+function base64urlToUint8Array(base64url: string): Uint8Array {
+  const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
+  const padLength = (4 - (base64.length % 4)) % 4;
+  const padded = `${base64}${'='.repeat(padLength)}`;
+  const binary = atob(padded);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
+}
+
 authRouter.post('/api/auth/register/options', async (c) => {
   const body = await c.req.json<{ displayName: string }>();
 
@@ -196,7 +208,7 @@ authRouter.post('/api/auth/login/options', async (c) => {
 
   const db = new Database(c.env.DB);
 
-  let allowCredentials: { id: string; type: 'public-key' }[] = [];
+  let allowCredentials: { id: Uint8Array; type: 'public-key' }[] = [];
 
   if (body.username) {
     const users = await db.query<{ id: string }>(
@@ -210,10 +222,22 @@ authRouter.post('/api/auth/login/options', async (c) => {
         [users[0].id],
       );
 
-      allowCredentials = credentials.map((cred) => ({
-        id: cred.credential_id,
-        type: 'public-key' as const,
-      }));
+      allowCredentials = credentials
+        .map((cred) => {
+          try {
+            return {
+              id: base64urlToUint8Array(cred.credential_id),
+              type: 'public-key' as const,
+            };
+          } catch (error) {
+            console.error('[auth] Invalid credential_id format', error);
+            return null;
+          }
+        })
+        .filter(
+          (cred): cred is { id: Uint8Array; type: 'public-key' } =>
+            cred !== null,
+        );
     }
   }
 

@@ -83,6 +83,7 @@ export default function ConversationPage() {
   const [targetUserId, setTargetUserId] = useState<UserId | null>(null);
   const [memberCount, setMemberCount] = useState<number | null>(null);
   const [targetUserName, setTargetUserName] = useState<string | null>(null);
+  const remoteAudioRef = useRef<HTMLAudioElement>(null);
 
   // Load highlighted IDs from sessionStorage
   useEffect(() => {
@@ -355,6 +356,45 @@ export default function ConversationPage() {
     };
   }, []);
 
+  useEffect(() => {
+    const audioEl = remoteAudioRef.current;
+    if (!audioEl) return;
+
+    if (!activeSession) {
+      audioEl.srcObject = null;
+      return;
+    }
+
+    let cancelled = false;
+    const attachStream = () => {
+      if (cancelled || !activeSession.remoteStream) return false;
+      if (audioEl.srcObject !== activeSession.remoteStream) {
+        audioEl.srcObject = activeSession.remoteStream;
+        audioEl.play().catch(() => {});
+      }
+      return true;
+    };
+
+    if (attachStream()) {
+      return () => {
+        cancelled = true;
+        audioEl.srcObject = null;
+      };
+    }
+
+    const interval = window.setInterval(() => {
+      if (attachStream()) {
+        window.clearInterval(interval);
+      }
+    }, 250);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+      audioEl.srcObject = null;
+    };
+  }, [activeSession]);
+
   // Handle call button click
   async function handleStartCall() {
     const client = getClient();
@@ -590,7 +630,6 @@ export default function ConversationPage() {
         }}
       />
 
-
       <header className="chat-header flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
         <h1 className="chat-title text-lg font-bold truncate">Group Chat</h1>
         <div className="chat-actions flex items-center gap-2">
@@ -714,6 +753,8 @@ export default function ConversationPage() {
         open={showSettings}
         onClose={() => setShowSettings(false)}
       />
+      {/* biome-ignore lint/a11y/useMediaCaption: live call audio has no captions */}
+      <audio ref={remoteAudioRef} autoPlay playsInline />
     </div>
   );
 }
