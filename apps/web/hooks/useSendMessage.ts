@@ -1,9 +1,8 @@
 'use client';
 
 import { useChatClientStore } from '@/stores/chat-client-store';
-import { messagesQueryKey } from '@/hooks/useMessages';
 import type { GroupId, SendMessageOptions, SendMessageResult } from '@microchat/client';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 
 interface SendMessageVariables {
   content: string;
@@ -14,21 +13,16 @@ interface SendMessageVariables {
 export function useSendMessage(groupId: GroupId | null | undefined) {
   const client = useChatClientStore((state) => state.client);
   const getClient = useChatClientStore((state) => state.getClient);
-  const queryClient = useQueryClient();
-
+  
   return useMutation<SendMessageResult, Error, SendMessageVariables>({
     mutationFn: async ({ content, epoch, options }) => {
       if (!groupId) throw new Error('No group ID');
       const c = client ?? getClient();
       return c.sendMessage(groupId, content, epoch, options);
     },
-    onSuccess: () => {
-      // Invalidate messages to trigger a refetch
-      if (groupId) {
-        queryClient.invalidateQueries({
-          queryKey: messagesQueryKey(groupId),
-        });
-      }
-    },
+    // onSuccess: Invalidation removed. 
+    // The WebSocket handles adding the new message to the cache.
+    // This prevents D1 read-replica lag from wiping out local optimistic messages
+    // and reduces API calls.
   });
 }

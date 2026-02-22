@@ -6,7 +6,7 @@ import { invalidateGroups } from '@/hooks/useGroups';
 import { useChatClientStore } from '@/stores/chat-client-store';
 import { useChatStore } from '@/stores/chat-store';
 import { usePresenceStore } from '@/stores/presence-store';
-import type { GroupId, MessageListItem, WebSocketEvent } from '@microchat/client';
+import type { GroupId, MessageListItem, WebSocketEvent, UserId } from '@microchat/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useCallback } from 'react';
 import { useGroups } from '@/hooks/useGroups';
@@ -67,16 +67,10 @@ export function useWebSocket(activeGroupId?: GroupId | null) {
         // Note: we'd need to know the current user's ID. Let's pass it in or pull from store if we can.
         // For sealed sender, the senderId is null, so it will always send a receipt.
         
-        // Wait, the auth client has `getCurrentUser() : Promise<CurrentUser>`.
-        // Better to send it asynchronously.
-        getClient()
-          .getCurrentUser()
-          .then((user) => {
-             if (user && user.userId !== event.senderId) {
-               getClient().sendDeliveryReceipt(event.groupId, event.messageId, user.userId);
-             }
-          })
-          .catch(() => {}); // ignore errors if unauthenticated
+        const user = queryClient.getQueryData<{ userId: string; displayName: string }>(['currentUser']);
+        if (user && user.userId !== event.senderId) {
+          getClient().sendDeliveryReceipt(event.groupId, event.messageId, user.userId as UserId);
+        }
 
         break;
       }
