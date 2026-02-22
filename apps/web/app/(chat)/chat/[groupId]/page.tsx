@@ -14,6 +14,7 @@ import {
   TrashIcon,
 } from '@phosphor-icons/react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/Button';
@@ -94,6 +95,13 @@ export default function ConversationPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const remoteAudioRef = useRef<HTMLAudioElement>(null);
   const [_callDuration, setCallDuration] = useState(0);
+  const [nowMs, setNowMs] = useState(() => Date.now());
+
+  // Periodically update UI so messages fade/expire on time
+  useEffect(() => {
+    const int = setInterval(() => setNowMs(Date.now()), 60000);
+    return () => clearInterval(int);
+  }, []);
 
   // Get call key initializer from store
   const ensureCallKey = useChatClientStore((state) => state.ensureCallKey);
@@ -427,6 +435,13 @@ export default function ConversationPage() {
     );
   }
 
+  const TTL_MS = 24 * 60 * 60 * 1000;
+  const visibleMessages = messages.filter((m) => {
+    if (m.deleted) return false;
+    const ageMs = nowMs - new Date(m.createdAt).getTime();
+    return ageMs < TTL_MS;
+  });
+
   return (
     <div className="chat-area flex flex-col flex-1 min-h-0 h-full w-full">
       {/* Incoming Call Modal */}
@@ -534,7 +549,7 @@ export default function ConversationPage() {
             </div>
           )}
           <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 py-3 space-y-1.5">
-            {messages.length === 0 ? (
+            {visibleMessages.length === 0 ? (
               <div className="flex items-center justify-center h-full">
                 <p className="text-gray-500 dark:text-gray-400 text-center">
                   No messages yet. Start the conversation!
@@ -542,14 +557,22 @@ export default function ConversationPage() {
               </div>
             ) : (
               <>
-                {messages.map((message, index) => {
+                <AnimatePresence initial={false}>
+                {visibleMessages.map((message, index, filteredMessages) => {
                   const showDateHeader =
                     index === 0 ||
                     formatDate(message.createdAt) !==
-                      formatDate(messages[index - 1].createdAt);
+                      formatDate(filteredMessages[index - 1].createdAt);
 
                   return (
-                    <div key={message.id}>
+                    <motion.div
+                      key={message.id}
+                      layout="position"
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95, height: 0, overflow: 'hidden', padding: 0 }}
+                      transition={{ duration: 0.3, ease: 'easeInOut' }}
+                    >
                       {showDateHeader && (
                         <div className="flex items-center justify-center my-3">
                           <span className="px-3 py-1 rounded-full text-xs text-(--text-muted) bg-(--surface-muted)">
@@ -571,9 +594,10 @@ export default function ConversationPage() {
                           toggleHighlightedId(message.id)
                         }
                       />
-                    </div>
+                    </motion.div>
                   );
                 })}
+                </AnimatePresence>
                 <div ref={messagesEndRef} />
               </>
             )}
@@ -665,16 +689,7 @@ function MessageBubble({
     opacityStyle = 1 - easedProgress * 0.95;
   }
 
-  // Deleted message: subtle tombstone aligned to sender side
-  if (message.deleted) {
-    return (
-      <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
-        <div className="max-w-[72%] px-4 py-2.5 rounded-2xl bg-(--surface-muted) opacity-60">
-          <p className="text-sm italic text-(--text-muted)">Message deleted</p>
-        </div>
-      </div>
-    );
-  }
+
 
   return (
     <ContextMenu.Root>

@@ -29,6 +29,7 @@ migrations_dir = "src/db/migrations"
 binding = "DB"
 database_name = "microchat-db"
 database_id = "a5b418d2-f9f5-4bdc-a1c8-f0c0d5a4f2af"
+migrations_dir = "src/db/migrations"
 
 [durable_objects]
 bindings = [
