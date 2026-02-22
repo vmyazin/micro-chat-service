@@ -311,30 +311,11 @@ export class ChatHub implements DurableObject {
 
     // If everyone in the group has received the message, tear it down!
     // A message is fully delivered if (Total Members - 1 (sender)) <= receipts.
-    // To be strictly safe and truly ephemeral, if receiptCount >= totalMembers - 1
+    // However, users want to see messages for 24 hours instead of having them
+    // immediately vanish when read replicas sync or React Query refetches on reconnect.
+    // The retention cron job (retention.ts) will clean up messages older than 24 hours.
     if (totalMembers > 1 && receiptCount >= totalMembers - 1) {
-      console.log(`[chathub] Message ${messageId} fully delivered. Erasing.`);
-
-      // Get any associated R2 image keys so the client/server can clean those up too
-      const _imageRows = await db.query<{ r2_key: string }>(
-        'SELECT r2_key FROM image_attachments WHERE message_id = ?',
-        [messageId],
-      );
-
-      // (We can't easily delete R2 from ChatHub as it doesn't have the IMAGES binding,
-      // but the retention cron handles orphaned images later, or we let the API handle it.
-      // For immediate DB deletion, we drop it.)
-      await db.execute('DELETE FROM image_attachments WHERE message_id = ?', [
-        messageId,
-      ]);
-      await db.execute('DELETE FROM delivery_receipts WHERE message_id = ?', [
-        messageId,
-      ]);
-      await db.execute('DELETE FROM messages WHERE id = ?', [messageId]);
-
-      // Broadcast an event to UI that it was completely deleted from server (optional,
-      // but good to notify clients if they need to update sync status).
-      // For secrecy, we ensure the cloud is wiped.
+      console.log(`[chathub] Message ${messageId} fully delivered. Keeping in DB for 24h retention policy.`);
     }
   }
 
