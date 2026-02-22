@@ -4,9 +4,10 @@ import { AuthClient } from '@microchat/client';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { Button } from '@/components/Button';
 import GroupList from '@/components/GroupList';
 import NewGroupDialog from '@/components/NewGroupDialog';
-import { Button } from '@/components/Button';
+import { useUiStore } from '@/stores/ui-store';
 
 export default function ChatLayout({
   children,
@@ -15,10 +16,16 @@ export default function ChatLayout({
 }) {
   const params = useParams();
   const router = useRouter();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [showNewGroupDialog, setShowNewGroupDialog] = useState(false);
-  const [groupListKey, setGroupListKey] = useState(0);
   const [isSigningOut, setIsSigningOut] = useState(false);
+
+  // UI state from Zustand store
+  const sidebarOpen = useUiStore((state) => state.sidebarOpen);
+  const setSidebarOpen = useUiStore((state) => state.setSidebarOpen);
+  const showNewGroupDialog = useUiStore((state) => state.showNewGroupDialog);
+  const setShowNewGroupDialog = useUiStore(
+    (state) => state.setShowNewGroupDialog,
+  );
+  const refreshGroupList = useUiStore((state) => state.refreshGroupList);
 
   const selectedGroupId = params?.groupId as string | undefined;
 
@@ -27,7 +34,7 @@ export default function ChatLayout({
   }
 
   function handleGroupCreated() {
-    setGroupListKey((k) => k + 1);
+    refreshGroupList();
   }
 
   async function handleSignOut() {
@@ -74,7 +81,8 @@ export default function ChatLayout({
               className="h-12 w-auto"
               priority
             />
-            <Button variant="ghost"
+            <Button
+              variant="ghost"
               type="button"
               onClick={() => setSidebarOpen(false)}
               className="lg:hidden p-1 hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -89,7 +97,6 @@ export default function ChatLayout({
             <GroupList
               onNewGroup={handleNewGroup}
               selectedGroupId={selectedGroupId}
-              refreshKey={groupListKey}
             />
           </div>
 
@@ -101,7 +108,9 @@ export default function ChatLayout({
             >
               Home Page
             </a>
-            <Button variant="primary" size="sm"
+            <Button
+              variant="primary"
+              size="sm"
               type="button"
               onClick={handleSignOut}
               disabled={isSigningOut}
@@ -127,7 +136,8 @@ export default function ChatLayout({
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile header with toggle */}
         <div className="lg:hidden flex items-center p-4 border-b border-[var(--border-color)]">
-          <Button variant="ghost"
+          <Button
+            variant="ghost"
             type="button"
             onClick={() => setSidebarOpen(true)}
             className="p-2 border-base hover:bg-gray-100 dark:hover:bg-gray-800"

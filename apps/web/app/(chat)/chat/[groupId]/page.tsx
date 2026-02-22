@@ -1,284 +1,117 @@
 'use client';
 
 import {
-  type CallSession,
-  type CurrentUser,
   type GroupId,
   type MessageListItem,
   type MessagePayload,
-  MicroChatClient,
   type UserId,
   uint8ArrayToBase64,
-  type WebSocketEvent,
 } from '@microchat/client';
-import { GroupCipher, MemoryKeyStore } from '@microchat/crypto';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { useParams } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
+import { Button } from '@/components/Button';
 import { CallButton } from '@/components/CallButton';
 import GroupSettings from '@/components/GroupSettings';
 import { ImageMessage } from '@/components/ImageMessage';
 import { IncomingCallModal } from '@/components/IncomingCallModal';
 import { MessageInput } from '@/components/MessageInput';
 import { VoiceMessagePlayer } from '@/components/VoiceMessagePlayer';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useDeleteMessage } from '@/hooks/useDeleteMessage';
+import { useMembers } from '@/hooks/useMembers';
+import { useMessages } from '@/hooks/useMessages';
+import { useSendMessage } from '@/hooks/useSendMessage';
 import { useSfx } from '@/hooks/useSfx';
-import { Button } from '@/components/Button';
-
-const callKeyStore = new MemoryKeyStore();
-const callCipher = new GroupCipher(callKeyStore);
-const initializedCallGroups = new Set<string>();
-
-async function deriveCallGroupKey(groupId: GroupId): Promise<Uint8Array> {
-  const encoder = new TextEncoder();
-  const hashBuffer = await crypto.subtle.digest(
-    'SHA-256',
-    encoder.encode(`microchat-call-key-${groupId}`),
-  );
-  return new Uint8Array(hashBuffer).slice(0, 32);
-}
-
-async function ensureCallKey(groupId: GroupId): Promise<void> {
-  if (initializedCallGroups.has(groupId)) {
-    return;
-  }
-
-  const rawKey = await callCipher.getRawKey(groupId, 0);
-  if (rawKey) {
-    initializedCallGroups.add(groupId);
-    return;
-  }
-
-  const derivedKey = await deriveCallGroupKey(groupId);
-  await callCipher.importGroupKey(groupId, 0, derivedKey);
-  initializedCallGroups.add(groupId);
-}
+import { useWebSocket } from '@/hooks/useWebSocket';
+import { useCallStore } from '@/stores/call-store';
+import { useChatClientStore } from '@/stores/chat-client-store';
+import { useChatStore } from '@/stores/chat-store';
 
 export default function ConversationPage() {
   const params = useParams();
   const groupId = params?.groupId as string | undefined;
 
-  const [messages, setMessages] = useState<MessageListItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [sendError, setSendError] = useState<string | null>(null);
-  const [connectionStatus, setConnectionStatus] = useState<
-    'connected' | 'disconnected' | 'reconnecting'
-  >('disconnected');
-  const [showSettings, setShowSettings] = useState(false);
-  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-  const [deleting, setDeleting] = useState(false);
-  const [highlightedIds, setHighlightedIds] = useState<Set<string>>(new Set());
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const clientRef = useRef<MicroChatClient | null>(null);
-  const currentUserRef = useRef(currentUser);
-  currentUserRef.current = currentUser;
+  const { getClient } = useChatClientStore();
+  const client = getClient();
   const playSfx = useSfx();
 
-  // Call-related state
-  const [activeSession, setActiveSession] = useState<CallSession | null>(null);
-  const [incomingSession, setIncomingSession] = useState<CallSession | null>(
-    null,
+  // Server state with React Query
+  const {
+    data: messages = [],
+    isLoading: loading,
+    error,
+    refetch,
+  } = useMessages(groupId as GroupId);
+  const { data: members = [] } = useMembers(groupId as GroupId);
+  const { data: currentUser } = useCurrentUser();
+
+  // Mutations
+  const sendMessage = useSendMessage(groupId as GroupId);
+  const deleteMessage = useDeleteMessage(groupId as GroupId);
+
+  // UI state from Zustand stores
+  const connectionStatus = useChatStore((state) => state.connectionStatus);
+  const showSettings = useChatStore((state) => state.showSettings);
+  const setShowSettings = useChatStore((state) => state.setShowSettings);
+  const deleteConfirmId = useChatStore((state) => state.deleteConfirmId);
+  const setDeleteConfirmId = useChatStore((state) => state.setDeleteConfirmId);
+  const deleting = useChatStore((state) => state.deleting);
+  const setDeleting = useChatStore((state) => state.setDeleting);
+  const highlightedIds = useChatStore((state) => state.highlightedIds);
+  const toggleHighlightedId = useChatStore(
+    (state) => state.toggleHighlightedId,
   );
-  const [isCalling, setIsCalling] = useState(false);
-  const [targetUserId, setTargetUserId] = useState<UserId | null>(null);
-  const [memberCount, setMemberCount] = useState<number | null>(null);
-  const [targetUserName, setTargetUserName] = useState<string | null>(null);
+  const addHighlightedId = useChatStore((state) => state.addHighlightedId);
+  const removeHighlightedId = useChatStore(
+    (state) => state.removeHighlightedId,
+  );
+
+  // Call state from Zustand
+  const activeSession = useCallStore((state) => state.activeSession);
+  const setActiveSession = useCallStore((state) => state.setActiveSession);
+  const incomingSession = useCallStore((state) => state.incomingSession);
+  const setIncomingSession = useCallStore((state) => state.setIncomingSession);
+  const isCalling = useCallStore((state) => state.isCalling);
+  const setIsCalling = useCallStore((state) => state.setIsCalling);
+  const targetUserId = useCallStore((state) => state.targetUserId);
+  const setTargetUserId = useCallStore((state) => state.setTargetUserId);
+  const targetUserName = useCallStore((state) => state.targetUserName);
+  const setTargetUserName = useCallStore((state) => state.setTargetUserName);
+  const memberCount = useCallStore((state) => state.memberCount);
+  const setMemberCount = useCallStore((state) => state.setMemberCount);
+  const setCallState = useCallStore((state) => state.setCallState);
+
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const remoteAudioRef = useRef<HTMLAudioElement>(null);
 
-  // Load highlighted IDs from sessionStorage
+  // Get call key initializer from store
+  const ensureCallKey = useChatClientStore((state) => state.ensureCallKey);
+
+  // Initialize WebSocket connection
+  useWebSocket(groupId as GroupId | null);
+
+  // Initialize call key
   useEffect(() => {
     if (!groupId) return;
-    const storageKey = `microchat:highlighted:${groupId}`;
-    const saved = sessionStorage.getItem(storageKey);
-    if (saved) {
-      try {
-        const ids = JSON.parse(saved) as string[];
-        setHighlightedIds(new Set(ids));
-      } catch {
-        // Ignore parse errors
-      }
-    }
-  }, [groupId]);
-
-  // Save highlighted IDs to sessionStorage
-  useEffect(() => {
-    if (!groupId) return;
-    const storageKey = `microchat:highlighted:${groupId}`;
-    sessionStorage.setItem(
-      storageKey,
-      JSON.stringify(Array.from(highlightedIds)),
-    );
-  }, [highlightedIds, groupId]);
-
-  const getClient = useCallback(() => {
-    if (!clientRef.current) {
-      clientRef.current = new MicroChatClient({
-        baseUrl: process.env.NEXT_PUBLIC_API_URL || '',
-        wsUrl: process.env.NEXT_PUBLIC_WS_URL,
-        enableVoiceCalls: true,
-        enableSealedSender: true,
-        callCipher,
-        getGroupEpoch: () => 0,
-      });
-    }
-    return clientRef.current;
-  }, []);
-
-  const fetchCurrentUser = useCallback(async () => {
-    try {
-      const client = getClient();
-      const user = await client.getCurrentUser();
-      setCurrentUser(user);
-    } catch (err) {
-      console.error('Failed to get current user:', err);
-    }
-  }, [getClient]);
-
-  const fetchMessages = useCallback(async () => {
-    if (!groupId) return;
-
-    try {
-      setLoading(true);
-      setError(null);
-      const client = getClient();
-      const result = await client.getMessages(groupId as GroupId);
-      setMessages(result);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load messages');
-    } finally {
-      setLoading(false);
-    }
-  }, [groupId, getClient]);
-
-  useEffect(() => {
-    if (groupId) {
-      fetchMessages();
-      fetchCurrentUser();
-    }
-  }, [groupId, fetchCurrentUser, fetchMessages]);
-
-  useEffect(() => {
-    if (!groupId) return;
-
-    ensureCallKey(groupId as GroupId).catch((err) => {
+    ensureCallKey(groupId as GroupId).catch((err: Error) => {
       console.error('[call] Failed to initialize call cipher', err);
     });
-  }, [groupId]);
+  }, [groupId, ensureCallKey]);
 
+  // Scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   });
 
-  useEffect(() => {
-    if (!groupId) return;
-
-    const client = getClient();
-
-    const handleEvent = (event: WebSocketEvent) => {
-      switch (event.type) {
-        case 'connected':
-          setConnectionStatus('connected');
-          client.subscribe(groupId as GroupId);
-          break;
-
-        case 'disconnected':
-          setConnectionStatus('reconnecting');
-          break;
-
-        case 'message':
-          if (event.groupId === groupId) {
-            const newMessage: MessageListItem = {
-              id: event.messageId,
-              groupId: event.groupId,
-              senderId: event.senderId,
-              senderName: event.senderName,
-              encryptedContent: event.encryptedContent,
-              createdAt: event.timestamp,
-              deleted: false,
-            };
-            setMessages((prev) => {
-              const exists = prev.some((m) => m.id === event.messageId);
-              if (exists) return prev;
-              return [...prev, newMessage];
-            });
-            if (
-              document.hidden &&
-              event.senderId !== currentUserRef.current?.userId
-            ) {
-              playSfx('message');
-            }
-          }
-          break;
-
-        case 'messageDeleted':
-          if (event.groupId === groupId) {
-            setMessages((prev) =>
-              prev.map((m) =>
-                m.id === event.messageId ? { ...m, deleted: true } : m,
-              ),
-            );
-          }
-          break;
-
-        case 'memberJoined':
-          if (event.groupId === groupId) {
-            const systemMessage: MessageListItem = {
-              id: `system-join-${event.userId}-${Date.now()}`,
-              groupId: event.groupId,
-              senderId: 'system' as UserId,
-              senderName: 'system',
-              encryptedContent: `${event.displayName} joined the group`,
-              createdAt: new Date().toISOString(),
-              deleted: false,
-            };
-            setMessages((prev) => [...prev, systemMessage]);
-            playSfx('memberJoined');
-          }
-          break;
-
-        case 'memberLeft':
-          if (event.groupId === groupId) {
-            const systemMessage: MessageListItem = {
-              id: `system-left-${event.userId}-${Date.now()}`,
-              groupId: event.groupId,
-              senderId: 'system' as UserId,
-              senderName: 'system',
-              encryptedContent: `User ${event.userId} left the group`,
-              createdAt: new Date().toISOString(),
-              deleted: false,
-            };
-            setMessages((prev) => [...prev, systemMessage]);
-          }
-          break;
-
-        case 'error':
-          console.error('WebSocket error:', event.error);
-          break;
-      }
-    };
-
-    const unsubscribe = client.onEvent(handleEvent);
-    client.connect();
-
-    if (connectionStatus === 'connected') {
-      client.subscribe(groupId as GroupId);
-    }
-
-    return () => {
-      unsubscribe();
-      client.unsubscribe(groupId as GroupId);
-    };
-  }, [groupId, getClient, connectionStatus, playSfx]);
-
   // Setup call event listeners
   useEffect(() => {
-    const client = getClient();
     if (!client.calls) return;
 
     const offIncoming = client.calls.onIncomingCall((session) => {
       console.log('[call] Incoming call received', session);
       setIncomingSession(session);
+      setCallState('incoming');
 
       // Subscribe to state changes
       let offState = () => {};
@@ -287,10 +120,12 @@ export default function ConversationPage() {
           setActiveSession(session);
           setIncomingSession(null);
           setIsCalling(false);
+          setCallState('in-call');
         } else if (state === 'ended') {
           setActiveSession(null);
           setIncomingSession(null);
           setIsCalling(false);
+          setCallState('idle');
           offState();
         }
       });
@@ -298,65 +133,43 @@ export default function ConversationPage() {
 
     const offMissed = client.calls.onMissedCall((event) => {
       console.log('[call] Missed call', event);
-
-      // Add system message for missed call
-      if (event.groupId === groupId) {
-        const systemMessage: MessageListItem = {
-          id: `system-missed-call-${event.callId}-${Date.now()}`,
-          groupId: event.groupId,
-          senderId: 'system' as UserId,
-          senderName: 'system',
-          encryptedContent: `Missed call from ${event.fromUserId ?? 'Unknown'}`,
-          createdAt: new Date().toISOString(),
-          deleted: false,
-        };
-        setMessages((prev) => [...prev, systemMessage]);
-      }
     });
 
     return () => {
       offIncoming();
       offMissed();
     };
-  }, [groupId, getClient]);
+  }, [
+    client,
+    setActiveSession,
+    setIncomingSession,
+    setIsCalling,
+    setCallState,
+  ]);
 
-  // Load target user for calling
+  // Update call target info when members change
   useEffect(() => {
-    if (!groupId) {
+    if (!groupId || !currentUser) {
       setTargetUserId(null);
       setMemberCount(null);
       setTargetUserName(null);
       return;
     }
 
-    const client = getClient();
-    client
-      .getMembers(groupId as GroupId)
-      .then((result) => {
-        setMemberCount(result.members.length);
-        const otherMember = result.members.find(
-          (m) => m.userId !== currentUser?.userId,
-        );
-        setTargetUserId(otherMember?.userId ?? null);
-        setTargetUserName(otherMember?.displayName ?? null);
-      })
-      .catch((err) => {
-        console.error('[call] Failed to load members:', err);
-        setTargetUserId(null);
-        setMemberCount(null);
-        setTargetUserName(null);
-      });
-  }, [groupId, currentUser?.userId, getClient]);
+    setMemberCount(members.length);
+    const otherMember = members.find((m) => m.userId !== currentUser.userId);
+    setTargetUserId(otherMember?.userId ?? null);
+    setTargetUserName(otherMember?.displayName ?? null);
+  }, [
+    groupId,
+    currentUser,
+    members,
+    setTargetUserId,
+    setMemberCount,
+    setTargetUserName,
+  ]);
 
-  useEffect(() => {
-    return () => {
-      if (clientRef.current) {
-        clientRef.current.disconnect();
-        clientRef.current = null;
-      }
-    };
-  }, []);
-
+  // Remote audio handling
   useEffect(() => {
     const audioEl = remoteAudioRef.current;
     if (!audioEl) return;
@@ -396,9 +209,20 @@ export default function ConversationPage() {
     };
   }, [activeSession]);
 
+  // Stable callbacks for IncomingCallModal — must not change identity on re-render
+  // to prevent useEffect in IncomingCallModal from re-running and calling accept() twice.
+  const handleAcceptCall = useCallback(() => {
+    incomingSession?.accept().catch(console.error);
+  }, [incomingSession]);
+
+  const handleRejectCall = useCallback(() => {
+    incomingSession?.reject().catch(console.error);
+    setIncomingSession(null);
+    setCallState('idle');
+  }, [incomingSession, setIncomingSession, setCallState]);
+
   // Handle call button click
   async function handleStartCall() {
-    const client = getClient();
     if (!client.calls || !targetUserId || !groupId) return;
 
     try {
@@ -412,15 +236,18 @@ export default function ConversationPage() {
 
       setActiveSession(session);
       setIsCalling(true);
+      setCallState('calling');
 
       let offState = () => {};
       offState = session.onStateChange((state) => {
         if (state === 'active') {
           setIsCalling(false);
+          setCallState('in-call');
         }
         if (state === 'ended') {
           setActiveSession(null);
           setIsCalling(false);
+          setCallState('idle');
           offState();
         }
       });
@@ -434,34 +261,13 @@ export default function ConversationPage() {
 
   async function handleSendMessage(content: string) {
     if (!groupId) return;
-
-    const client = getClient();
-    const result = await client.sendMessage(groupId as GroupId, content);
-
-    const payload: MessagePayload = { type: 'text', content };
-    const newMessage: MessageListItem = {
-      id: result.messageId,
-      groupId: groupId as GroupId,
-      senderId: (currentUser?.userId ?? 'me') as UserId,
-      senderName: currentUser?.displayName ?? 'me',
-      encryptedContent: JSON.stringify(payload),
-      createdAt: result.timestamp,
-      deleted: false,
-    };
-    setMessages((prev) => {
-      const exists = prev.some((m) => m.id === result.messageId);
-      if (exists) return prev;
-      return [...prev, newMessage];
-    });
+    await sendMessage.mutateAsync({ content });
   }
 
   async function handleSendVoiceMessage(audioBlob: Blob, duration: number) {
     if (!groupId) return;
 
-    setSendError(null);
-
     try {
-      const client = getClient();
       const result = await client.sendVoiceMessage(
         groupId as GroupId,
         audioBlob,
@@ -477,59 +283,28 @@ export default function ConversationPage() {
         mimeType: audioBlob.type,
       };
 
-      const newMessage: MessageListItem = {
-        id: result.messageId,
-        groupId: groupId as GroupId,
-        senderId: (currentUser?.userId ?? 'me') as UserId,
-        senderName: currentUser?.displayName ?? 'me',
-        encryptedContent: JSON.stringify(payload),
-        createdAt: result.timestamp,
-        deleted: false,
-      };
-      setMessages((prev) => {
-        if (prev.some((m) => m.id === result.messageId)) return prev;
-        return [...prev, newMessage];
-      });
+      // The message will be added by the WebSocket handler or mutation success
+      console.log('Voice message sent:', result);
     } catch (err) {
       console.error('Failed to send voice message:', err);
-      setSendError(
-        err instanceof Error ? err.message : 'Failed to send voice message',
-      );
     }
   }
 
   async function handleSendImage(blob: Blob, width: number, height: number) {
     if (!groupId) return;
 
-    const client = getClient();
-    const result = await client.sendImageMessage(
-      groupId as GroupId,
-      blob,
-      width,
-      height,
-    );
+    try {
+      const result = await client.sendImageMessage(
+        groupId as GroupId,
+        blob,
+        width,
+        height,
+      );
 
-    const payload: MessagePayload = {
-      type: 'image',
-      r2Key: result.r2Key,
-      nonce: '',
-      width,
-      height,
-    };
-
-    const newMessage: MessageListItem = {
-      id: result.messageId,
-      groupId: groupId as GroupId,
-      senderId: (currentUser?.userId ?? 'me') as UserId,
-      senderName: currentUser?.displayName ?? 'me',
-      encryptedContent: JSON.stringify(payload),
-      createdAt: result.timestamp,
-      deleted: false,
-    };
-    setMessages((prev) => {
-      if (prev.some((m) => m.id === result.messageId)) return prev;
-      return [...prev, newMessage];
-    });
+      console.log('Image message sent:', result);
+    } catch (err) {
+      console.error('Failed to send image message:', err);
+    }
   }
 
   async function handleDeleteMessage(messageId: string) {
@@ -537,12 +312,7 @@ export default function ConversationPage() {
 
     try {
       setDeleting(true);
-      const client = getClient();
-      await client.deleteMessage(groupId as GroupId, messageId);
-      // Optimistic update - mark as deleted locally
-      setMessages((prev) =>
-        prev.map((m) => (m.id === messageId ? { ...m, deleted: true } : m)),
-      );
+      await deleteMessage.mutateAsync(messageId);
       setDeleteConfirmId(null);
     } catch (err) {
       console.error('Failed to delete message:', err);
@@ -604,10 +374,11 @@ export default function ConversationPage() {
     return (
       <div className="flex flex-col items-center justify-center h-full p-4">
         <div className="p-4 border-base bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 max-w-md">
-          <p className="mb-2">{error}</p>
-          <Button variant="ghost"
+          <p className="mb-2">{error.message}</p>
+          <Button
+            variant="ghost"
             type="button"
-            onClick={fetchMessages}
+            onClick={() => refetch()}
             className="text-sm underline hover:no-underline"
           >
             Retry
@@ -622,20 +393,15 @@ export default function ConversationPage() {
       {/* Incoming Call Modal */}
       <IncomingCallModal
         session={incomingSession}
-        onAccept={() => {
-          incomingSession?.accept().catch(console.error);
-        }}
-        onReject={() => {
-          incomingSession?.reject().catch(console.error);
-          setIncomingSession(null);
-        }}
+        onAccept={handleAcceptCall}
+        onReject={handleRejectCall}
       />
 
       <header className="chat-header flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
         <h1 className="chat-title text-lg font-bold truncate">Group Chat</h1>
         <div className="chat-actions flex items-center gap-2">
           <CallButton
-            client={getClient()}
+            client={client}
             groupId={groupId as GroupId}
             currentUserId={currentUser?.userId}
             onStartCall={handleStartCall}
@@ -644,7 +410,8 @@ export default function ConversationPage() {
             calling={isCalling}
             activeSession={activeSession}
           />
-          <Button variant="ghost"
+          <Button
+            variant="ghost"
             type="button"
             onClick={() => setShowSettings(true)}
             className="chat-action-settings p-2 border-base hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -678,12 +445,13 @@ export default function ConversationPage() {
           Reconnecting to real-time updates...
         </div>
       )}
-      {sendError && (
+      {sendMessage.isError && (
         <div className="px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 text-sm text-center">
-          <span>{sendError}</span>
-          <Button variant="ghost"
+          <span>{sendMessage.error?.message || 'Failed to send message'}</span>
+          <Button
+            variant="ghost"
             type="button"
-            onClick={() => setSendError(null)}
+            onClick={() => sendMessage.reset()}
             className="ml-3 text-xs underline hover:no-underline"
           >
             Dismiss
@@ -724,17 +492,7 @@ export default function ConversationPage() {
                     onCancelDelete={() => setDeleteConfirmId(null)}
                     deleting={deleting && deleteConfirmId === message.id}
                     isHighlighted={highlightedIds.has(message.id)}
-                    onToggleHighlight={() =>
-                      setHighlightedIds((prev) => {
-                        const next = new Set(prev);
-                        if (next.has(message.id)) {
-                          next.delete(message.id);
-                        } else {
-                          next.add(message.id);
-                        }
-                        return next;
-                      })
-                    }
+                    onToggleHighlight={() => toggleHighlightedId(message.id)}
                   />
                 </div>
               );
@@ -909,7 +667,8 @@ function MessageBubble({
                     Delete this message?
                   </p>
                   <div className="flex gap-2">
-                    <Button variant="ghost"
+                    <Button
+                      variant="ghost"
                       type="button"
                       onClick={onConfirmDelete}
                       disabled={deleting}
@@ -917,7 +676,8 @@ function MessageBubble({
                     >
                       {deleting ? 'Deleting...' : 'Delete'}
                     </Button>
-                    <Button variant="ghost"
+                    <Button
+                      variant="ghost"
                       type="button"
                       onClick={onCancelDelete}
                       disabled={deleting}

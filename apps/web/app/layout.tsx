@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Bodoni_Moda, Geist, Geist_Mono, Jost } from 'next/font/google';
 import './globals.css';
+import { QueryProvider } from '@/providers/query-provider';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -33,7 +34,8 @@ export const metadata: Metadata = {
     'End-to-end encrypted group messaging built on the MLS protocol (RFC 9420).',
   openGraph: {
     title: 'MicroChat — Private Group Messaging',
-    description: 'End-to-end encrypted group messaging built on the MLS protocol (RFC 9420).',
+    description:
+      'End-to-end encrypted group messaging built on the MLS protocol (RFC 9420).',
     url: 'https://microchat.smoxu.com',
     siteName: 'MicroChat',
     images: [
@@ -50,7 +52,8 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'MicroChat — Private Group Messaging',
-    description: 'End-to-end encrypted group messaging built on the MLS protocol (RFC 9420).',
+    description:
+      'End-to-end encrypted group messaging built on the MLS protocol (RFC 9420).',
     images: ['/images/og-image.jpg'],
   },
   robots: {
@@ -76,7 +79,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${bodoniModa.variable} ${jost.variable} antialiased`}
       >
-        {children}
+        <QueryProvider>{children}</QueryProvider>
       </body>
     </html>
   );

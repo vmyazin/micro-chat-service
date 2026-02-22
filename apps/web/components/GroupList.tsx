@@ -1,50 +1,27 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { MicroChatClient, type GroupListItem } from '@microchat/client';
+import { useGroups } from '@/hooks/useGroups';
 import { Button } from '@/components/Button';
 import { SidebarItem } from '@/components/SidebarItem';
 
 interface GroupListProps {
   onNewGroup: () => void;
   selectedGroupId?: string;
-  refreshKey?: number;
 }
 
-export default function GroupList({ onNewGroup, selectedGroupId, refreshKey }: GroupListProps) {
+export default function GroupList({ onNewGroup, selectedGroupId }: GroupListProps) {
   const router = useRouter();
-  const [groups, setGroups] = useState<GroupListItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchGroups();
-  }, [refreshKey]);
-
-  async function fetchGroups() {
-    try {
-      setLoading(true);
-      setError(null);
-      const client = new MicroChatClient({
-        baseUrl: process.env.NEXT_PUBLIC_API_URL || '',
-      });
-      const result = await client.listGroups();
-      setGroups(result);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load groups';
-      if (message.includes('session') || message.includes('Authentication required')) {
-        router.push('/login?redirect=/chat');
-        return;
-      }
-      setError(message);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const { data: groups, isLoading, error, refetch } = useGroups();
 
   function handleGroupClick(groupId: string) {
     router.push(`/chat/${groupId}`);
+  }
+
+  // Handle auth errors by redirecting
+  if (error && (error.message.includes('session') || error.message.includes('Authentication required'))) {
+    router.push('/login?redirect=/chat');
+    return null;
   }
 
   return (
@@ -57,7 +34,7 @@ export default function GroupList({ onNewGroup, selectedGroupId, refreshKey }: G
         New Group
       </Button>
 
-      {loading && (
+      {isLoading && (
         <div className="flex items-center justify-center py-8">
           <LoadingSpinner />
         </div>
@@ -65,9 +42,9 @@ export default function GroupList({ onNewGroup, selectedGroupId, refreshKey }: G
 
       {error && (
         <div className="p-3 border-base bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm mb-4">
-          {error}
+          {error.message}
           <Button variant="ghost"
-            onClick={fetchGroups}
+            onClick={() => refetch()}
             className="block mt-2 text-xs underline hover:no-underline"
           >
             Retry
@@ -75,13 +52,13 @@ export default function GroupList({ onNewGroup, selectedGroupId, refreshKey }: G
         </div>
       )}
 
-      {!loading && !error && groups.length === 0 && (
+      {!isLoading && !error && (!groups || groups.length === 0) && (
         <p className="text-sm text-(--text-muted) text-center py-4">
           No groups yet. Create one to get started!
         </p>
       )}
 
-      {!loading && groups.length > 0 && (
+      {!isLoading && groups && groups.length > 0 && (
         <ul className="space-y-2 flex-1 overflow-y-auto">
           {groups.map((group) => (
             <li key={group.groupId}>

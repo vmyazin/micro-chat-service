@@ -1,8 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { MicroChatClient, type GroupId, type GroupMember } from '@microchat/client';
+import { useMembers } from '@/hooks/useMembers';
+import { useCreateInvite } from '@/hooks/useCreateInvite';
+import { useLeaveGroup } from '@/hooks/useLeaveGroup';
+import { useDeleteGroup } from '@/hooks/useDeleteGroup';
+import type { GroupId } from '@microchat/client';
 import { Button } from '@/components/Button';
 import * as Dialog from '@radix-ui/react-dialog';
 
@@ -14,62 +18,56 @@ interface GroupSettingsProps {
 
 export default function GroupSettings({ groupId, open, onClose }: GroupSettingsProps) {
   const router = useRouter();
-  const [members, setMembers] = useState<GroupMember[]>([]);
-  const [ownerId, setOwnerId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [actionLoading, setActionLoading] = useState(false);
+  
+  // Server state with React Query
+  const { data: members = [], isLoading: loading, error: membersError } = useMembers(groupId);
+  
+  // Mutations
+  const createInvite = useCreateInvite(groupId);
+  const leaveGroup = useLeaveGroup();
+  const deleteGroup = useDeleteGroup();
+  
+  // Local UI state
   const [inviteLink, setInviteLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
 
-  const getClient = useCallback(() => {
-    return new MicroChatClient({
-      baseUrl: process.env.NEXT_PUBLIC_API_URL || '',
-    });
-  }, []);
-
-  const fetchMembers = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const client = getClient();
-      const result = await client.getMembers(groupId);
-      setMembers(result.members);
-      setOwnerId(result.ownerId);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load members');
-    } finally {
-      setLoading(false);
-    }
-  }, [groupId, getClient]);
-
+  // Reset state when dialog opens
   useEffect(() => {
     if (open) {
-      fetchMembers();
       setInviteLink(null);
       setCopied(false);
       setShowLeaveConfirm(false);
       setShowDeleteConfirm(false);
+      setLocalError(null);
     }
-  }, [open, fetchMembers]);
+  }, [open]);
+
+  // Check if any mutation is pending
+  const actionLoading = createInvite.isPending || leaveGroup.isPending || deleteGroup.isPending;
+  
+  // Combine errors
+  const error = localError || membersError?.message || createInvite.error?.message || 
+                leaveGroup.error?.message || deleteGroup.error?.message || null;
 
   if (!open) return null;
 
+  // Find owner
+  const ownerId = members.find((m) => m.isOwner)?.userId ?? null;
+  const isOwner = members.some((m) => m.isOwner);
+
   async function handleInvite() {
+    setLocalError(null);
+    setCopied(false);
+    
     try {
-      setActionLoading(true);
-      setError(null);
-      setCopied(false);
-      const client = getClient();
-      const result = await client.createInvite(groupId);
+      const result = await createInvite.mutateAsync();
       const link = `${window.location.origin}/invite/${result.code}`;
       setInviteLink(link);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create invite');
-    } finally {
-      setActionLoading(false);
+      setLocalError(err instanceof Error ? err.message : 'Failed to create invite');
     }
   }
 
@@ -89,34 +87,28 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
   }
 
   async function handleLeave() {
+    setLocalError(null);
+    
     try {
-      setActionLoading(true);
-      setError(null);
-      const client = getClient();
-      await client.leaveGroup(groupId);
+      await leaveGroup.mutateAsync(groupId);
       onClose();
       router.push('/chat');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to leave group');
-      setActionLoading(false);
+      setLocalError(err instanceof Error ? err.message : 'Failed to leave group');
     }
   }
 
   async function handleDelete() {
+    setLocalError(null);
+    
     try {
-      setActionLoading(true);
-      setError(null);
-      const client = getClient();
-      await client.deleteGroup(groupId);
+      await deleteGroup.mutateAsync(groupId);
       onClose();
       router.push('/chat');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete group');
-      setActionLoading(false);
+      setLocalError(err instanceof Error ? err.message : 'Failed to delete group');
     }
   }
-
-  const isOwner = members.some((m) => m.isOwner && m.userId === ownerId);
 
   return (
     <Dialog.Root open={open} onOpenChange={(isOpen) => { if (!isOpen && !actionLoading) onClose(); }}>
@@ -180,7 +172,7 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
             disabled={actionLoading}
             className="w-full disabled:opacity-50 flex items-center justify-center ga"
           >
-            {actionLoading && !inviteLink && <LoadingSpinner />}
+            {createInvite.isPending && <LoadingSpinner />}
             Invite Member
           </Button>
 
@@ -238,7 +230,7 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
                   disabled={actionLoading}
                   className="flex-1 border-base flex items-center justify-center ga"
                 >
-                  {actionLoading && <LoadingSpinner />}
+                  {leaveGroup.isPending && <LoadingSpinner />}
                   Leave
                 </Button>
               </div>
@@ -273,7 +265,7 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
                       disabled={actionLoading}
                       className="flex-1 border-base flex items-center justify-center ga"
                     >
-                      {actionLoading && <LoadingSpinner />}
+                      {deleteGroup.isPending && <LoadingSpinner />}
                       Delete
                     </Button>
                   </div>

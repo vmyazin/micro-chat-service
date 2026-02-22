@@ -85,6 +85,7 @@ class CallSessionImpl implements CallSession {
   private _state: CallState = 'idle';
   private wsClient: WebSocketClient;
   private iceServers: RTCIceServer[];
+  private answerProcessed = false;
 
   constructor(options: {
     callId: CallId;
@@ -270,8 +271,21 @@ class CallSessionImpl implements CallSession {
     if (this._state === 'ended') {
       return;
     }
+    if (this._state === 'connecting' || this._state === 'active') {
+      console.log('[call] Call already accepted');
+      return;
+    }
     if (!this.pc || this.direction !== 'incoming') {
       throw new Error('Can only accept incoming calls');
+    }
+
+    // Can only create answer if we have a remote offer
+    if (this.pc.signalingState !== 'have-remote-offer') {
+      console.log(
+        '[call] Cannot accept: peer connection not in have-remote-offer state, current state:',
+        this.pc.signalingState,
+      );
+      throw new Error('Cannot accept call: no remote offer');
     }
 
     try {
@@ -334,13 +348,63 @@ class CallSessionImpl implements CallSession {
   }
 
   handleAnswer(answer: RTCSessionDescriptionInit): void {
-    if (!this.pc) return;
+    if (!this.pc) {
+      console.log('[call] Cannot handle answer: no peer connection');
+      return;
+    }
 
+    // Prevent processing answer multiple times
+    if (this.answerProcessed) {
+      console.log('[call] Ignoring duplicate answer (already processed)');
+      return;
+    }
+
+    // The peer connection signaling state should be 'have-local-offer' when we receive an answer
+    // If it's 'stable', the answer was already processed
+    // If it's anything else, we're in an invalid state
+    const signalingState = this.pc.signalingState;
+    console.log(
+      '[call] handleAnswer called, signaling state:',
+      signalingState,
+      'answerProcessed:',
+      this.answerProcessed,
+    );
+
+    if (signalingState !== 'have-local-offer') {
+      console.log(
+        '[call] Ignoring answer: peer connection not in have-local-offer state, current state:',
+        signalingState,
+      );
+      return;
+    }
+
+    this.answerProcessed = true;
     this.setState('connecting');
-    this.pc.setRemoteDescription(answer).catch((err) => {
-      console.error('[call] Failed to set remote description:', err);
-      this.hangup();
-    });
+
+    // Capture pc locally — this.pc could be nulled by cleanup() before the
+    // promise resolves, so we hold a stable reference.
+    const pc = this.pc;
+    console.log('[call] Setting remote answer description');
+    pc.setRemoteDescription(answer)
+      .then(() => {
+        console.log('[call] Remote description set successfully');
+      })
+      .catch((err: unknown) => {
+        // If the PC is already stable (e.g. due to a race with a duplicate
+        // answer), just log and ignore — do NOT hang up, the call may still
+        // be progressing normally on the other path.
+        if (
+          err instanceof DOMException &&
+          (err.name === 'InvalidStateError' || err.message.includes('stable'))
+        ) {
+          console.warn(
+            '[call] setRemoteDescription rejected because PC is already stable — ignoring duplicate answer',
+          );
+          return;
+        }
+        console.error('[call] Failed to set remote description:', err);
+        this.hangup();
+      });
   }
 
   handleIceCandidate(candidate: RTCIceCandidateInit): void {
@@ -389,6 +453,9 @@ class CallSessionImpl implements CallSession {
       this.pc.close();
       this.pc = null;
     }
+
+    // Reset answer processed flag
+    this.answerProcessed = false;
   }
 }
 
@@ -706,11 +773,30 @@ export class CallClient {
       }
 
       case 'callAnswer': {
+        console.log(
+          '[call] Received callAnswer event for callId:',
+          event.callId,
+        );
+
         if (!this.activeSession || this.activeSession.callId !== event.callId) {
           console.log('[call] Ignoring answer for unknown call');
           return;
         }
 
+        // Only the outgoing side (caller) should process answers
+        // The incoming side (callee) sends the answer and shouldn't receive it back
+        console.log(
+          '[call] Active session direction:',
+          this.activeSession.direction,
+        );
+        if (this.activeSession.direction !== 'outgoing') {
+          console.log(
+            '[call] Ignoring answer on incoming call (should only be processed by caller)',
+          );
+          return;
+        }
+
+        console.log('[call] Processing answer on outgoing call');
         this.activeSession.handleAnswer({ type: 'answer', sdp: event.sdp });
         break;
       }

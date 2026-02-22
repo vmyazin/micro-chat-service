@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { MicroChatClient } from '@microchat/client';
+import { useCreateGroup } from '@/hooks/useCreateGroup';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Button } from './Button';
 
@@ -15,26 +15,22 @@ interface NewGroupDialogProps {
 export default function NewGroupDialog({ open, onClose, onGroupCreated }: NewGroupDialogProps) {
   const router = useRouter();
   const [groupName, setGroupName] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [localError, setLocalError] = useState<string | null>(null);
+  
+  const createGroup = useCreateGroup();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
     if (!groupName.trim()) {
-      setError('Please enter a group name');
+      setLocalError('Please enter a group name');
       return;
     }
 
+    setLocalError(null);
+
     try {
-      setLoading(true);
-      setError(null);
-
-      const client = new MicroChatClient({
-        baseUrl: process.env.NEXT_PUBLIC_API_URL || '',
-      });
-
-      const result = await client.createGroup(groupName.trim());
+      const result = await createGroup.mutateAsync(groupName.trim());
 
       setGroupName('');
       onGroupCreated?.(result.groupId);
@@ -49,16 +45,14 @@ export default function NewGroupDialog({ open, onClose, onGroupCreated }: NewGro
       onClose();
       router.push(`/chat/${result.groupId}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create group');
-    } finally {
-      setLoading(false);
+      setLocalError(err instanceof Error ? err.message : 'Failed to create group');
     }
   }
 
   function handleClose() {
-    if (!loading) {
+    if (!createGroup.isPending) {
       setGroupName('');
-      setError(null);
+      setLocalError(null);
       onClose();
     }
   }
@@ -85,15 +79,15 @@ export default function NewGroupDialog({ open, onClose, onGroupCreated }: NewGro
                 value={groupName}
                 onChange={(e) => setGroupName(e.target.value)}
                 placeholder="Enter group name..."
-                disabled={loading}
+                disabled={createGroup.isPending}
                 className="w-full p-3 border-base bg-[var(--background)] focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
                 autoFocus
               />
             </div>
 
-            {error && (
+            {localError && (
               <div className="mb-4 p-3 border-base bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm">
-                {error}
+                {localError}
               </div>
             )}
 
@@ -102,16 +96,16 @@ export default function NewGroupDialog({ open, onClose, onGroupCreated }: NewGro
                 type="button"
                 variant="outline"
                 onClick={handleClose}
-                disabled={loading}
+                disabled={createGroup.isPending}
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 variant="colorful"
-                disabled={loading || !groupName.trim()}
+                disabled={createGroup.isPending || !groupName.trim()}
               >
-                {loading && <LoadingSpinner />}
+                {createGroup.isPending && <LoadingSpinner />}
                 Create & Copy Link
               </Button>
             </div>

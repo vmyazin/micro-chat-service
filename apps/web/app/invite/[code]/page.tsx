@@ -1,9 +1,9 @@
 'use client';
 
-import { MicroChatClient } from '@microchat/client';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/Button';
+import { useAcceptInvite } from '@/hooks/useAcceptInvite';
 
 type InviteState = 'loading' | 'error' | 'success';
 
@@ -13,16 +13,14 @@ export default function InvitePage() {
   const [state, setState] = useState<InviteState>('loading');
   const [error, setError] = useState<string | null>(null);
 
+  const acceptInvite = useAcceptInvite();
+
   useEffect(() => {
     const code = params.code;
     if (!code) return;
 
-    const client = new MicroChatClient({
-      baseUrl: process.env.NEXT_PUBLIC_API_URL || '',
-    });
-
-    client
-      .acceptInvite(code)
+    acceptInvite
+      .mutateAsync(code)
       .then((result) => {
         setState('success');
         router.replace(`/chat/${result.groupId}`);
@@ -33,7 +31,7 @@ export default function InvitePage() {
           err instanceof Error ? err.message : 'Failed to accept invite',
         );
       });
-  }, [params.code, router]);
+  }, [params.code, router, acceptInvite]);
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
@@ -63,7 +61,8 @@ export default function InvitePage() {
             <div className="p-3 border-base bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm mb-4">
               {error}
             </div>
-            <Button variant="ghost"
+            <Button
+              variant="ghost"
               type="button"
               onClick={() => router.push('/chat')}
               className="btn-base"

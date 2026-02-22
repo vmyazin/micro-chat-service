@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { CallSession } from '@microchat/client';
 import { Button } from '@/components/Button';
 import * as Dialog from '@radix-ui/react-dialog';
@@ -13,6 +13,16 @@ interface IncomingCallModalProps {
 
 export function IncomingCallModal({ session, onAccept, onReject }: IncomingCallModalProps) {
   const [elapsed, setElapsed] = useState(0);
+  // Guards against accept() being invoked more than once (e.g. double-click or
+  // effect re-run before session is nulled out by the parent).
+  const acceptedRef = useRef(false);
+
+  // Reset the guard whenever a new session arrives.
+  useEffect(() => {
+    if (session) {
+      acceptedRef.current = false;
+    }
+  }, [session]);
 
   useEffect(() => {
     if (!session) {
@@ -35,7 +45,11 @@ export function IncomingCallModal({ session, onAccept, onReject }: IncomingCallM
     }, 30000);
 
     const offState = session.onStateChange((state) => {
-      if (state === 'ended') {
+      // Only call onReject for a true remote hang-up / timeout.
+      // Do NOT call it when state becomes 'active' or 'connecting' — those
+      // happen on a successful accept and the parent handles them via its own
+      // onStateChange listener registered in the call-setup effect.
+      if (state === 'ended' && !acceptedRef.current) {
         onReject();
       }
     });
@@ -120,7 +134,11 @@ export function IncomingCallModal({ session, onAccept, onReject }: IncomingCallM
           </Button>
           <Button variant="ghost"
             type="button"
-            onClick={onAccept}
+            onClick={() => {
+              if (acceptedRef.current) return;
+              acceptedRef.current = true;
+              onAccept();
+            }}
             className="call-action-accept flex-1 bg-green-600 text-white font-semibold hover:bg-green-700 transition-colors flex items-center justify-center ga"
           >
             <svg className="call-action-icon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
