@@ -17,13 +17,24 @@ if [ "$CURRENT_BRANCH" != "main" ]; then
   exit 0
 fi
 
+echo "==> Checking git remote status..."
+if ! git push --dry-run > /dev/null 2>&1; then
+  echo -e "⚠️  Attention! Git push would fail, likely because your branch is behind the remote."
+  echo -e "Please run \033[94mgit pull\033[0m to integrate remote changes before deploying."
+  exit 0
+fi
+
+echo ""
 echo "==> Running pre-deploy checks..."
 pnpm typecheck
 pnpm build
 
 echo ""
 echo "==> Pushing to git..."
-git push
+if ! git push; then
+  echo -e "⚠️  Attention! Git push failed. Please resolve the issue and try again."
+  exit 0
+fi
 
 echo ""
 echo "==> Deploying Workers API to Cloudflare..."
