@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { Button } from '@/components/Button';
 import GroupList from '@/components/GroupList';
 import NewGroupDialog from '@/components/NewGroupDialog';
+import { CallFaviconUpdater } from '@/components/CallFaviconUpdater';
 import { useUiStore } from '@/stores/ui-store';
 
 export default function ChatLayout({
@@ -159,6 +160,8 @@ export default function ChatLayout({
         onClose={() => setShowNewGroupDialog(false)}
         onGroupCreated={handleGroupCreated}
       />
+      
+      <CallFaviconUpdater />
     </div>
   );
 }
