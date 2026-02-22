@@ -142,6 +142,13 @@ export function CallButton({
   if (!targetUserId) return null;
 
   if (activeSession) {
+    const isLive = callState === 'active';
+    const statusLabel = isLive ? 'Live' : 'Connecting...';
+    const statusTone = isLive
+      ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+      : 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300';
+    const showSpinner = !isLive;
+
     return (
       <>
         <button
@@ -161,6 +168,24 @@ export function CallButton({
             <Microphone className="w-5 h-5" />
           )}
         </button>
+        <div
+          className={`flex items-center gap-2 px-3 py-2 border-base ${statusTone} transition-all duration-300 ${
+            isExpanded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1'
+          }`}
+          role="status"
+          aria-live="polite"
+        >
+          {showSpinner && (
+            <span
+              className="h-3 w-3 rounded-full border-2 border-current border-t-transparent animate-spin"
+              aria-hidden="true"
+            />
+          )}
+          <span className="text-sm font-medium">
+            {statusLabel}
+            {isLive ? ` ${formatDuration(duration)}` : ''}
+          </span>
+        </div>
         <button
           type="button"
           onClick={() => activeSession.hangup()}
@@ -169,13 +194,6 @@ export function CallButton({
           title="End call"
         >
           <PhoneX aria-hidden="true" className="w-5 h-5 shrink-0" />
-          <span 
-            className={`whitespace-nowrap font-medium text-sm overflow-hidden transition-all duration-500 ease-out flex items-center ${
-              isExpanded ? 'max-w-[100px] opacity-100 ml-2 mr-1' : 'max-w-0 opacity-0 ml-0 mr-0'
-            }`}
-          >
-            {callState === 'active' ? formatDuration(duration) : 'Calling...'}
-          </span>
         </button>
       </>
     );
@@ -185,11 +203,15 @@ export function CallButton({
     return (
       <button
         type="button"
-        className="px-3 py-2 border-base bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 cursor-not-allowed"
-        aria-label="Calling"
+        className="px-3 py-2 border-base bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 cursor-not-allowed inline-flex items-center gap-2"
+        aria-label="Connecting"
         disabled
       >
-        Calling...
+        <span
+          className="h-3 w-3 rounded-full border-2 border-current border-t-transparent animate-spin"
+          aria-hidden="true"
+        />
+        Connecting...
       </button>
     );
   }
