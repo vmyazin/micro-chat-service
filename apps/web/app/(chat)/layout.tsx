@@ -137,7 +137,7 @@ export default function ChatLayout({
       {/* Main content area */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile header with toggle */}
-        <div className="lg:hidden flex items-center p-4 border-b border-[var(--border-color)]">
+        <div className="lg:hidden flex items-center p-4 border-b border-[var(--border-color)] shrink-0">
           <Button
             variant="ghost"
             type="button"
@@ -151,7 +151,7 @@ export default function ChatLayout({
         </div>
 
         {/* Page content */}
-        <div className="flex-1 overflow-hidden">{children}</div>
+        <div className="flex-1 overflow-hidden flex flex-col min-h-0">{children}</div>
       </main>
 
       {/* New Group Dialog */}

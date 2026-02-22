@@ -405,7 +405,7 @@ export default function ConversationPage() {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="chat-area flex flex-col flex-1 min-h-0 h-full w-full">
       {/* Incoming Call Modal */}
       <IncomingCallModal
         session={incomingSession}
@@ -414,7 +414,7 @@ export default function ConversationPage() {
       />
 
       {(callState === 'in-call' || callState === 'calling') ? (
-        <header className="chat-header sticky top-0 z-20 w-full flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-emerald-200/70 dark:border-emerald-800/60 bg-emerald-50/80 dark:bg-emerald-950/40 shadow-[0_1px_0_rgba(16,185,129,0.12),0_8px_24px_rgba(0,0,0,0.18)]">
+        <header className="chat-header shrink-0 z-20 w-full flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-emerald-200/70 dark:border-emerald-800/60 bg-emerald-50/80 dark:bg-emerald-950/40 shadow-[0_1px_0_rgba(16,185,129,0.12),0_8px_24px_rgba(0,0,0,0.18)]">
           <div className="flex items-center gap-3 min-w-0">
             {callState === 'in-call' ? (
               <span
@@ -457,7 +457,7 @@ export default function ConversationPage() {
           </div>
         </header>
       ) : (
-        <header className="chat-header sticky top-0 z-20 w-full flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-[var(--surface-elevated)]">
+        <header className="chat-header shrink-0 z-20 w-full flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-[var(--surface-elevated)]">
           <h1 className="chat-title text-lg font-bold truncate">Group Chat</h1>
           <div className="chat-actions flex items-center gap-2">
             <CallButton
@@ -482,75 +482,83 @@ export default function ConversationPage() {
           </div>
         </header>
       )}
-      <div className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col min-h-0">
-        {connectionStatus === 'reconnecting' && (
-          <div className="px-4 py-2 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 text-sm text-center">
-            Reconnecting to real-time updates...
-          </div>
-        )}
-        {sendMessage.isError && (
-          <div className="px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 text-sm text-center">
-            <span>{sendMessage.error?.message || 'Failed to send message'}</span>
-            <Button
-              variant="ghost"
-              type="button"
-              onClick={() => sendMessage.reset()}
-              className="ml-3 text-xs underline hover:no-underline"
-            >
-              Dismiss
-            </Button>
-          </div>
-        )}
-        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 py-3 space-y-1.5">
-          {messages.length === 0 ? (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-gray-500 dark:text-gray-400 text-center">
-                No messages yet. Start the conversation!
-              </p>
+      <section className="chat-surface flex-1 w-full min-h-0 overflow-hidden">
+        <div className="chat-container mx-auto w-full max-w-[1200px] min-h-0 h-full flex flex-col">
+          {connectionStatus === 'reconnecting' && (
+            <div className="px-4 py-2 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 text-sm text-center">
+              Reconnecting to real-time updates...
             </div>
-          ) : (
-            <>
-              {messages.map((message, index) => {
-                const showDateHeader =
-                  index === 0 ||
-                  formatDate(message.createdAt) !==
-                    formatDate(messages[index - 1].createdAt);
-
-                return (
-                  <div key={message.id}>
-                    {showDateHeader && (
-                      <div className="flex items-center justify-center my-3">
-                        <span className="px-3 py-1 rounded-full text-xs text-[var(--text-muted)] bg-[var(--surface-muted)]">
-                          {formatDate(message.createdAt)}
-                        </span>
-                      </div>
-                    )}
-                    <MessageBubble
-                      message={message}
-                      formatTime={formatTime}
-                      isOwn={isOwnMessage(message)}
-                      showDeleteConfirm={deleteConfirmId === message.id}
-                      onRequestDelete={() => setDeleteConfirmId(message.id)}
-                      onConfirmDelete={() => handleDeleteMessage(message.id)}
-                      onCancelDelete={() => setDeleteConfirmId(null)}
-                      deleting={deleting && deleteConfirmId === message.id}
-                      isHighlighted={highlightedIds.has(message.id)}
-                      onToggleHighlight={() => toggleHighlightedId(message.id)}
-                    />
-                  </div>
-                );
-              })}
-              <div ref={messagesEndRef} />
-            </>
           )}
+          {sendMessage.isError && (
+            <div className="px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 text-sm text-center">
+              <span>
+                {sendMessage.error?.message || 'Failed to send message'}
+              </span>
+              <Button
+                variant="ghost"
+                type="button"
+                onClick={() => sendMessage.reset()}
+                className="ml-3 text-xs underline hover:no-underline"
+              >
+                Dismiss
+              </Button>
+            </div>
+          )}
+          <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 py-3 space-y-1.5">
+            {messages.length === 0 ? (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-gray-500 dark:text-gray-400 text-center">
+                  No messages yet. Start the conversation!
+                </p>
+              </div>
+            ) : (
+              <>
+                {messages.map((message, index) => {
+                  const showDateHeader =
+                    index === 0 ||
+                    formatDate(message.createdAt) !==
+                      formatDate(messages[index - 1].createdAt);
+
+                  return (
+                    <div key={message.id}>
+                      {showDateHeader && (
+                        <div className="flex items-center justify-center my-3">
+                          <span className="px-3 py-1 rounded-full text-xs text-[var(--text-muted)] bg-(--surface-muted)">
+                            {formatDate(message.createdAt)}
+                          </span>
+                        </div>
+                      )}
+                      <MessageBubble
+                        message={message}
+                        formatTime={formatTime}
+                        isOwn={isOwnMessage(message)}
+                        showDeleteConfirm={deleteConfirmId === message.id}
+                        onRequestDelete={() => setDeleteConfirmId(message.id)}
+                        onConfirmDelete={() =>
+                          handleDeleteMessage(message.id)
+                        }
+                        onCancelDelete={() => setDeleteConfirmId(null)}
+                        deleting={deleting && deleteConfirmId === message.id}
+                        isHighlighted={highlightedIds.has(message.id)}
+                        onToggleHighlight={() => toggleHighlightedId(message.id)}
+                      />
+                    </div>
+                  );
+                })}
+                <div ref={messagesEndRef} />
+              </>
+            )}
+          </div>
+          <div className="shrink-0 w-full">
+            <MessageInput
+              onSend={handleSendMessage}
+              onSendVoice={handleSendVoiceMessage}
+              onSendImage={handleSendImage}
+              disabled={loading}
+            />
+          </div>
         </div>
-        <MessageInput
-          onSend={handleSendMessage}
-          onSendVoice={handleSendVoiceMessage}
-          onSendImage={handleSendImage}
-          disabled={loading}
-        />
-      </div>
+      </section>
       <GroupSettings
         groupId={groupId as GroupId}
         open={showSettings}
