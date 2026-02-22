@@ -58,6 +58,23 @@ export function useWebSocket(groupId: GroupId | null) {
             return [...old, newMessage];
           }
         );
+        
+        // Auto-ack the message delivery for the new Ephemeral Storage logic
+        // Only if it's not from us (the server already knows we sent it if we're connected)
+        // Note: we'd need to know the current user's ID. Let's pass it in or pull from store if we can.
+        // For sealed sender, the senderId is null, so it will always send a receipt.
+        
+        // Wait, the auth client has `getCurrentUser() : Promise<CurrentUser>`.
+        // Better to send it asynchronously.
+        getClient()
+          .getCurrentUser()
+          .then((user) => {
+             if (user && user.userId !== event.senderId) {
+               getClient().sendDeliveryReceipt(event.groupId, event.messageId, user.userId);
+             }
+          })
+          .catch(() => {}); // ignore errors if unauthenticated
+
         break;
       }
 

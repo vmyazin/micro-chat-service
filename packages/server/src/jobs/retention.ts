@@ -8,12 +8,14 @@ export interface RetentionEnv {
 
 export interface RetentionResult {
   deletedCount: number;
+  expiredMessagesDeleted: number;
   expiredChallengesDeleted: number;
   expiredImagesDeleted: number;
   executedAt: string;
 }
 
-const RETENTION_DAYS = 30;
+const RETENTION_DAYS = 30; // standard for metadata
+const MESSAGE_TTL_DAYS = 1; // maximum TTL for undelivered messages (Ephemeral)
 
 export async function runRetentionCleanup(
   db: Database,
@@ -31,11 +33,38 @@ export async function runRetentionCleanup(
 
   const deletedCount = result.meta?.changes ?? 0;
 
+  // Maximum TTL: delete any messages older than 24 hours (ephemeral storage policy)
+  const messageCutoffDate = new Date();
+  messageCutoffDate.setDate(messageCutoffDate.getDate() - MESSAGE_TTL_DAYS);
+  const messageCutoffISO = messageCutoffDate.toISOString();
+
+  // First, get all orphaned images linked to these expiring messages to delete from R2
+  let expiredImagesDeleted = 0;
+  let expiredMessagesDeleted = 0;
+
+  if (images) {
+    const orphanedImages = await db.query<{ r2_key: string }>(
+      'SELECT r2_key FROM image_attachments WHERE message_id IN (SELECT id FROM messages WHERE created_at < ?)',
+      [messageCutoffISO],
+    );
+
+    for (const { r2_key } of orphanedImages) {
+      await images.delete(r2_key);
+    }
+    expiredImagesDeleted += orphanedImages.length;
+  }
+
+  // Delete the old messages (cascade or triggers should handle DB associations)
+  const deleteMessagesResult = await db.execute(
+    'DELETE FROM messages WHERE created_at < ?',
+    [messageCutoffISO],
+  );
+  expiredMessagesDeleted = deleteMessagesResult.meta?.changes ?? 0;
+
   const challengeStore = new ChallengeStore(d1);
   const expiredChallengesDeleted = await challengeStore.deleteExpired();
 
-  // Clean up expired image attachments from R2
-  let expiredImagesDeleted = 0;
+  // Clean up expired image attachments from R2 (those without a message, or very old)
   if (images) {
     const oldImages = await db.query<{ r2_key: string }>(
       'SELECT r2_key FROM image_attachments WHERE created_at < ?',
@@ -51,18 +80,19 @@ export async function runRetentionCleanup(
         'DELETE FROM image_attachments WHERE created_at < ?',
         [cutoffISO],
       );
-      expiredImagesDeleted = deleteResult.meta?.changes ?? 0;
+      expiredImagesDeleted += deleteResult.meta?.changes ?? 0;
     }
   }
 
   const executedAt = new Date().toISOString();
 
   console.log(
-    `[retention] Deleted ${deletedCount} delivery receipts older than ${RETENTION_DAYS} days, ${expiredChallengesDeleted} expired challenges, ${expiredImagesDeleted} expired images`,
+    `[retention] Deleted ${deletedCount} delivery receipts older than ${RETENTION_DAYS} days, ${expiredMessagesDeleted} messages older than ${MESSAGE_TTL_DAYS} days, ${expiredChallengesDeleted} expired challenges, ${expiredImagesDeleted} expired images`,
   );
 
   return {
     deletedCount,
+    expiredMessagesDeleted,
     expiredChallengesDeleted,
     expiredImagesDeleted,
     executedAt,

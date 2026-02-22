@@ -229,6 +229,15 @@ export class MicroChatClient {
   onEvent(handler: WebSocketEventHandler): () => void {
     return this.wsClient.onEvent(handler);
   }
+
+  sendDeliveryReceipt(groupId: GroupId, messageId: string, userId: UserId): void {
+    this.wsClient.sendEvent({
+      type: 'deliveryReceipt',
+      groupId,
+      messageId,
+      userId,
+    });
+  }
 }
 
 export default MicroChatClient;

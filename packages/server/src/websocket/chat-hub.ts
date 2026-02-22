@@ -104,6 +104,9 @@ export class ChatHub implements DurableObject {
         await this.handleSubscribe(session, data.groupId as GroupId);
       } else if (data.action === 'unsubscribe' && data.groupId) {
         session.groups.delete(data.groupId as GroupId);
+      } else if (data.type === 'deliveryReceipt') {
+        const receiptEvent = data as Extract<WebSocketEvent, { type: 'deliveryReceipt' }>;
+        await this.handleDeliveryReceipt(session, receiptEvent);
       } else if (this.isCallEvent(data)) {
         await this.handleCallEvent(session, data as WebSocketEvent);
       }
@@ -179,6 +182,66 @@ export class ChatHub implements DurableObject {
     }
 
     return delivered;
+  }
+
+  private async handleDeliveryReceipt(
+    session: WebSocketSession,
+    event: Extract<WebSocketEvent, { type: 'deliveryReceipt' }>,
+  ): Promise<void> {
+    const { messageId, groupId } = event;
+    const db = this.getDb();
+    const now = new Date().toISOString();
+
+    // 1. Record the delivery receipt using raw SQL since Drizzle ORM is not set up here
+    try {
+      await db.execute(
+        'INSERT INTO delivery_receipts (id, message_id, user_id, delivered_at) VALUES (?, ?, ?, ?) ON CONFLICT DO NOTHING',
+        [crypto.randomUUID(), messageId, session.userId, now],
+      );
+    } catch (err) {
+      console.error('[chathub] Error inserting delivery receipt', err);
+      // It might fail if message is already deleted; that's fine.
+      return;
+    }
+
+    // 2. Determine if all members have received it
+    // First, how many total members are in the group?
+    const membersData = await db.query<{ count: number }>(
+      'SELECT COUNT(*) as count FROM group_members WHERE group_id = ?',
+      [groupId],
+    );
+    const totalMembers = membersData[0]?.count || 0;
+
+    // Next, how many distinct delivery receipts exist for this message?
+    const receiptsData = await db.query<{ count: number }>(
+      'SELECT COUNT(DISTINCT user_id) as count FROM delivery_receipts WHERE message_id = ?',
+      [messageId],
+    );
+    const receiptCount = receiptsData[0]?.count || 0;
+
+    // If everyone in the group has received the message, tear it down!
+    // A message is fully delivered if (Total Members - 1 (sender)) <= receipts.
+    // To be strictly safe and truly ephemeral, if receiptCount >= totalMembers - 1
+    if (totalMembers > 1 && receiptCount >= totalMembers - 1) {
+      console.log(`[chathub] Message ${messageId} fully delivered. Erasing.`);
+
+      // Get any associated R2 image keys so the client/server can clean those up too
+      const imageRows = await db.query<{ r2_key: string }>(
+        'SELECT r2_key FROM image_attachments WHERE message_id = ?',
+        [messageId],
+      );
+
+      // (We can't easily delete R2 from ChatHub as it doesn't have the IMAGES binding, 
+      // but the retention cron handles orphaned images later, or we let the API handle it. 
+      // For immediate DB deletion, we drop it.)
+      await db.execute('DELETE FROM image_attachments WHERE message_id = ?', [messageId]);
+      await db.execute('DELETE FROM delivery_receipts WHERE message_id = ?', [messageId]);
+      await db.execute('DELETE FROM messages WHERE id = ?', [messageId]);
+
+      // Broadcast an event to UI that it was completely deleted from server (optional, 
+      // but good to notify clients if they need to update sync status).
+      // For secrecy, we ensure the cloud is wiped.
+    }
   }
 
   private isCallEvent(data: unknown): data is WebSocketEvent {

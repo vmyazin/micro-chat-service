@@ -165,6 +165,12 @@ export type WebSocketEvent =
       reason: 'hangup' | 'rejected' | 'missed' | 'error';
     }
   | { type: 'callRinging'; groupId: GroupId; callId: CallId }
+  | {
+      type: 'deliveryReceipt';
+      groupId: GroupId;
+      messageId: string;
+      userId: UserId;
+    }
   | { type: 'connected' }
   | { type: 'disconnected' }
   | { type: 'error'; error: string };
