@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { X } from '@phosphor-icons/react';
+import { XIcon } from '@phosphor-icons/react';
 import * as Dialog from '@radix-ui/react-dialog';
 
 interface ImageMessageProps {
@@ -163,7 +163,7 @@ export function ImageMessage({
               />
             )}
             <Dialog.Close className="absolute top-4 right-4 p-2 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors focus:outline-none focus:ring-2 focus:ring-white">
-              <X className="w-5 h-5" />
+              <XIcon className="w-5 h-5" />
               <span className="sr-only">Close preview</span>
             </Dialog.Close>
           </Dialog.Content>

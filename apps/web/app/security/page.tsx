@@ -1,15 +1,15 @@
 'use client';
 
 import {
-  CheckCircle,
-  Database,
-  Eye,
-  HardDrives,
-  Key,
-  Lock,
-  Shield,
-  Warning,
-  XCircle,
+  CheckCircleIcon,
+  DatabaseIcon,
+  EyeIcon,
+  HardDrivesIcon,
+  KeyIcon,
+  LockIcon,
+  ShieldIcon,
+  WarningIcon,
+  XCircleIcon,
 } from '@phosphor-icons/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
@@ -111,7 +111,7 @@ function LaymanContent() {
       <section className="grid lg:grid-cols-2 gap-16 items-center">
         <div>
           <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-6">
-            <Eye className="w-6 h-6" />
+            <EyeIcon className="w-6 h-6" />
           </div>
           <h2
             className="text-3xl md:text-4xl mb-6 font-bold text-slate-900"
@@ -138,7 +138,7 @@ function LaymanContent() {
       <section className="grid lg:grid-cols-2 gap-16 items-center">
         <div className="lg:order-2">
           <div className="w-12 h-12 bg-red-100 text-red-600 rounded-xl flex items-center justify-center mb-6">
-            <Warning className="w-6 h-6" />
+            <WarningIcon className="w-6 h-6" />
           </div>
           <h2
             className="text-3xl md:text-4xl mb-6 font-bold text-slate-900"
@@ -166,7 +166,7 @@ function LaymanContent() {
       <section className="grid lg:grid-cols-2 gap-16 items-center">
         <div>
           <div className="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center mb-6">
-            <Database className="w-6 h-6" />
+            <DatabaseIcon className="w-6 h-6" />
           </div>
           <h2
             className="text-3xl md:text-4xl mb-6 font-bold text-slate-900"
@@ -232,7 +232,7 @@ function NerdContent() {
       <section className="grid lg:grid-cols-2 gap-16">
         <div>
           <div className="flex items-center gap-3 mb-6">
-            <Shield className="w-6 h-6 text-blue-600" />
+            <ShieldIcon className="w-6 h-6 text-blue-600" />
             <span className="font-mono text-blue-600 font-bold uppercase tracking-wider">
               Threat Model
             </span>
@@ -251,28 +251,28 @@ function NerdContent() {
             </p>
             <ul className="list-none space-y-4 pl-0 mb-6">
               <li className="flex gap-3">
-                <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0 mt-1" />
+                <CheckCircleIcon className="w-6 h-6 text-green-600 flex-shrink-0 mt-1" />
                 <span>
                   <strong>Passive network observers</strong> (ISPs, backbone
                   surveillance) see only encrypted ciphertext
                 </span>
               </li>
               <li className="flex gap-3">
-                <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0 mt-1" />
+                <CheckCircleIcon className="w-6 h-6 text-green-600 flex-shrink-0 mt-1" />
                 <span>
                   <strong>Compromised servers</strong> cannot decrypt messages
                   or derive keys from stored state
                 </span>
               </li>
               <li className="flex gap-3">
-                <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0 mt-1" />
+                <CheckCircleIcon className="w-6 h-6 text-green-600 flex-shrink-0 mt-1" />
                 <span>
                   <strong>Malicious insiders</strong> with database access
                   cannot read message content or metadata graphs
                 </span>
               </li>
               <li className="flex gap-3">
-                <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0 mt-1" />
+                <CheckCircleIcon className="w-6 h-6 text-green-600 flex-shrink-0 mt-1" />
                 <span>
                   <strong>Long-term key compromise</strong> via forward secrecy
                   and post-compromise security (PCS)
@@ -309,7 +309,7 @@ function NerdContent() {
         <div className="grid md:grid-cols-2 gap-8">
           <div className="bg-white p-8 rounded-2xl border border-gray-200 hover:shadow-lg transition-all">
             <div className="flex items-center gap-4 mb-4">
-              <CheckCircle className="w-8 h-8 text-green-600" />
+              <CheckCircleIcon className="w-8 h-8 text-green-600" />
               <h3 className="text-xl font-bold text-slate-900">Messages</h3>
             </div>
             <p className="text-slate-600 font-light mb-4">
@@ -324,7 +324,7 @@ function NerdContent() {
 
           <div className="bg-white p-8 rounded-2xl border border-gray-200 hover:shadow-lg transition-all">
             <div className="flex items-center gap-4 mb-4">
-              <Key className="w-8 h-8 text-blue-600" />
+              <KeyIcon className="w-8 h-8 text-blue-600" />
               <h3 className="text-xl font-bold text-slate-900">
                 Authentication
               </h3>
@@ -341,7 +341,7 @@ function NerdContent() {
 
           <div className="bg-white p-8 rounded-2xl border border-gray-200 hover:shadow-lg transition-all">
             <div className="flex items-center gap-4 mb-4">
-              <XCircle className="w-8 h-8 text-red-500" />
+              <XCircleIcon className="w-8 h-8 text-red-500" />
               <h3 className="text-xl font-bold text-slate-900">Metadata</h3>
             </div>
             <p className="text-slate-600 font-light mb-4">
@@ -356,11 +356,11 @@ function NerdContent() {
 
           <div className="bg-white p-8 rounded-2xl border border-gray-200 hover:shadow-lg transition-all">
             <div className="flex items-center gap-4 mb-4">
-              <HardDrives className="w-8 h-8 text-purple-600" />
+              <HardDrivesIcon className="w-8 h-8 text-purple-600" />
               <h3 className="text-xl font-bold text-slate-900">Backups</h3>
             </div>
             <p className="text-slate-600 font-light mb-4">
-              Database backups contain only encrypted group state and hashed
+              DatabaseIcon backups contain only encrypted group state and hashed
               credentials. All backups are encrypted at rest with AES-256.
               Message content is never backed up on servers.
             </p>
@@ -374,7 +374,7 @@ function NerdContent() {
       {/* Auditing */}
       <section className="bg-gradient-to-br from-blue-50 to-slate-50 rounded-3xl p-12 border border-blue-100">
         <div className="max-w-3xl mx-auto text-center">
-          <Shield className="w-12 h-12 text-blue-600 mx-auto mb-6" />
+          <ShieldIcon className="w-12 h-12 text-blue-600 mx-auto mb-6" />
           <h2
             className="text-3xl md:text-4xl mb-6 font-bold text-slate-900"
             style={{ fontFamily: 'var(--font-bodoni)' }}
@@ -414,7 +414,7 @@ function LaymanServerBlindDemo() {
       {/* Server */}
       <div className="flex flex-col items-center">
         <div className="w-20 h-20 bg-slate-100 rounded-xl flex items-center justify-center border-2 border-slate-200 relative">
-          <HardDrives className="w-10 h-10 text-slate-400" />
+          <HardDrivesIcon className="w-10 h-10 text-slate-400" />
 
           {/* Blindfold effect */}
           <motion.div
@@ -444,7 +444,7 @@ function LaymanServerBlindDemo() {
               delay: i * 0.3,
             }}
           >
-            <Lock className="w-6 h-6 text-slate-400" />
+            <LockIcon className="w-6 h-6 text-slate-400" />
           </motion.div>
         ))}
       </div>
@@ -466,12 +466,12 @@ function LaymanHackerDemo() {
         transition={{ duration: 3, repeat: Infinity }}
       >
         <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center border-2 border-red-300">
-          <Warning className="w-8 h-8 text-red-600" />
+          <WarningIcon className="w-8 h-8 text-red-600" />
         </div>
         <span className="mt-2 text-xs font-bold text-red-600">Attacker</span>
       </motion.div>
 
-      {/* Barrier / Shield */}
+      {/* Barrier / ShieldIcon */}
       <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2">
         <motion.div
           className="w-32 h-48 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-2xl"
@@ -484,14 +484,14 @@ function LaymanHackerDemo() {
           }}
           transition={{ duration: 2, repeat: Infinity }}
         >
-          <Shield className="w-16 h-16 text-white" />
+          <ShieldIcon className="w-16 h-16 text-white" />
         </motion.div>
       </div>
 
       {/* Locked data */}
       <div className="absolute right-12 top-1/2 -translate-y-1/2 flex flex-col items-center">
         <div className="w-16 h-16 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-slate-200">
-          <Lock className="w-8 h-8 text-slate-600" />
+          <LockIcon className="w-8 h-8 text-slate-600" />
         </div>
         <span className="mt-2 text-xs font-bold text-slate-600">Your Data</span>
       </div>
@@ -528,9 +528,9 @@ function LaymanDataDemo() {
               {item.label}
             </span>
             {item.status === 'yes' ? (
-              <CheckCircle className="w-5 h-5 text-green-600" />
+              <CheckCircleIcon className="w-5 h-5 text-green-600" />
             ) : (
-              <XCircle className="w-5 h-5 text-slate-400" />
+              <XCircleIcon className="w-5 h-5 text-slate-400" />
             )}
           </motion.div>
         ))}
@@ -545,7 +545,7 @@ function NerdThreatDiagram() {
       {/* Client (Protected) */}
       <div className="flex items-center gap-6">
         <div className="w-16 h-16 bg-green-500/20 border-2 border-green-500 rounded-lg flex items-center justify-center">
-          <Shield className="w-8 h-8 text-green-400" />
+          <ShieldIcon className="w-8 h-8 text-green-400" />
         </div>
         <div className="text-left">
           <div className="text-sm font-mono text-green-400">CLIENT</div>
@@ -577,7 +577,7 @@ function NerdThreatDiagram() {
               animate={{ rotate: [0, 10, 0] }}
               transition={{ duration: 0.5, repeat: Infinity }}
             >
-              <XCircle className="w-5 h-5 text-red-500" />
+              <XCircleIcon className="w-5 h-5 text-red-500" />
             </motion.div>
           </motion.div>
         ))}
@@ -586,7 +586,7 @@ function NerdThreatDiagram() {
       {/* Server (Untrusted) */}
       <div className="flex items-center gap-6">
         <div className="w-16 h-16 bg-slate-700 border-2 border-slate-600 rounded-lg flex items-center justify-center">
-          <HardDrives className="w-8 h-8 text-slate-400" />
+          <HardDrivesIcon className="w-8 h-8 text-slate-400" />
         </div>
         <div className="text-left">
           <div className="text-sm font-mono text-slate-400">SERVER</div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { SpinnerGap } from '@phosphor-icons/react';
+import { SpinnerGapIcon } from '@phosphor-icons/react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCreateGroup } from '@/hooks/useCreateGroup';
@@ -119,6 +119,6 @@ export default function NewGroupDialog({ open, onClose, onGroupCreated }: NewGro
 
 function LoadingSpinner() {
   return (
-    <SpinnerGap className="animate-spin h-4 w-4" />
+    <SpinnerGapIcon className="animate-spin h-4 w-4" />
   );
 }

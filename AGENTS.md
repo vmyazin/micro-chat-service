@@ -66,6 +66,7 @@ Note: `server` is not imported by any other package (it's the runtime). All othe
 ## Conventions & Gotchas
 
 - **D1 migrations live in `packages/server/src/db/migrations/`** — run wrangler commands from `packages/server` directory
+- **Icons:** use the Phosphor set only; import from `@phosphor-icons/react` with the `*Icon` suffix
 - **Rate limiting is per-isolate** — not globally consistent across Workers instances
 - **`MessageClient` sends plaintext without an injected `GroupCipher`** — development mode fallback
 - **Group names are currently unencrypted** — stored as `encrypted_name` but sent as plaintext

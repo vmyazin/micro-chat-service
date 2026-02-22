@@ -1,6 +1,6 @@
 'use client';
 
-import { Phone, PhoneX } from '@phosphor-icons/react';
+import { PhoneIcon, PhoneXIcon } from '@phosphor-icons/react';
 import { useEffect, useRef, useState } from 'react';
 import type { CallSession } from '@microchat/client';
 import { Button } from '@/components/Button';
@@ -98,7 +98,7 @@ export function IncomingCallModal({ session, onAccept, onReject }: IncomingCallM
           
           <header className="call-modal-header mb-6">
             <div className="call-avatar-container w-20 h-20 mx-auto mb-4 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-              <Phone className="call-avatar-icon w-10 h-10 text-green-600 dark:text-green-400 animate-pulse" />
+              <PhoneIcon className="call-avatar-icon w-10 h-10 text-green-600 dark:text-green-400 animate-pulse" />
             </div>
             <h2 className="call-caller-name text-xl font-bold mb-1">
               {callerName}
@@ -120,7 +120,7 @@ export function IncomingCallModal({ session, onAccept, onReject }: IncomingCallM
               }}
               className="call-action-reject flex-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 font-semibold hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors flex items-center justify-center ga"
             >
-              <PhoneX className="call-action-icon w-5 h-5" />
+              <PhoneXIcon className="call-action-icon w-5 h-5" />
               Decline
             </Button>
             <Button variant="ghost"
@@ -132,7 +132,7 @@ export function IncomingCallModal({ session, onAccept, onReject }: IncomingCallM
               }}
               className="call-action-accept flex-1 bg-green-600 text-white font-semibold hover:bg-green-700 transition-colors flex items-center justify-center ga"
             >
-              <Phone className="call-action-icon w-5 h-5" />
+              <PhoneIcon className="call-action-icon w-5 h-5" />
               Accept
             </Button>
           </div>

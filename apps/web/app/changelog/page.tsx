@@ -1,7 +1,7 @@
 // Server Component — reads changelog.yaml at build/render time
 import fs from 'node:fs';
 import path from 'node:path';
-import { ClockCounterClockwise } from '@phosphor-icons/react/ssr';
+import { ClockCounterClockwiseIcon } from '@phosphor-icons/react/ssr';
 import yaml from 'js-yaml';
 import type { Metadata } from 'next';
 import { ChangelogList } from '@/components/ChangelogList';
@@ -48,7 +48,7 @@ export default function ChangelogPage() {
 
       <header className="pt-40 pb-20 px-6 text-center max-w-4xl mx-auto">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-100 border border-slate-200 mb-8">
-          <ClockCounterClockwise className="w-4 h-4 text-slate-600" />
+          <ClockCounterClockwiseIcon className="w-4 h-4 text-slate-600" />
           <span className="text-xs font-bold text-slate-600 uppercase tracking-widest">
             Always Improving
           </span>

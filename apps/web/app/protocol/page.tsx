@@ -1,15 +1,15 @@
 'use client';
 
 import {
-  ArrowClockwise,
-  FileCode,
-  Ghost,
-  HardDrives,
-  Key,
-  Lock,
-  Shield,
-  Terminal,
-  Users,
+  ArrowClockwiseIcon,
+  FileCodeIcon,
+  GhostIcon,
+  HardDrivesIcon,
+  KeyIcon,
+  LockIcon,
+  ShieldIcon,
+  TerminalIcon,
+  UsersIcon,
 } from '@phosphor-icons/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
@@ -111,7 +111,7 @@ function LaymanContent() {
       <section className="grid lg:grid-cols-2 gap-16 items-center">
         <div>
           <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-6">
-            <Lock className="w-6 h-6" />
+            <LockIcon className="w-6 h-6" />
           </div>
           <h2
             className="text-3xl md:text-4xl mb-6 font-bold text-slate-900"
@@ -139,7 +139,7 @@ function LaymanContent() {
       <section className="grid lg:grid-cols-2 gap-16 items-center">
         <div className="lg:order-2">
           <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center mb-6">
-            <Shield className="w-6 h-6" />
+            <ShieldIcon className="w-6 h-6" />
           </div>
           <h2
             className="text-3xl md:text-4xl mb-6 font-bold text-slate-900"
@@ -164,17 +164,17 @@ function LaymanContent() {
         </div>
       </section>
 
-      {/* Concept 3: The Ghost Courier */}
+      {/* Concept 3: The GhostIcon Courier */}
       <section className="grid lg:grid-cols-2 gap-16 items-center">
         <div>
           <div className="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center mb-6">
-            <Ghost className="w-6 h-6" />
+            <GhostIcon className="w-6 h-6" />
           </div>
           <h2
             className="text-3xl md:text-4xl mb-6 font-bold text-slate-900"
             style={{ fontFamily: 'var(--font-bodoni)' }}
           >
-            The Ghost Courier
+            The GhostIcon Courier
           </h2>
           <p className="text-lg text-slate-600 leading-relaxed mb-6 font-light">
             Normally, the stranger carrying your box (our server) knows exactly
@@ -240,7 +240,7 @@ function NerdContent() {
       <section className="grid lg:grid-cols-2 gap-16">
         <div>
           <div className="flex items-center gap-3 mb-6">
-            <Terminal className="w-6 h-6 text-blue-600" />
+            <TerminalIcon className="w-6 h-6 text-blue-600" />
             <span className="font-mono text-blue-600 font-bold uppercase tracking-wider">
               The Architecture
             </span>
@@ -321,7 +321,7 @@ function NerdContent() {
         <div className="grid md:grid-cols-2 gap-8">
           <div className="bg-white p-8 rounded-2xl border border-gray-200 hover:shadow-lg transition-all">
             <div className="flex items-center gap-4 mb-4">
-              <ArrowClockwise className="w-8 h-8 text-green-600" />
+              <ArrowClockwiseIcon className="w-8 h-8 text-green-600" />
               <h3 className="text-xl font-bold text-slate-900">
                 Forward Secrecy
               </h3>
@@ -336,7 +336,7 @@ function NerdContent() {
 
           <div className="bg-white p-8 rounded-2xl border border-gray-200 hover:shadow-lg transition-all">
             <div className="flex items-center gap-4 mb-4">
-              <FileCode className="w-8 h-8 text-red-500" />
+              <FileCodeIcon className="w-8 h-8 text-red-500" />
               <h3 className="text-xl font-bold text-slate-900">
                 Post-Compromise Security
               </h3>
@@ -355,7 +355,7 @@ function NerdContent() {
       <section className="grid lg:grid-cols-2 gap-16">
         <div className="lg:order-2">
           <div className="flex items-center gap-3 mb-6">
-            <Ghost className="w-6 h-6 text-purple-600" />
+            <GhostIcon className="w-6 h-6 text-purple-600" />
             <span className="font-mono text-purple-600 font-bold uppercase tracking-wider">
               Anonymity
             </span>
@@ -425,7 +425,7 @@ function LaymanEncryptionDemo() {
       {/* Alice */}
       <div className="flex flex-col items-center z-10">
         <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center border-2 border-blue-200">
-          <Users className="w-8 h-8 text-blue-600" />
+          <UsersIcon className="w-8 h-8 text-blue-600" />
         </div>
         <span className="mt-2 text-sm font-bold text-slate-500">You</span>
       </div>
@@ -433,7 +433,7 @@ function LaymanEncryptionDemo() {
       {/* Server */}
       <div className="flex flex-col items-center z-10 relative">
         <div className="w-20 h-20 bg-slate-100 rounded-xl flex items-center justify-center border-2 border-slate-200">
-          <HardDrives className="w-10 h-10 text-slate-400" />
+          <HardDrivesIcon className="w-10 h-10 text-slate-400" />
         </div>
         <span className="mt-2 text-sm font-bold text-slate-400">Server</span>
 
@@ -443,14 +443,14 @@ function LaymanEncryptionDemo() {
           animate={{ scale: [1, 1.2, 1] }}
           transition={{ repeat: Infinity, duration: 2 }}
         >
-          <Lock className="w-4 h-4" />
+          <LockIcon className="w-4 h-4" />
         </motion.div>
       </div>
 
       {/* Bob */}
       <div className="flex flex-col items-center z-10">
         <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center border-2 border-green-200">
-          <Users className="w-8 h-8 text-green-600" />
+          <UsersIcon className="w-8 h-8 text-green-600" />
         </div>
         <span className="mt-2 text-sm font-bold text-slate-500">Friend</span>
       </div>
@@ -474,7 +474,7 @@ function LaymanEncryptionDemo() {
         }}
         style={{ marginTop: -16 }} // Center vertically
       >
-        <Lock className="w-4 h-4" />
+        <LockIcon className="w-4 h-4" />
       </motion.div>
     </div>
   );
@@ -503,9 +503,9 @@ function LaymanRatchetDemo() {
             }}
           >
             {i === 1 ? (
-              <Key className="w-6 h-6 text-slate-400" />
+              <KeyIcon className="w-6 h-6 text-slate-400" />
             ) : (
-              <Lock className="w-6 h-6 text-slate-400" />
+              <LockIcon className="w-6 h-6 text-slate-400" />
             )}
             <span className="text-xs text-slate-400 mt-2">Msg {i}</span>
 
@@ -622,7 +622,7 @@ function NerdTreeDemo() {
         animate={{ borderColor: ['#22c55e', '#ef4444', '#22c55e'] }}
         transition={{ duration: 4, repeat: Infinity, repeatDelay: 2 }}
       >
-        <Lock className="w-5 h-5 text-white" />
+        <LockIcon className="w-5 h-5 text-white" />
       </motion.div>
 
       {/* Level 1 Nodes */}
@@ -633,22 +633,22 @@ function NerdTreeDemo() {
         transition={{ duration: 4, repeat: Infinity, repeatDelay: 2, delay: 1 }}
       />
 
-      {/* Level 2 Nodes (Users) */}
+      {/* Level 2 Nodes (UsersIcon) */}
       <div className="absolute top-[75%] left-[12%] -translate-x-1/2 flex flex-col items-center">
         <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center">
-          <Users className="w-5 h-5 text-slate-400" />
+          <UsersIcon className="w-5 h-5 text-slate-400" />
         </div>
         <span className="text-xs text-slate-500 mt-2">U1</span>
       </div>
       <div className="absolute top-[75%] left-[38%] -translate-x-1/2 flex flex-col items-center">
         <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center">
-          <Users className="w-5 h-5 text-slate-400" />
+          <UsersIcon className="w-5 h-5 text-slate-400" />
         </div>
         <span className="text-xs text-slate-500 mt-2">U2</span>
       </div>
       <div className="absolute top-[75%] left-[62%] -translate-x-1/2 flex flex-col items-center">
         <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center">
-          <Users className="w-5 h-5 text-slate-400" />
+          <UsersIcon className="w-5 h-5 text-slate-400" />
         </div>
         <span className="text-xs text-slate-500 mt-2">U3</span>
       </div>
@@ -660,7 +660,7 @@ function NerdTreeDemo() {
         transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 5.5 }}
       >
         <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center shadow-[0_0_15px_rgba(37,99,235,0.5)]">
-          <ArrowClockwise className="w-5 h-5 text-white" />
+          <ArrowClockwiseIcon className="w-5 h-5 text-white" />
         </div>
         <span className="text-xs text-blue-400 mt-2 font-bold">Update</span>
       </motion.div>
@@ -702,10 +702,10 @@ function LaymanGhostDemo() {
         }}
         transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
       >
-        <Ghost className="w-8 h-8 text-purple-600" />
+        <GhostIcon className="w-8 h-8 text-purple-600" />
       </motion.div>
       <div className="mt-8 text-sm font-mono text-purple-600 bg-purple-50 border border-purple-100 px-4 py-2 rounded-full flex items-center gap-2">
-        <Key className="w-4 h-4" />
+        <KeyIcon className="w-4 h-4" />
         One-Time Delivery Token
       </div>
     </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { Pause, Play } from '@phosphor-icons/react';
+import { PauseIcon, PlayIcon } from '@phosphor-icons/react';
 
 interface PlayPauseButtonProps {
   isPlaying: boolean;
@@ -22,13 +22,13 @@ export function PlayPauseButton({ isPlaying, isOwn, onClick }: PlayPauseButtonPr
       }`}
     >
       {isPlaying ? (
-        <Pause
+        <PauseIcon
           weight="fill"
           className={`w-6 h-6 ${isOwn ? 'text-white' : 'text-[var(--accent)]'}`}
           aria-hidden="true"
         />
       ) : (
-        <Play
+        <PlayIcon
           weight="fill"
           className={`w-6 h-6 ${isOwn ? 'text-white' : 'text-[var(--accent)]'}`}
           aria-hidden="true"

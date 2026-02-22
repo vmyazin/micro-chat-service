@@ -1,7 +1,12 @@
 'use client';
 
 import { AuthClient } from '@microchat/client';
-import { List, SignOut, SpinnerGap, X } from '@phosphor-icons/react';
+import {
+  ListIcon,
+  SignOutIcon,
+  SpinnerGapIcon,
+  XIcon,
+} from '@phosphor-icons/react';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -90,7 +95,7 @@ export default function ChatLayout({
               className="lg:hidden p-1 hover:bg-gray-100 dark:hover:bg-gray-800"
               aria-label="Close sidebar"
             >
-              <X className="w-5 h-5" />
+              <XIcon className="w-5 h-5" />
             </Button>
           </div>
 
@@ -125,7 +130,7 @@ export default function ChatLayout({
                 </>
               ) : (
                 <>
-                  <SignOut className="w-4 h-4" />
+                  <SignOutIcon className="w-4 h-4" />
                   Sign Out
                 </>
               )}
@@ -145,7 +150,7 @@ export default function ChatLayout({
             className="p-2 border-base hover:bg-gray-100 dark:hover:bg-gray-800"
             aria-label="Open sidebar"
           >
-            <List className="w-5 h-5" />
+            <ListIcon className="w-5 h-5" />
           </Button>
           <span className="ml-3 font-bold">MicroChat</span>
         </div>
@@ -169,5 +174,5 @@ export default function ChatLayout({
 }
 
 function SignOutSpinner() {
-  return <SpinnerGap aria-hidden="true" className="animate-spin h-4 w-4" />;
+  return <SpinnerGapIcon aria-hidden="true" className="animate-spin h-4 w-4" />;
 }

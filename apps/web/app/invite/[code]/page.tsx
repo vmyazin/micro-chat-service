@@ -1,6 +1,6 @@
 'use client';
 
-import { SpinnerGap } from '@phosphor-icons/react';
+import { SpinnerGapIcon } from '@phosphor-icons/react';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/Button';
@@ -79,6 +79,9 @@ export default function InvitePage() {
 
 function LoadingSpinner() {
   return (
-    <SpinnerGap aria-hidden="true" className="animate-spin h-8 w-8 mx-auto" />
+    <SpinnerGapIcon
+      aria-hidden="true"
+      className="animate-spin h-8 w-8 mx-auto"
+    />
   );
 }

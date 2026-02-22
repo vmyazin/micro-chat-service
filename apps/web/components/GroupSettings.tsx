@@ -1,6 +1,6 @@
 'use client';
 
-import { SpinnerGap, X } from '@phosphor-icons/react';
+import { SpinnerGapIcon, XIcon } from '@phosphor-icons/react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMembers } from '@/hooks/useMembers';
@@ -128,7 +128,7 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
             disabled={actionLoading}
             className="hover:bg-gray-100 dark:hover:bg-gray-800"
           >
-            <X className="w-5 h-5" />
+            <XIcon className="w-5 h-5" />
           </Button>
         </div>
 
@@ -281,6 +281,6 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
 
 function LoadingSpinner() {
   return (
-    <SpinnerGap className="animate-spin h-4 w-4" />
+    <SpinnerGapIcon className="animate-spin h-4 w-4" />
   );
 }

@@ -2,7 +2,7 @@
 'use client';
 
 import { AuthClient } from '@microchat/client';
-import { SpinnerGap } from '@phosphor-icons/react';
+import { SpinnerGapIcon } from '@phosphor-icons/react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
@@ -151,7 +151,7 @@ function LoginPageSkeleton() {
 }
 
 function LoadingSpinner() {
-  return <SpinnerGap aria-hidden="true" className="animate-spin h-5 w-5" />;
+  return <SpinnerGapIcon aria-hidden="true" className="animate-spin h-5 w-5" />;
 }
 
 function base64urlToBuffer(base64url: string): ArrayBuffer {

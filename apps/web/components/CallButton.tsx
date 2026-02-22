@@ -1,11 +1,6 @@
 'use client';
 
-import {
-  Microphone,
-  MicrophoneSlash,
-  Phone,
-  PhoneX,
-} from '@phosphor-icons/react';
+import { MicrophoneIcon, MicrophoneSlashIcon, PhoneIcon, PhoneXIcon } from '@phosphor-icons/react';
 import { useEffect, useState } from 'react';
 import type { CallSession, CallState, GroupId, MicroChatClient, UserId } from '@microchat/client';
 import { Button } from './Button';
@@ -164,9 +159,9 @@ export function CallButton({
           title={isMuted ? 'Unmute microphone' : 'Mute microphone'}
         >
           {isMuted ? (
-            <MicrophoneSlash className="w-5 h-5" />
+            <MicrophoneSlashIcon className="w-5 h-5" />
           ) : (
-            <Microphone className="w-5 h-5" />
+            <MicrophoneIcon className="w-5 h-5" />
           )}
           <span className="text-sm font-medium">
             {isMuted ? 'Muted' : 'Mute'}
@@ -201,7 +196,7 @@ export function CallButton({
           aria-label="Hang up"
           title="End call"
         >
-          <PhoneX aria-hidden="true" className="w-5 h-5 shrink-0" />
+          <PhoneXIcon aria-hidden="true" className="w-5 h-5 shrink-0" />
           <span className="text-sm font-medium">End</span>
         </button>
       </>
@@ -242,7 +237,7 @@ export function CallButton({
       className="shadow-sm"
       aria-label="Start call"
     >
-      <Phone aria-hidden="true" className="w-5 h-5" />
+      <PhoneIcon aria-hidden="true" className="w-5 h-5" />
       <span className="text-sm font-semibold">Call</span>
     </Button>
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, SpinnerGap } from '@phosphor-icons/react';
+import { PlusIcon, SpinnerGapIcon } from '@phosphor-icons/react';
 import { useRouter } from 'next/navigation';
 import { useGroups } from '@/hooks/useGroups';
 import { Button } from '@/components/Button';
@@ -31,7 +31,7 @@ export default function GroupList({ onNewGroup, selectedGroupId }: GroupListProp
         onClick={onNewGroup}
         className="w-full mb-4 flex items-center justify-center ga"
       >
-        <Plus className="w-5 h-5" />
+        <PlusIcon className="w-5 h-5" />
         New Group
       </Button>
 
@@ -85,6 +85,6 @@ function decodeGroupName(encryptedName: string): string {
 
 function LoadingSpinner() {
   return (
-    <SpinnerGap className="animate-spin h-5 w-5" />
+    <SpinnerGapIcon className="animate-spin h-5 w-5" />
   );
 }

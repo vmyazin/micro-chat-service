@@ -1,14 +1,7 @@
 'use client';
 
 import * as Dialog from '@radix-ui/react-dialog';
-import {
-  Microphone,
-  Paperclip,
-  PaperPlaneRight,
-  Smiley,
-  SpinnerGap,
-  X,
-} from '@phosphor-icons/react';
+import { MicrophoneIcon, PaperclipIcon, PaperPlaneRightIcon, SmileyIcon, SpinnerGapIcon, XIcon } from '@phosphor-icons/react';
 import { useState, useRef, useEffect } from 'react';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
 import { useImagePicker } from '@/hooks/useImagePicker';
@@ -158,7 +151,7 @@ export function MessageInput({
             className="w-12 h-12 rounded-[1.25rem] hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 flex items-center justify-center p-0"
             aria-label="Cancel recording"
           >
-            <X className="w-6 h-6" />
+            <XIcon className="w-6 h-6" />
           </Button>
 
           <div className="flex-1 flex items-center justify-center gap-3 px-4 py-2 bg-red-50 dark:bg-red-900/10 rounded-[1.25rem] mx-2">
@@ -180,7 +173,7 @@ export function MessageInput({
             className="min-w-[48px] h-[48px] rounded-[1.25rem] flex items-center justify-center bg-[#00A980] hover:bg-[#00906D] text-white transition-colors p-0"
             aria-label="Stop recording and send"
           >
-            <PaperPlaneRight className="w-5 h-5" />
+            <PaperPlaneRightIcon className="w-5 h-5" />
           </Button>
         </div>
         {recorderState.error && (
@@ -218,7 +211,7 @@ export function MessageInput({
                     aria-label="Close image preview"
                     disabled={sending || imagePicker.compressing}
                   >
-                    <X className="w-4 h-4" />
+                    <XIcon className="w-4 h-4" />
                   </Button>
                 </Dialog.Close>
               </div>
@@ -266,7 +259,7 @@ export function MessageInput({
 
         <div className="flex items-center gap-1 px-2 text-gray-300">
           <button type="button" className="p-2 hover:text-gray-500 transition-colors" aria-label="Add emoji">
-            <Smiley className="w-6 h-6" />
+            <SmileyIcon className="w-6 h-6" />
           </button>
 
           {onSendImage && (
@@ -280,7 +273,7 @@ export function MessageInput({
               {imagePicker.compressing ? (
                 <SendingSpinner />
               ) : (
-                <Paperclip className="w-5 h-5" />
+                <PaperclipIcon className="w-5 h-5" />
               )}
             </button>
           )}
@@ -294,7 +287,7 @@ export function MessageInput({
             className="w-12 h-12 rounded-[1.25rem] flex items-center justify-center bg-[var(--accent)] text-white hover:opacity-90 font-semibold transition-opacity disabled:opacity-50 disabled:cursor-not-allowed p-0"
             aria-label="Record voice message"
           >
-            <Microphone className="w-5 h-5" />
+            <MicrophoneIcon className="w-5 h-5" />
           </Button>
         ) : (
           <Button variant="primary"
@@ -306,7 +299,7 @@ export function MessageInput({
             {sending ? (
               <SendingSpinner />
             ) : (
-              <PaperPlaneRight className="w-5 h-5" />
+              <PaperPlaneRightIcon className="w-5 h-5" />
             )}
           </Button>
         )}
@@ -342,6 +335,6 @@ function extractClipboardImage(clipboard: DataTransfer | null): File | null {
 
 function SendingSpinner() {
   return (
-    <SpinnerGap className="animate-spin h-5 w-5" />
+    <SpinnerGapIcon className="animate-spin h-5 w-5" />
   );
 }

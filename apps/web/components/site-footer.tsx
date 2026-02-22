@@ -1,4 +1,4 @@
-import { GithubLogo } from '@phosphor-icons/react/ssr';
+import { GithubLogoIcon } from '@phosphor-icons/react/ssr';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -51,7 +51,7 @@ export function SiteFooter() {
             rel="noopener noreferrer"
             aria-label="GitHub"
           >
-            <GithubLogo className="w-4 h-4" />
+            <GithubLogoIcon className="w-4 h-4" />
           </a>
         </div>
 

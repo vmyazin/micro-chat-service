@@ -7,7 +7,12 @@ import {
   type UserId,
   uint8ArrayToBase64,
 } from '@microchat/client';
-import { Gear, Highlighter, SpinnerGap, Trash } from '@phosphor-icons/react';
+import {
+  GearIcon,
+  HighlighterIcon,
+  SpinnerGapIcon,
+  TrashIcon,
+} from '@phosphor-icons/react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -470,7 +475,10 @@ export default function ConversationPage() {
               className="chat-action-settings p-2 border-base hover:bg-gray-100 dark:hover:bg-gray-800"
               aria-label="Group Settings"
             >
-              <Gear aria-hidden="true" className="chat-action-icon w-5 h-5" />
+              <GearIcon
+                aria-hidden="true"
+                className="chat-action-icon w-5 h-5"
+              />
             </Button>
           </div>
         </header>
@@ -495,7 +503,10 @@ export default function ConversationPage() {
               className="chat-action-settings p-2 border-base hover:bg-gray-100 dark:hover:bg-gray-800"
               aria-label="Group Settings"
             >
-              <Gear aria-hidden="true" className="chat-action-icon w-5 h-5" />
+              <GearIcon
+                aria-hidden="true"
+                className="chat-action-icon w-5 h-5"
+              />
             </Button>
           </div>
         </header>
@@ -796,7 +807,7 @@ function MessageBubble({
             className="flex items-center gap-2 px-3 py-2 text-sm text-(--text-primary) hover:bg-(--surface-muted) rounded-md cursor-pointer outline-none transition-colors"
             onSelect={onToggleHighlight}
           >
-            <Highlighter className="w-4 h-4" />
+            <HighlighterIcon className="w-4 h-4" />
             {isHighlighted ? 'Unhighlight' : 'Highlight'}
           </ContextMenu.Item>
 
@@ -807,7 +818,7 @@ function MessageBubble({
                 className="flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md cursor-pointer outline-none transition-colors"
                 onSelect={onRequestDelete}
               >
-                <Trash className="w-4 h-4" />
+                <TrashIcon className="w-4 h-4" />
                 Delete
               </ContextMenu.Item>
             </>
@@ -858,5 +869,5 @@ function decodeContent(encryptedContent: string): MessagePayload | string {
 }
 
 function LoadingSpinner() {
-  return <SpinnerGap aria-hidden="true" className="animate-spin h-6 w-6" />;
+  return <SpinnerGapIcon aria-hidden="true" className="animate-spin h-6 w-6" />;
 }

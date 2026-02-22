@@ -2,12 +2,12 @@
 'use client';
 
 import {
-  CaretRight,
-  Check,
-  Lock,
-  Shield,
-  Trash,
-  Warning,
+  CaretRightIcon,
+  CheckIcon,
+  LockIcon,
+  ShieldIcon,
+  TrashIcon,
+  WarningIcon,
 } from '@phosphor-icons/react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
@@ -18,19 +18,19 @@ import { SiteHeader } from '@/components/site-header';
 export default function Home() {
   const features = [
     {
-      icon: <Lock className="w-6 h-6" />,
+      icon: <LockIcon className="w-6 h-6" />,
       title: 'End-to-End Encrypted',
       description:
         'Messages are encrypted on your device using the MLS protocol. Our servers only see encrypted blobs—we cannot read your content.',
     },
     {
-      icon: <Shield className="w-6 h-6" />,
+      icon: <ShieldIcon className="w-6 h-6" />,
       title: 'Forward Secrecy',
       description:
         "Compromise of current keys doesn't expose past messages. Each message epoch uses fresh key material derived via HKDF.",
     },
     {
-      icon: <Trash className="w-6 h-6" />,
+      icon: <TrashIcon className="w-6 h-6" />,
       title: 'Server-Side Crypto-Erasure',
       description:
         'When a group is deleted, we destroy all key material. Stored ciphertext becomes permanently unrecoverable.',
@@ -176,7 +176,7 @@ export default function Home() {
                   {promises.map((promise) => (
                     <div key={promise} className="flex items-start gap-3">
                       <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center shrink-0 mt-0.5">
-                        <Check className="w-3 h-3 text-green-600" />
+                        <CheckIcon className="w-3 h-3 text-green-600" />
                       </div>
                       <span className="text-gray-600 font-light">
                         {promise}
@@ -195,7 +195,7 @@ export default function Home() {
                   {limitations.map((limitation) => (
                     <div key={limitation} className="flex items-start gap-3">
                       <div className="w-5 h-5 bg-amber-100 rounded-full flex items-center justify-center shrink-0 mt-0.5">
-                        <Warning className="w-3 h-3 text-amber-600" />
+                        <WarningIcon className="w-3 h-3 text-amber-600" />
                       </div>
                       <span className="text-gray-600 font-light">
                         {limitation}
@@ -240,7 +240,7 @@ export default function Home() {
                 className="text-white/60 hover:text-white transition-colors flex items-center gap-2 group cursor-pointer text-lg"
               >
                 Read the Whitepaper
-                <CaretRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                <CaretRightIcon className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </a>
             </div>
           </motion.div>
