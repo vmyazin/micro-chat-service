@@ -5,9 +5,9 @@ import {
   CheckCircle,
   Database,
   Eye,
+  HardDrives,
   Key,
   Lock,
-  Server,
   Shield,
   Warning,
   XCircle,
@@ -356,7 +356,7 @@ function NerdContent() {
 
           <div className="bg-white p-8 rounded-2xl border border-gray-200 hover:shadow-lg transition-all">
             <div className="flex items-center gap-4 mb-4">
-              <Server className="w-8 h-8 text-purple-600" />
+              <HardDrives className="w-8 h-8 text-purple-600" />
               <h3 className="text-xl font-bold text-slate-900">Backups</h3>
             </div>
             <p className="text-slate-600 font-light mb-4">
@@ -414,7 +414,7 @@ function LaymanServerBlindDemo() {
       {/* Server */}
       <div className="flex flex-col items-center">
         <div className="w-20 h-20 bg-slate-100 rounded-xl flex items-center justify-center border-2 border-slate-200 relative">
-          <Server className="w-10 h-10 text-slate-400" />
+          <HardDrives className="w-10 h-10 text-slate-400" />
 
           {/* Blindfold effect */}
           <motion.div
@@ -586,7 +586,7 @@ function NerdThreatDiagram() {
       {/* Server (Untrusted) */}
       <div className="flex items-center gap-6">
         <div className="w-16 h-16 bg-slate-700 border-2 border-slate-600 rounded-lg flex items-center justify-center">
-          <Server className="w-8 h-8 text-slate-400" />
+          <HardDrives className="w-8 h-8 text-slate-400" />
         </div>
         <div className="text-left">
           <div className="text-sm font-mono text-slate-400">SERVER</div>

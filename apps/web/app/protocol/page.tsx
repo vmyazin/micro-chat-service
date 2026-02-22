@@ -5,9 +5,9 @@ import {
   ArrowClockwise,
   FileCode,
   Ghost,
+  HardDrives,
   Key,
   Lock,
-  Server,
   Shield,
   Terminal,
   Users,
@@ -433,7 +433,7 @@ function LaymanEncryptionDemo() {
       {/* Server */}
       <div className="flex flex-col items-center z-10 relative">
         <div className="w-20 h-20 bg-slate-100 rounded-xl flex items-center justify-center border-2 border-slate-200">
-          <Server className="w-10 h-10 text-slate-400" />
+          <HardDrives className="w-10 h-10 text-slate-400" />
         </div>
         <span className="mt-2 text-sm font-bold text-slate-400">Server</span>
 
