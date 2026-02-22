@@ -130,6 +130,12 @@ export type WebSocketEvent =
     }
   | { type: 'memberLeft'; groupId: GroupId; userId: UserId }
   | {
+      type: 'presenceUpdate';
+      groupId: GroupId;
+      userId: UserId;
+      status: 'online' | 'offline';
+    }
+  | {
       type: 'callOffer';
       groupId: GroupId;
       callId: CallId;

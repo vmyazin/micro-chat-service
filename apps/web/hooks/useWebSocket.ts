@@ -5,6 +5,7 @@ import { membersQueryKey } from '@/hooks/useMembers';
 import { invalidateGroups } from '@/hooks/useGroups';
 import { useChatClientStore } from '@/stores/chat-client-store';
 import { useChatStore } from '@/stores/chat-store';
+import { usePresenceStore } from '@/stores/presence-store';
 import type { GroupId, MessageListItem, WebSocketEvent } from '@microchat/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useCallback } from 'react';
@@ -110,6 +111,15 @@ export function useWebSocket(groupId: GroupId | null) {
       case 'callEnd':
       case 'callRinging':
       case 'iceCandidate': {
+        break;
+      }
+
+      case 'presenceUpdate': {
+        if (event.status === 'online') {
+          usePresenceStore.getState().setUserOnline(event.groupId, event.userId);
+        } else {
+          usePresenceStore.getState().setUserOffline(event.groupId, event.userId);
+        }
         break;
       }
     }

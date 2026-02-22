@@ -80,17 +80,46 @@ export class ChatHub implements DurableObject {
     });
 
     server.addEventListener('close', () => {
-      this.sessions.delete(server);
+      this.handleSessionClose(server);
     });
 
     server.addEventListener('error', () => {
-      this.sessions.delete(server);
+      this.handleSessionClose(server);
     });
 
     // Send connected event
     this.sendTo(server, { type: 'connected' });
 
     return new Response(null, { status: 101, webSocket: client });
+  }
+
+  private handleSessionClose(ws: WebSocket): void {
+    const session = this.sessions.get(ws);
+    if (!session) return;
+
+    const groups = Array.from(session.groups);
+    this.sessions.delete(ws);
+
+    for (const groupId of groups) {
+      this.checkAndBroadcastOfflineStatus(session.userId, groupId);
+    }
+  }
+
+  private checkAndBroadcastOfflineStatus(
+    userId: UserId,
+    groupId: GroupId,
+  ): void {
+    let stillInGroup = false;
+    for (const otherSession of this.sessions.values()) {
+      if (otherSession.userId === userId && otherSession.groups.has(groupId)) {
+        stillInGroup = true;
+        break;
+      }
+    }
+
+    if (!stillInGroup) {
+      this.broadcastPresence(groupId, userId, 'offline');
+    }
   }
 
   private async handleMessage(
@@ -103,7 +132,9 @@ export class ChatHub implements DurableObject {
       if (data.action === 'subscribe' && data.groupId) {
         await this.handleSubscribe(session, data.groupId as GroupId);
       } else if (data.action === 'unsubscribe' && data.groupId) {
-        session.groups.delete(data.groupId as GroupId);
+        const groupId = data.groupId as GroupId;
+        session.groups.delete(groupId);
+        this.checkAndBroadcastOfflineStatus(session.userId, groupId);
       } else if (data.type === 'deliveryReceipt') {
         const receiptEvent = data as Extract<
           WebSocketEvent,
@@ -141,6 +172,62 @@ export class ChatHub implements DurableObject {
     }
 
     session.groups.add(groupId);
+
+    // Get currently online members (excluding self)
+    const onlineUsers = new Set<UserId>();
+    for (const otherSession of this.sessions.values()) {
+      if (otherSession.ws !== session.ws && otherSession.groups.has(groupId)) {
+        onlineUsers.add(otherSession.userId);
+      }
+    }
+
+    // Send the batch of online users to the subscribing user
+    if (onlineUsers.size > 0) {
+      for (const onlineUserId of onlineUsers) {
+        this.sendTo(session.ws, {
+          type: 'presenceUpdate',
+          groupId,
+          userId: onlineUserId,
+          status: 'online',
+        });
+      }
+    }
+
+    // Inform others that this user is online
+    // If this is the user's first connection to this group
+    let wasAlreadyInGroup = false;
+    for (const [ws, otherSession] of this.sessions.entries()) {
+      if (
+        ws !== session.ws &&
+        otherSession.userId === session.userId &&
+        otherSession.groups.has(groupId)
+      ) {
+        wasAlreadyInGroup = true;
+        break;
+      }
+    }
+
+    if (!wasAlreadyInGroup) {
+      this.broadcastPresence(groupId, session.userId, 'online', session.ws);
+    }
+  }
+
+  private broadcastPresence(
+    groupId: GroupId,
+    userId: UserId,
+    status: 'online' | 'offline',
+    excludeWs?: WebSocket,
+  ) {
+    for (const [ws, session] of this.sessions.entries()) {
+      if (ws !== excludeWs && session.groups.has(groupId)) {
+        this.sendTo(ws, {
+          type: 'presenceUpdate',
+          groupId,
+          userId,
+          status,
+        });
+      }
+    }
   }
 
   private async handleBroadcast(request: Request): Promise<Response> {

@@ -10,6 +10,7 @@ import { useDeleteGroup } from '@/hooks/useDeleteGroup';
 import type { GroupId } from '@microchat/client';
 import { Button } from '@/components/Button';
 import * as Dialog from '@radix-ui/react-dialog';
+import { usePresenceStore } from '@/stores/presence-store';
 
 interface GroupSettingsProps {
   groupId: GroupId;
@@ -151,8 +152,15 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
                   key={member.userId}
                   className="flex items-center justify-between p-2 border-base bg-white dark:bg-gray-900"
                 >
-                  <div>
+                  <div className="flex items-center gap-2">
+                    <span 
+                      className={`inline-block w-2 h-2 rounded-full ${usePresenceStore.getState().isUserOnline(groupId, member.userId) ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`} 
+                      aria-hidden="true" 
+                    />
                     <span className="font-medium">{member.displayName}</span>
+                    <span className="sr-only">
+                      {usePresenceStore.getState().isUserOnline(groupId, member.userId) ? 'Online' : 'Offline'}
+                    </span>
                     {member.isOwner && (
                       <span className="ml-2 text-xs px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 rounded">
                         Owner

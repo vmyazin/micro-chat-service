@@ -35,6 +35,7 @@ import { useWebSocket } from '@/hooks/useWebSocket';
 import { useCallStore } from '@/stores/call-store';
 import { useChatClientStore } from '@/stores/chat-client-store';
 import { useChatStore } from '@/stores/chat-store';
+import { usePresenceStore } from '@/stores/presence-store';
 
 export default function ConversationPage() {
   const params = useParams();
@@ -91,6 +92,14 @@ export default function ConversationPage() {
   const setMemberCount = useCallStore((state) => state.setMemberCount);
   const callState = useCallStore((state) => state.callState);
   const setCallState = useCallStore((state) => state.setCallState);
+
+  // Presence state
+  const isTargetUserOnline = usePresenceStore((state) =>
+    targetUserId ? state.isUserOnline(groupId as GroupId, targetUserId) : false,
+  );
+  const onlineUserCount = usePresenceStore((state) =>
+    state.getOnlineUserCount(groupId as GroupId),
+  );
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const remoteAudioRef = useRef<HTMLAudioElement>(null);
@@ -499,7 +508,33 @@ export default function ConversationPage() {
         </header>
       ) : (
         <header className="chat-header shrink-0 z-20 w-full flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-(--surface-elevated)">
-          <h1 className="chat-title text-lg font-bold truncate">Group Chat</h1>
+          <div className="flex flex-col min-w-0">
+            <h1 className="chat-title text-lg font-bold truncate">
+              Group Chat
+            </h1>
+            <div className="flex items-center gap-1.5 text-xs text-(--text-muted) select-none">
+              {(memberCount ?? 0) <= 2 ? (
+                <>
+                  <span
+                    className={`inline-block w-2 h-2 rounded-full ${isTargetUserOnline ? 'bg-green-500' : 'bg-gray-400 dark:bg-gray-500'}`}
+                    aria-hidden="true"
+                  />
+                  <span>{isTargetUserOnline ? 'Online' : 'Offline'}</span>
+                </>
+              ) : (
+                <>
+                  <span
+                    className="inline-block w-2 h-2 rounded-full bg-green-500"
+                    aria-hidden="true"
+                  />
+                  <span>
+                    {onlineUserCount}{' '}
+                    {onlineUserCount === 1 ? 'member' : 'members'} online
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
           <div className="chat-actions flex items-center gap-2">
             <CallButton
               client={client}
@@ -558,45 +593,63 @@ export default function ConversationPage() {
             ) : (
               <>
                 <AnimatePresence initial={false}>
-                {visibleMessages.map((message, index, filteredMessages) => {
-                  const showDateHeader =
-                    index === 0 ||
-                    formatDate(message.createdAt) !==
-                      formatDate(filteredMessages[index - 1].createdAt);
+                  {visibleMessages.map((message, index, filteredMessages) => {
+                    const showDateHeader =
+                      index === 0 ||
+                      formatDate(message.createdAt) !==
+                        formatDate(filteredMessages[index - 1].createdAt);
 
-                  return (
-                    <motion.div
-                      key={message.id}
-                      layout="position"
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.95, height: 0, overflow: 'hidden', padding: 0 }}
-                      transition={{ duration: 0.3, ease: 'easeInOut' }}
-                    >
-                      {showDateHeader && (
-                        <div className="flex items-center justify-center my-3">
-                          <span className="px-3 py-1 rounded-full text-xs text-(--text-muted) bg-(--surface-muted)">
-                            {formatDate(message.createdAt)}
-                          </span>
-                        </div>
-                      )}
-                      <MessageBubble
-                        message={message}
-                        formatTime={formatTime}
-                        isOwn={isOwnMessage(message)}
-                        showDeleteConfirm={deleteConfirmId === message.id}
-                        onRequestDelete={() => setDeleteConfirmId(message.id)}
-                        onConfirmDelete={() => handleDeleteMessage(message.id)}
-                        onCancelDelete={() => setDeleteConfirmId(null)}
-                        deleting={deleting && deleteConfirmId === message.id}
-                        isHighlighted={highlightedIds.has(message.id)}
-                        onToggleHighlight={() =>
-                          toggleHighlightedId(message.id)
-                        }
-                      />
-                    </motion.div>
-                  );
-                })}
+                    return (
+                      <motion.div
+                        key={message.id}
+                        layout="position"
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{
+                          opacity: 0,
+                          scale: 0.95,
+                          height: 0,
+                          overflow: 'hidden',
+                          padding: 0,
+                        }}
+                        transition={{ duration: 0.3, ease: 'easeInOut' }}
+                      >
+                        {showDateHeader && (
+                          <div className="flex items-center justify-center my-3">
+                            <span className="px-3 py-1 rounded-full text-xs text-(--text-muted) bg-(--surface-muted)">
+                              {formatDate(message.createdAt)}
+                            </span>
+                          </div>
+                        )}
+                        <MessageBubble
+                          message={message}
+                          formatTime={formatTime}
+                          isOwn={isOwnMessage(message)}
+                          showDeleteConfirm={deleteConfirmId === message.id}
+                          onRequestDelete={() => setDeleteConfirmId(message.id)}
+                          onConfirmDelete={() =>
+                            handleDeleteMessage(message.id)
+                          }
+                          onCancelDelete={() => setDeleteConfirmId(null)}
+                          deleting={deleting && deleteConfirmId === message.id}
+                          isHighlighted={highlightedIds.has(message.id)}
+                          onToggleHighlight={() =>
+                            toggleHighlightedId(message.id)
+                          }
+                          isSenderOnline={
+                            message.senderId
+                              ? usePresenceStore
+                                  .getState()
+                                  .isUserOnline(
+                                    groupId as GroupId,
+                                    message.senderId,
+                                  )
+                              : false
+                          }
+                        />
+                      </motion.div>
+                    );
+                  })}
                 </AnimatePresence>
                 <div ref={messagesEndRef} />
               </>
@@ -634,6 +687,7 @@ interface MessageBubbleProps {
   deleting: boolean;
   isHighlighted: boolean;
   onToggleHighlight: () => void;
+  isSenderOnline?: boolean;
 }
 
 function MessageBubble({
@@ -647,6 +701,7 @@ function MessageBubble({
   deleting,
   isHighlighted,
   onToggleHighlight,
+  isSenderOnline,
 }: MessageBubbleProps) {
   const isSystem = message.senderId === ('system' as UserId);
 
@@ -689,8 +744,6 @@ function MessageBubble({
     opacityStyle = 1 - easedProgress * 0.95;
   }
 
-
-
   return (
     <ContextMenu.Root>
       <ContextMenu.Trigger asChild>
@@ -699,14 +752,22 @@ function MessageBubble({
         >
           {/* Avatar for others */}
           {!isOwn && (
-            <div
-              className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-xs font-bold text-white select-none"
-              style={{
-                background: avatarColor(message.senderName ?? 'Anonymous'),
-              }}
-              aria-hidden="true"
-            >
-              {(message.senderName ?? '?').charAt(0).toUpperCase()}
+            <div className="relative">
+              <div
+                className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-xs font-bold text-white select-none"
+                style={{
+                  background: avatarColor(message.senderName ?? 'Anonymous'),
+                }}
+                aria-hidden="true"
+              >
+                {(message.senderName ?? '?').charAt(0).toUpperCase()}
+              </div>
+              {isSenderOnline && (
+                <span
+                  className="absolute bottom-0 right-0 block w-2.5 h-2.5 rounded-full bg-green-500 ring-2 ring-(--surface-elevated)"
+                  aria-hidden="true"
+                />
+              )}
             </div>
           )}
 
