@@ -315,7 +315,9 @@ export class ChatHub implements DurableObject {
     // immediately vanish when read replicas sync or React Query refetches on reconnect.
     // The retention cron job (retention.ts) will clean up messages older than 24 hours.
     if (totalMembers > 1 && receiptCount >= totalMembers - 1) {
-      console.log(`[chathub] Message ${messageId} fully delivered. Keeping in DB for 24h retention policy.`);
+      console.log(
+        `[chathub] Message ${messageId} fully delivered. Keeping in DB for 24h retention policy.`,
+      );
     }
   }
 
