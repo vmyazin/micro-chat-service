@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useGroups } from '@/hooks/useGroups';
 import { Button } from '@/components/Button';
 import { SidebarItem } from '@/components/SidebarItem';
+import { usePresenceStore } from '@/stores/presence-store';
 
 interface GroupListProps {
   onNewGroup: () => void;
@@ -70,6 +71,7 @@ export default function GroupList({ onNewGroup, selectedGroupId }: GroupListProp
                 description={group.memberCount < 4 && group.memberNames.length > 0
                   ? group.memberNames.join(', ')
                   : `${group.memberCount} member${group.memberCount !== 1 ? 's' : ''}`}
+                isOnline={usePresenceStore.getState().getOnlineUserCount(group.groupId) > 0}
               />
             </li>
           ))}
