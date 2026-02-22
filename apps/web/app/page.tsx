@@ -13,6 +13,7 @@ import {
 import Link from 'next/link';
 import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
+import { Button } from '@/components/Button';
 
 export default function Home() {
   const features = [
@@ -101,12 +102,12 @@ export default function Home() {
               >
                 Create Private Group
               </Link>
-              <button
+              <Button variant="ghost"
                 type="button"
-                className="w-full sm:w-auto bg-white text-[#1E293B] border border-gray-200 px-10 py-4 rounded-full font-bold text-lg hover:bg-gray-50 transition-all cursor-pointer"
+                className="w-full sm:w-auto bg-white text-[#1E293B] border border-gray-200 font-bold text-lg hover:bg-gray-50 transition-all cursor-pointer"
               >
                 How it works
-              </button>
+              </Button>
             </motion.div>
           </div>
         </section>

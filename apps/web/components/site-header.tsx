@@ -4,6 +4,7 @@ import { Lock, Menu } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { Button } from '@/components/Button';
 
 export function SiteHeader() {
   const pathname = usePathname();
@@ -41,9 +42,9 @@ export function SiteHeader() {
           <Link href="/chat" className="hidden md:block bg-foreground text-white px-6 py-2.5 rounded-full text-sm font-semibold hover:bg-blue-600 transition-all duration-300 cursor-pointer shadow-lg shadow-black/5 active:scale-95">
             Create Private Group
           </Link>
-          <button className="md:hidden">
+          <Button variant="ghost" className="md:hidden">
              <Menu className="w-6 h-6 text-slate-900" />
-          </button>
+          </Button>
         </div>
       </div>
     </nav>

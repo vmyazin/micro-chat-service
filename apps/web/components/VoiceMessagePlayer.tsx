@@ -3,6 +3,7 @@
 import { base64ToUint8Array } from '@microchat/client';
 import { Pause, Play } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Button } from '@/components/Button';
 
 interface VoiceMessagePlayerProps {
   audioData: string;
@@ -71,7 +72,7 @@ export function VoiceMessagePlayer({
 
   return (
     <div className="flex items-center gap-3 min-w-[200px]">
-      <button
+      <Button variant="ghost"
         type="button"
         onClick={togglePlay}
         className={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-colors ${
@@ -89,7 +90,7 @@ export function VoiceMessagePlayer({
             className={`w-4 h-4 ${isOwn ? 'text-white' : 'text-[var(--accent)]'}`}
           />
         )}
-      </button>
+      </Button>
 
       <div className="flex-1 flex flex-col gap-1.5">
         <div

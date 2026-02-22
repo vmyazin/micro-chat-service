@@ -3,6 +3,7 @@
 import { MicroChatClient } from '@microchat/client';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { Button } from '@/components/Button';
 
 type InviteState = 'loading' | 'error' | 'success';
 
@@ -62,13 +63,13 @@ export default function InvitePage() {
             <div className="p-3 border-base bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm mb-4">
               {error}
             </div>
-            <button
+            <Button variant="ghost"
               type="button"
               onClick={() => router.push('/chat')}
               className="btn-base"
             >
               Go to Chat
-            </button>
+            </Button>
           </>
         )}
       </div>

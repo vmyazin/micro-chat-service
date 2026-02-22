@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import GroupList from '@/components/GroupList';
 import NewGroupDialog from '@/components/NewGroupDialog';
+import { Button } from '@/components/Button';
 
 export default function ChatLayout({
   children,
@@ -73,14 +74,14 @@ export default function ChatLayout({
               className="h-12 w-auto"
               priority
             />
-            <button
+            <Button variant="ghost"
               type="button"
               onClick={() => setSidebarOpen(false)}
               className="lg:hidden p-1 hover:bg-gray-100 dark:hover:bg-gray-800"
               aria-label="Close sidebar"
             >
               <CloseIcon />
-            </button>
+            </Button>
           </div>
 
           {/* Sidebar content */}
@@ -100,11 +101,11 @@ export default function ChatLayout({
             >
               Home Page
             </a>
-            <button
+            <Button variant="primary" size="sm"
               type="button"
               onClick={handleSignOut}
               disabled={isSigningOut}
-              className="w-full btn-base btn-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center ga disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSigningOut ? (
                 <>
@@ -117,7 +118,7 @@ export default function ChatLayout({
                   Sign Out
                 </>
               )}
-            </button>
+            </Button>
           </div>
         </div>
       </aside>
@@ -126,14 +127,14 @@ export default function ChatLayout({
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile header with toggle */}
         <div className="lg:hidden flex items-center p-4 border-b border-[var(--border-color)]">
-          <button
+          <Button variant="ghost"
             type="button"
             onClick={() => setSidebarOpen(true)}
             className="p-2 border-base hover:bg-gray-100 dark:hover:bg-gray-800"
             aria-label="Open sidebar"
           >
             <MenuIcon />
-          </button>
+          </Button>
           <span className="ml-3 font-bold">MicroChat</span>
         </div>
 

@@ -22,6 +22,7 @@ import { IncomingCallModal } from '@/components/IncomingCallModal';
 import { MessageInput } from '@/components/MessageInput';
 import { VoiceMessagePlayer } from '@/components/VoiceMessagePlayer';
 import { useSfx } from '@/hooks/useSfx';
+import { Button } from '@/components/Button';
 
 const callKeyStore = new MemoryKeyStore();
 const callCipher = new GroupCipher(callKeyStore);
@@ -604,13 +605,13 @@ export default function ConversationPage() {
       <div className="flex flex-col items-center justify-center h-full p-4">
         <div className="p-4 border-base bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 max-w-md">
           <p className="mb-2">{error}</p>
-          <button
+          <Button variant="ghost"
             type="button"
             onClick={fetchMessages}
             className="text-sm underline hover:no-underline"
           >
             Retry
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -643,7 +644,7 @@ export default function ConversationPage() {
             calling={isCalling}
             activeSession={activeSession}
           />
-          <button
+          <Button variant="ghost"
             type="button"
             onClick={() => setShowSettings(true)}
             className="chat-action-settings p-2 border-base hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -669,7 +670,7 @@ export default function ConversationPage() {
                 d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
               />
             </svg>
-          </button>
+          </Button>
         </div>
       </header>
       {connectionStatus === 'reconnecting' && (
@@ -680,13 +681,13 @@ export default function ConversationPage() {
       {sendError && (
         <div className="px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 text-sm text-center">
           <span>{sendError}</span>
-          <button
+          <Button variant="ghost"
             type="button"
             onClick={() => setSendError(null)}
             className="ml-3 text-xs underline hover:no-underline"
           >
             Dismiss
-          </button>
+          </Button>
         </div>
       )}
       <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-3 space-y-1.5">
@@ -908,15 +909,15 @@ function MessageBubble({
                     Delete this message?
                   </p>
                   <div className="flex gap-2">
-                    <button
+                    <Button variant="ghost"
                       type="button"
                       onClick={onConfirmDelete}
                       disabled={deleting}
-                      className="flex-1 text-xs px-2 py-1 rounded-lg bg-red-500 text-white hover:bg-red-600 disabled:opacity-50 transition-colors"
+                      className="flex-1 text-xs bg-red-500 text-white hover:bg-red-600 disabled:opacity-50 transition-colors"
                     >
                       {deleting ? 'Deleting...' : 'Delete'}
-                    </button>
-                    <button
+                    </Button>
+                    <Button variant="ghost"
                       type="button"
                       onClick={onCancelDelete}
                       disabled={deleting}
@@ -927,7 +928,7 @@ function MessageBubble({
                       }`}
                     >
                       Cancel
-                    </button>
+                    </Button>
                   </div>
                 </div>
               )}

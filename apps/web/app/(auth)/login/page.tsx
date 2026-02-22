@@ -5,6 +5,7 @@ import { AuthClient } from '@microchat/client';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
+import { Button } from '@/components/Button';
 
 type LoginState = 'idle' | 'loading' | 'unsupported';
 
@@ -91,11 +92,11 @@ function LoginForm() {
             </div>
           )}
 
-          <button
+          <Button variant="primary"
             type="button"
             onClick={handleLogin}
             disabled={state === 'loading'}
-            className="w-full btn-base flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center ga disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {state === 'loading' ? (
               <>
@@ -105,7 +106,7 @@ function LoginForm() {
             ) : (
               'Sign in with Passkey'
             )}
-          </button>
+          </Button>
 
           <p className="text-center text-sm text-gray-600 dark:text-gray-400">
             Don&apos;t have an account?{' '}

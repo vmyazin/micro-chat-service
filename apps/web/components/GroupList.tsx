@@ -51,7 +51,7 @@ export default function GroupList({ onNewGroup, selectedGroupId, refreshKey }: G
     <div className="flex flex-col h-full">
       <Button variant="primary"
         onClick={onNewGroup}
-        className="w-full  mb-4 flex items-center justify-center gap-2"
+        className="w-full mb-4 flex items-center justify-center ga"
       >
         <PlusIcon />
         New Group

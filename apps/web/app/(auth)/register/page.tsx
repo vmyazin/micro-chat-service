@@ -5,6 +5,7 @@ import { AuthClient } from '@microchat/client';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
+import { Button } from '@/components/Button';
 
 type RegistrationState = 'idle' | 'loading' | 'unsupported';
 
@@ -126,11 +127,11 @@ function RegisterForm() {
             </div>
           )}
 
-          <button
+          <Button variant="primary"
             type="button"
             onClick={handleRegister}
             disabled={state === 'loading'}
-            className="w-full btn-base flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center ga disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {state === 'loading' ? (
               <>
@@ -140,7 +141,7 @@ function RegisterForm() {
             ) : (
               'Register with Passkey'
             )}
-          </button>
+          </Button>
 
           <p className="text-center text-sm text-gray-600 dark:text-gray-400">
             Already have an account?{' '}

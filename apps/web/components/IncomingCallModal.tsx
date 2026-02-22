@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import type { CallSession } from '@microchat/client';
+import { Button } from '@/components/Button';
 
 interface IncomingCallModalProps {
   session: CallSession | null;
@@ -75,10 +76,10 @@ export function IncomingCallModal({ session, onAccept, onReject }: IncomingCallM
         </header>
 
         <div className="call-actions flex gap-4">
-          <button
+          <Button variant="ghost"
             type="button"
             onClick={onReject}
-            className="call-action-reject flex-1 py-3 px-4 rounded-xl bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 font-semibold hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors flex items-center justify-center gap-2"
+            className="call-action-reject flex-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 font-semibold hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors flex items-center justify-center ga"
           >
             <svg className="call-action-icon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -89,11 +90,11 @@ export function IncomingCallModal({ session, onAccept, onReject }: IncomingCallM
               />
             </svg>
             Decline
-          </button>
-          <button
+          </Button>
+          <Button variant="ghost"
             type="button"
             onClick={onAccept}
-            className="call-action-accept flex-1 py-3 px-4 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+            className="call-action-accept flex-1 bg-green-600 text-white font-semibold hover:bg-green-700 transition-colors flex items-center justify-center ga"
           >
             <svg className="call-action-icon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -104,7 +105,7 @@ export function IncomingCallModal({ session, onAccept, onReject }: IncomingCallM
               />
             </svg>
             Accept
-          </button>
+          </Button>
         </div>
       </section>
     </div>

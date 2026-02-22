@@ -6,6 +6,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
 import { useImagePicker } from '@/hooks/useImagePicker';
 import { formatDuration } from '@/components/VoiceMessagePlayer';
+import { Button } from '@/components/Button';
 
 export interface MessageInputProps {
   onSend: (content: string) => Promise<void>;
@@ -144,14 +145,14 @@ export function MessageInput({
     return (
       <div className="p-4 border-t-[var(--border-thick)] border-[var(--border-color)] bg-[var(--surface-elevated)]">
         <div className="flex items-center gap-3">
-          <button
+          <Button variant="ghost"
             type="button"
             onClick={recorderControls.cancel}
-            className="p-2 border-base hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500"
+            className="border-base hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500"
             aria-label="Cancel recording"
           >
             <X className="w-5 h-5" />
-          </button>
+          </Button>
 
           <div className="flex-1 flex items-center gap-3 px-4 py-2 border-base bg-[var(--surface-muted)]">
             <span className="relative flex h-3 w-3">
@@ -166,15 +167,15 @@ export function MessageInput({
             </span>
           </div>
 
-          <button
+          <Button variant="primary"
             type="button"
             onClick={recorderControls.stop}
-            className="px-4 py-2 btn-base bg-[var(--accent)] text-white font-semibold flex items-center gap-2"
+            className="bg-[var(--accent)] text-white font-semibold flex items-center ga"
             aria-label="Stop recording and send"
           >
             <Square className="w-4 h-4" />
             Send
-          </button>
+          </Button>
         </div>
         {recorderState.error && (
           <p className="mt-2 text-xs text-red-500">{recorderState.error}</p>
@@ -205,14 +206,14 @@ export function MessageInput({
                   Preview image
                 </Dialog.Title>
                 <Dialog.Close asChild>
-                  <button
+                  <Button variant="ghost"
                     type="button"
-                    className="p-2 border-base hover:bg-[var(--surface-muted)]"
+                    className="border-base hover:bg-[var(--surface-muted)]"
                     aria-label="Close image preview"
                     disabled={sending || imagePicker.compressing}
                   >
                     <X className="w-4 h-4" />
-                  </button>
+                  </Button>
                 </Dialog.Close>
               </div>
               {pastedImageUrl && (
@@ -230,14 +231,14 @@ export function MessageInput({
                 </div>
               )}
               <div className="flex justify-end">
-                <button
+                <Button variant="primary"
                   type="button"
                   onClick={handleSendPastedImage}
                   disabled={sending || imagePicker.compressing}
-                  className="px-4 py-2 btn-base bg-[var(--accent)] text-white font-semibold disabled:opacity-50 flex items-center gap-2"
+                  className="bg-[var(--accent)] text-white font-semibold disabled:opacity-50 flex items-center ga"
                 >
                   {(sending || imagePicker.compressing) ? <SendingSpinner /> : 'Send'}
-                </button>
+                </Button>
               </div>
             </div>
           </Dialog.Content>
@@ -246,15 +247,15 @@ export function MessageInput({
       <input {...imagePicker.inputProps} />
       <div className="flex gap-2">
         {onSendImage && (
-          <button
+          <Button variant="primary"
             type="button"
             onClick={imagePicker.pickImage}
             disabled={isDisabled || imagePicker.compressing}
-            className="px-3 py-2 btn-base bg-[var(--surface-muted)] hover:bg-[var(--accent)] hover:text-white font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-[var(--surface-muted)] hover:bg-[var(--accent)] hover:text-white font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Send image"
           >
             {imagePicker.compressing ? <SendingSpinner /> : <Image className="w-5 h-5" />}
-          </button>
+          </Button>
         )}
         <input
           ref={inputRef}
@@ -268,7 +269,7 @@ export function MessageInput({
           className="flex-1 px-4 py-2 border-base bg-[var(--surface-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] disabled:opacity-50 disabled:cursor-not-allowed"
         />
         {onSendVoice && !content.trim() ? (
-          <button
+          <Button variant="ghost"
             type="button"
             onClick={() => recorderControls.start()}
             disabled={isDisabled}
@@ -276,15 +277,15 @@ export function MessageInput({
             aria-label="Record voice message"
           >
             <Mic className="w-5 h-5" />
-          </button>
+          </Button>
         ) : (
-          <button
+          <Button variant="primary"
             onClick={handleSend}
             disabled={isDisabled || !content.trim()}
-            className="px-6 py-2 btn-base bg-[var(--accent)] text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-[var(--accent)] text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {sending ? <SendingSpinner /> : 'Send'}
-          </button>
+          </Button>
         )}
       </div>
       {(recorderState.error || imagePicker.error) && (
