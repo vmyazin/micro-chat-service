@@ -10,7 +10,7 @@ import {
 import { Gear, Highlighter, SpinnerGap, Trash } from '@phosphor-icons/react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { useParams } from 'next/navigation';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/Button';
 import { CallButton } from '@/components/CallButton';
 import GroupSettings from '@/components/GroupSettings';
@@ -81,10 +81,12 @@ export default function ConversationPage() {
   const setTargetUserName = useCallStore((state) => state.setTargetUserName);
   const memberCount = useCallStore((state) => state.memberCount);
   const setMemberCount = useCallStore((state) => state.setMemberCount);
+  const callState = useCallStore((state) => state.callState);
   const setCallState = useCallStore((state) => state.setCallState);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const remoteAudioRef = useRef<HTMLAudioElement>(null);
+  const [callDuration, setCallDuration] = useState(0);
 
   // Get call key initializer from store
   const ensureCallKey = useChatClientStore((state) => state.ensureCallKey);
@@ -104,6 +106,19 @@ export default function ConversationPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   });
+
+  useEffect(() => {
+    if (callState !== 'in-call') {
+      setCallDuration(0);
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      setCallDuration((prev) => prev + 1);
+    }, 1000);
+
+    return () => window.clearInterval(interval);
+  }, [callState]);
 
   // Setup call event listeners
   useEffect(() => {
@@ -398,30 +413,75 @@ export default function ConversationPage() {
         onReject={handleRejectCall}
       />
 
-      <header className="chat-header flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-        <h1 className="chat-title text-lg font-bold truncate">Group Chat</h1>
-        <div className="chat-actions flex items-center gap-2">
-          <CallButton
-            client={client}
-            groupId={groupId as GroupId}
-            currentUserId={currentUser?.userId}
-            onStartCall={handleStartCall}
-            memberCount={memberCount}
-            targetUserId={targetUserId}
-            calling={isCalling}
-            activeSession={activeSession}
-          />
-          <Button
-            variant="ghost"
-            type="button"
-            onClick={() => setShowSettings(true)}
-            className="chat-action-settings p-2 border-base hover:bg-gray-100 dark:hover:bg-gray-800"
-            aria-label="Group Settings"
-          >
-            <Gear aria-hidden="true" className="chat-action-icon w-5 h-5" />
-          </Button>
-        </div>
-      </header>
+      {(callState === 'in-call' || callState === 'calling') ? (
+        <header className="chat-header flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-emerald-200/70 dark:border-emerald-800/60 bg-emerald-50/80 dark:bg-emerald-950/40 shadow-[0_1px_0_rgba(16,185,129,0.12),0_8px_24px_rgba(0,0,0,0.18)]">
+          <div className="flex items-center gap-3 min-w-0">
+            {callState === 'in-call' ? (
+              <span
+                className="inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.18)] animate-pulse"
+                aria-hidden="true"
+              />
+            ) : (
+              <span
+                className="inline-flex h-3 w-3 rounded-full border-2 border-emerald-500/70 border-t-transparent animate-spin"
+                aria-hidden="true"
+              />
+            )}
+            <div className="min-w-0">
+              <p className="text-lg font-semibold text-emerald-950 dark:text-emerald-100 truncate">
+                {callState === 'in-call' ? 'Live call' : 'Connecting call'}
+                {targetUserName ? ` with ${targetUserName}` : ''}
+              </p>
+            </div>
+          </div>
+          <div className="chat-actions flex items-center gap-2">
+            <CallButton
+              client={client}
+              groupId={groupId as GroupId}
+              currentUserId={currentUser?.userId}
+              onStartCall={handleStartCall}
+              memberCount={memberCount}
+              targetUserId={targetUserId}
+              calling={isCalling}
+              activeSession={activeSession}
+            />
+            <Button
+              variant="ghost"
+              type="button"
+              onClick={() => setShowSettings(true)}
+              className="chat-action-settings p-2 border-base hover:bg-gray-100 dark:hover:bg-gray-800"
+              aria-label="Group Settings"
+            >
+              <Gear aria-hidden="true" className="chat-action-icon w-5 h-5" />
+            </Button>
+          </div>
+        </header>
+      ) : (
+        <header className="chat-header flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+          <h1 className="chat-title text-lg font-bold truncate">Group Chat</h1>
+          <div className="chat-actions flex items-center gap-2">
+            <CallButton
+              client={client}
+              groupId={groupId as GroupId}
+              currentUserId={currentUser?.userId}
+              onStartCall={handleStartCall}
+              memberCount={memberCount}
+              targetUserId={targetUserId}
+              calling={isCalling}
+              activeSession={activeSession}
+            />
+            <Button
+              variant="ghost"
+              type="button"
+              onClick={() => setShowSettings(true)}
+              className="chat-action-settings p-2 border-base hover:bg-gray-100 dark:hover:bg-gray-800"
+              aria-label="Group Settings"
+            >
+              <Gear aria-hidden="true" className="chat-action-icon w-5 h-5" />
+            </Button>
+          </div>
+        </header>
+      )}
       {connectionStatus === 'reconnecting' && (
         <div className="px-4 py-2 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 text-sm text-center">
           Reconnecting to real-time updates...
