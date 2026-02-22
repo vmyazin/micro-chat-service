@@ -483,7 +483,7 @@ export default function ConversationPage() {
         </header>
       )}
       <section className="chat-surface flex-1 w-full min-h-0 overflow-hidden">
-        <div className="chat-container mx-auto w-full max-w-[1200px] min-h-0 h-full flex flex-col">
+        <div className="chat-container min-h-0 h-full flex flex-col">
           {connectionStatus === 'reconnecting' && (
             <div className="px-4 py-2 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 text-sm text-center">
               Reconnecting to real-time updates...
