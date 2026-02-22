@@ -1,4 +1,4 @@
-import { GithubLogo } from '@phosphor-icons/react';
+import { GithubLogo } from '@phosphor-icons/react/ssr';
 import Image from 'next/image';
 import Link from 'next/link';
 

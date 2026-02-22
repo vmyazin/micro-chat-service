@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import yaml from 'js-yaml';
-import { ClockCounterClockwise } from '@phosphor-icons/react';
+import { ClockCounterClockwise } from '@phosphor-icons/react/ssr';
 import type { Metadata } from 'next';
 import { ChangelogList } from '@/components/ChangelogList';
 import { SiteFooter } from '@/components/site-footer';
