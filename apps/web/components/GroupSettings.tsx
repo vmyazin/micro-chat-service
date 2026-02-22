@@ -123,7 +123,7 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
         onClick={() => !actionLoading && onClose()}
       />
 
-      <div className="relative brutal-card bg-[var(--background)] p-6 w-full max-w-md mx-4 max-h-[80vh] overflow-y-auto">
+      <div className="relative card-base bg-[var(--background)] p-6 w-full max-w-md mx-4 max-h-[80vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">Group Settings</h2>
           <button
@@ -138,7 +138,7 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
         </div>
 
         {error && (
-          <div className="mb-4 p-3 brutal-border bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm">
+          <div className="mb-4 p-3 border-base bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm">
             {error}
           </div>
         )}
@@ -154,7 +154,7 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
               {members.map((member) => (
                 <li
                   key={member.userId}
-                  className="flex items-center justify-between p-2 brutal-border bg-white dark:bg-gray-900"
+                  className="flex items-center justify-between p-2 border-base bg-white dark:bg-gray-900"
                 >
                   <div>
                     <span className="font-medium">{member.displayName}</span>
@@ -174,26 +174,26 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
           <button
             onClick={handleInvite}
             disabled={actionLoading}
-            className="w-full brutal-btn disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full btn-base disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {actionLoading && !inviteLink && <LoadingSpinner />}
             Invite Member
           </button>
 
           {inviteLink && (
-            <div className="p-3 brutal-border bg-gray-50 dark:bg-gray-800 space-y-2">
+            <div className="p-3 border-base bg-gray-50 dark:bg-gray-800 space-y-2">
               <div className="flex gap-2">
                 <input
                   id="invite-link-input"
                   type="text"
                   readOnly
                   value={inviteLink}
-                  className="flex-1 p-2 text-sm brutal-border bg-white dark:bg-gray-900 font-mono truncate"
+                  className="flex-1 p-2 text-sm border-base bg-white dark:bg-gray-900 font-mono truncate"
                   onClick={(e) => (e.target as HTMLInputElement).select()}
                 />
                 <button
                   onClick={handleCopyLink}
-                  className="px-3 brutal-btn text-sm"
+                  className="px-3 btn-base text-sm"
                 >
                   {copied ? 'Copied!' : 'Copy'}
                 </button>
@@ -212,12 +212,12 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
             <button
               onClick={() => setShowLeaveConfirm(true)}
               disabled={actionLoading}
-              className="w-full p-3 brutal-border text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20 disabled:opacity-50"
+              className="w-full p-3 border-base text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20 disabled:opacity-50"
             >
               Leave Group
             </button>
           ) : (
-            <div className="p-3 brutal-border bg-orange-50 dark:bg-orange-900/20">
+            <div className="p-3 border-base bg-orange-50 dark:bg-orange-900/20">
               <p className="text-sm text-orange-700 dark:text-orange-400 mb-3">
                 Are you sure you want to leave this group?
               </p>
@@ -225,14 +225,14 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
                 <button
                   onClick={() => setShowLeaveConfirm(false)}
                   disabled={actionLoading}
-                  className="flex-1 p-2 brutal-border hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50"
+                  className="flex-1 p-2 border-base hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleLeave}
                   disabled={actionLoading}
-                  className="flex-1 p-2 brutal-border bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 p-2 border-base bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {actionLoading && <LoadingSpinner />}
                   Leave
@@ -247,12 +247,12 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
                 <button
                   onClick={() => setShowDeleteConfirm(true)}
                   disabled={actionLoading}
-                  className="w-full p-3 brutal-border text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50"
+                  className="w-full p-3 border-base text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50"
                 >
                   Delete Group
                 </button>
               ) : (
-                <div className="p-3 brutal-border bg-red-50 dark:bg-red-900/20">
+                <div className="p-3 border-base bg-red-50 dark:bg-red-900/20">
                   <p className="text-sm text-red-700 dark:text-red-400 mb-3">
                     Are you sure? This will permanently delete the group and all messages.
                   </p>
@@ -260,14 +260,14 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
                     <button
                       onClick={() => setShowDeleteConfirm(false)}
                       disabled={actionLoading}
-                      className="flex-1 p-2 brutal-border hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50"
+                      className="flex-1 p-2 border-base hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleDelete}
                       disabled={actionLoading}
-                      className="flex-1 p-2 brutal-border bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                      className="flex-1 p-2 border-base bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                       {actionLoading && <LoadingSpinner />}
                       Delete

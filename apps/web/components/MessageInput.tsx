@@ -147,13 +147,13 @@ export function MessageInput({
           <button
             type="button"
             onClick={recorderControls.cancel}
-            className="p-2 brutal-border hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500"
+            className="p-2 border-base hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500"
             aria-label="Cancel recording"
           >
             <X className="w-5 h-5" />
           </button>
 
-          <div className="flex-1 flex items-center gap-3 px-4 py-2 brutal-border bg-[var(--surface-muted)]">
+          <div className="flex-1 flex items-center gap-3 px-4 py-2 border-base bg-[var(--surface-muted)]">
             <span className="relative flex h-3 w-3">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500" />
@@ -169,7 +169,7 @@ export function MessageInput({
           <button
             type="button"
             onClick={recorderControls.stop}
-            className="px-4 py-2 brutal-btn bg-[var(--accent)] text-white font-semibold flex items-center gap-2"
+            className="px-4 py-2 btn-base bg-[var(--accent)] text-white font-semibold flex items-center gap-2"
             aria-label="Stop recording and send"
           >
             <Square className="w-4 h-4" />
@@ -197,7 +197,7 @@ export function MessageInput({
           <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50" />
           <Dialog.Content className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div
-              className="relative brutal-card bg-[var(--background)] p-6 w-full max-w-lg"
+              className="relative card-base bg-[var(--background)] p-6 w-full max-w-lg"
               onKeyDown={handlePreviewKeyDown}
             >
               <div className="flex items-center justify-between mb-4">
@@ -207,7 +207,7 @@ export function MessageInput({
                 <Dialog.Close asChild>
                   <button
                     type="button"
-                    className="p-2 brutal-border hover:bg-[var(--surface-muted)]"
+                    className="p-2 border-base hover:bg-[var(--surface-muted)]"
                     aria-label="Close image preview"
                     disabled={sending || imagePicker.compressing}
                   >
@@ -216,7 +216,7 @@ export function MessageInput({
                 </Dialog.Close>
               </div>
               {pastedImageUrl && (
-                <div className="brutal-border bg-[var(--surface-muted)] p-2 mb-4">
+                <div className="border-base bg-[var(--surface-muted)] p-2 mb-4">
                   <img
                     src={pastedImageUrl}
                     alt="Image preview"
@@ -225,7 +225,7 @@ export function MessageInput({
                 </div>
               )}
               {imagePicker.error && (
-                <div className="mb-4 p-3 brutal-border bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm">
+                <div className="mb-4 p-3 border-base bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm">
                   {imagePicker.error}
                 </div>
               )}
@@ -234,7 +234,7 @@ export function MessageInput({
                   type="button"
                   onClick={handleSendPastedImage}
                   disabled={sending || imagePicker.compressing}
-                  className="px-4 py-2 brutal-btn bg-[var(--accent)] text-white font-semibold disabled:opacity-50 flex items-center gap-2"
+                  className="px-4 py-2 btn-base bg-[var(--accent)] text-white font-semibold disabled:opacity-50 flex items-center gap-2"
                 >
                   {(sending || imagePicker.compressing) ? <SendingSpinner /> : 'Send'}
                 </button>
@@ -250,7 +250,7 @@ export function MessageInput({
             type="button"
             onClick={imagePicker.pickImage}
             disabled={isDisabled || imagePicker.compressing}
-            className="px-3 py-2 brutal-btn bg-[var(--surface-muted)] hover:bg-[var(--accent)] hover:text-white font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-3 py-2 btn-base bg-[var(--surface-muted)] hover:bg-[var(--accent)] hover:text-white font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Send image"
           >
             {imagePicker.compressing ? <SendingSpinner /> : <Image className="w-5 h-5" />}
@@ -265,14 +265,14 @@ export function MessageInput({
           onPaste={handlePaste}
           placeholder="Type a message..."
           disabled={isDisabled}
-          className="flex-1 px-4 py-2 brutal-border bg-[var(--surface-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex-1 px-4 py-2 border-base bg-[var(--surface-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] disabled:opacity-50 disabled:cursor-not-allowed"
         />
         {onSendVoice && !content.trim() ? (
           <button
             type="button"
             onClick={() => recorderControls.start()}
             disabled={isDisabled}
-            className="px-4 py-2 brutal-btn bg-[var(--surface-muted)] hover:bg-[var(--accent)] hover:text-white font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 btn-base bg-[var(--surface-muted)] hover:bg-[var(--accent)] hover:text-white font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Record voice message"
           >
             <Mic className="w-5 h-5" />
@@ -281,7 +281,7 @@ export function MessageInput({
           <button
             onClick={handleSend}
             disabled={isDisabled || !content.trim()}
-            className="px-6 py-2 brutal-btn bg-[var(--accent)] text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-2 btn-base bg-[var(--accent)] text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {sending ? <SendingSpinner /> : 'Send'}
           </button>

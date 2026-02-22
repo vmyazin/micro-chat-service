@@ -82,7 +82,7 @@ function RegisterForm() {
   if (!isWebAuthnSupported && typeof window !== 'undefined') {
     return (
       <div className="flex min-h-screen items-center justify-center p-4">
-        <div className="brutal-card w-full max-w-md text-center">
+        <div className="card-base w-full max-w-md text-center">
           <h1 className="text-2xl font-bold mb-4">Browser Not Supported</h1>
           <p className="text-gray-600 dark:text-gray-400">
             Your browser does not support passkeys (WebAuthn). Please use a
@@ -95,7 +95,7 @@ function RegisterForm() {
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
-      <div className="brutal-card w-full max-w-md">
+      <div className="card-base w-full max-w-md">
         <h1 className="text-2xl font-bold text-center mb-8">Create Account</h1>
 
         <div className="space-y-6">
@@ -113,7 +113,7 @@ function RegisterForm() {
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="Enter your name"
               disabled={state === 'loading'}
-              className="w-full px-4 py-3 brutal-border bg-transparent focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+              className="w-full px-4 py-3 border-base bg-transparent focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleRegister();
               }}
@@ -121,7 +121,7 @@ function RegisterForm() {
           </div>
 
           {error && (
-            <div className="p-3 brutal-border bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm">
+            <div className="p-3 border-base bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm">
               {error}
             </div>
           )}
@@ -130,7 +130,7 @@ function RegisterForm() {
             type="button"
             onClick={handleRegister}
             disabled={state === 'loading'}
-            className="w-full brutal-btn flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full btn-base flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {state === 'loading' ? (
               <>
@@ -172,7 +172,7 @@ export default function RegisterPage() {
 function RegisterPageSkeleton() {
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
-      <div className="brutal-card w-full max-w-md">
+      <div className="card-base w-full max-w-md">
         <h1 className="text-2xl font-bold text-center mb-8">Create Account</h1>
         <div className="space-y-6">
           <div className="h-12 bg-gray-200 dark:bg-gray-700 animate-pulse rounded" />

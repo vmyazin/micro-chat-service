@@ -602,7 +602,7 @@ export default function ConversationPage() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-4">
-        <div className="p-4 brutal-border bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 max-w-md">
+        <div className="p-4 border-base bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 max-w-md">
           <p className="mb-2">{error}</p>
           <button
             type="button"
@@ -646,7 +646,7 @@ export default function ConversationPage() {
           <button
             type="button"
             onClick={() => setShowSettings(true)}
-            className="chat-action-settings p-2 brutal-border hover:bg-gray-100 dark:hover:bg-gray-800"
+            className="chat-action-settings p-2 border-base hover:bg-gray-100 dark:hover:bg-gray-800"
             aria-label="Group Settings"
           >
             <svg
@@ -937,7 +937,7 @@ function MessageBubble({
       </ContextMenu.Trigger>
 
       <ContextMenu.Portal>
-        <ContextMenu.Content className="min-w-[160px] bg-[var(--surface-elevated)] brutal-border rounded-lg p-1 shadow-lg z-50">
+        <ContextMenu.Content className="min-w-[160px] bg-[var(--surface-elevated)] border-base rounded-lg p-1 shadow-lg z-50">
           <ContextMenu.Item
             className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--surface-muted)] rounded-md cursor-pointer outline-none transition-colors"
             onSelect={onToggleHighlight}

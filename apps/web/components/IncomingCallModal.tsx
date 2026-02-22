@@ -52,7 +52,7 @@ export function IncomingCallModal({ session, onAccept, onReject }: IncomingCallM
 
   return (
     <div className="call-modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-      <section className="call-modal-dialog bg-[var(--surface-elevated)] brutal-border rounded-2xl p-8 max-w-sm w-full mx-4 text-center">
+      <section className="call-modal-dialog bg-[var(--surface-elevated)] border-base rounded-2xl p-8 max-w-sm w-full mx-4 text-center">
         <header className="call-modal-header mb-6">
           <div className="call-avatar-container w-20 h-20 mx-auto mb-4 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
             <svg

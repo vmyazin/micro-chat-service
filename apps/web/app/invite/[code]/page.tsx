@@ -36,7 +36,7 @@ export default function InvitePage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
-      <div className="brutal-card w-full max-w-md text-center">
+      <div className="card-base w-full max-w-md text-center">
         {state === 'loading' && (
           <>
             <LoadingSpinner />
@@ -59,13 +59,13 @@ export default function InvitePage() {
         {state === 'error' && (
           <>
             <h1 className="text-xl font-bold mb-4">Invite Failed</h1>
-            <div className="p-3 brutal-border bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm mb-4">
+            <div className="p-3 border-base bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm mb-4">
               {error}
             </div>
             <button
               type="button"
               onClick={() => router.push('/chat')}
-              className="brutal-btn"
+              className="btn-base"
             >
               Go to Chat
             </button>

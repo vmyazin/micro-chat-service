@@ -145,7 +145,7 @@ export function CallButton({
             setIsMuted(newMuted);
             activeSession.setMute(newMuted);
           }}
-          className={`p-2 brutal-border transition-colors ${isMuted ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50' : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+          className={`p-2 border-base transition-colors ${isMuted ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50' : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
           aria-label={isMuted ? 'Unmute' : 'Mute'}
           title={isMuted ? 'Unmute microphone' : 'Mute microphone'}
         >
@@ -163,7 +163,7 @@ export function CallButton({
         <button
           type="button"
           onClick={() => activeSession.hangup()}
-          className="p-2 brutal-border bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 flex items-center justify-center transition-all duration-300 ease-in-out"
+          className="p-2 border-base bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 flex items-center justify-center transition-all duration-300 ease-in-out"
           aria-label="Hang up"
           title="End call"
         >
@@ -192,7 +192,7 @@ export function CallButton({
     return (
       <button
         type="button"
-        className="px-3 py-2 brutal-border bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 cursor-not-allowed"
+        className="px-3 py-2 border-base bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 cursor-not-allowed"
         aria-label="Calling"
         disabled
       >
@@ -213,7 +213,7 @@ export function CallButton({
     <button
       type="button"
       onClick={handleClick}
-      className="p-2 brutal-border hover:bg-gray-100 dark:hover:bg-gray-800"
+      className="p-2 border-base hover:bg-gray-100 dark:hover:bg-gray-800"
       aria-label="Start call"
     >
       <svg

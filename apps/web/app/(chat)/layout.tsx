@@ -56,7 +56,7 @@ export default function ChatLayout({
       <aside
         className={`
           fixed lg:static inset-y-0 left-0 z-50
-          w-[300px] brutal-border border-r-0 lg:border-r
+          w-[300px] border-base border-r-0 lg:border-r
           bg-[var(--sidebar-background)]
           transform transition-transform duration-200 ease-in-out
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
@@ -104,7 +104,7 @@ export default function ChatLayout({
               type="button"
               onClick={handleSignOut}
               disabled={isSigningOut}
-              className="w-full brutal-btn brutal-btn-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full btn-base btn-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSigningOut ? (
                 <>
@@ -129,7 +129,7 @@ export default function ChatLayout({
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}
-            className="p-2 brutal-border hover:bg-gray-100 dark:hover:bg-gray-800"
+            className="p-2 border-base hover:bg-gray-100 dark:hover:bg-gray-800"
             aria-label="Open sidebar"
           >
             <MenuIcon />

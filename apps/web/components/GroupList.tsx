@@ -49,7 +49,7 @@ export default function GroupList({ onNewGroup, selectedGroupId, refreshKey }: G
     <div className="flex flex-col h-full">
       <button
         onClick={onNewGroup}
-        className="w-full brutal-btn mb-4 flex items-center justify-center gap-2"
+        className="w-full btn-base mb-4 flex items-center justify-center gap-2"
       >
         <PlusIcon />
         New Group
@@ -62,7 +62,7 @@ export default function GroupList({ onNewGroup, selectedGroupId, refreshKey }: G
       )}
 
       {error && (
-        <div className="p-3 brutal-border bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm mb-4">
+        <div className="p-3 border-base bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm mb-4">
           {error}
           <button
             onClick={fetchGroups}
@@ -85,7 +85,7 @@ export default function GroupList({ onNewGroup, selectedGroupId, refreshKey }: G
             <li key={group.groupId}>
               <button
                 onClick={() => handleGroupClick(group.groupId)}
-                className={`group-list-item w-full text-left p-4 brutal-border transition-colors ${
+                className={`group-list-item w-full text-left p-4 border-base transition-colors ${
                   selectedGroupId === group.groupId
                     ? 'bg-[var(--accent)] text-white border-[var(--accent-hover)]'
                     : 'bg-[var(--surface-elevated)] hover:bg-[var(--surface-muted)]'

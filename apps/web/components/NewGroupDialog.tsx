@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { MicroChatClient } from '@microchat/client';
+import * as Dialog from '@radix-ui/react-dialog';
+import { Button } from './Button';
 
 interface NewGroupDialogProps {
   open: boolean;
@@ -15,8 +17,6 @@ export default function NewGroupDialog({ open, onClose, onGroupCreated }: NewGro
   const [groupName, setGroupName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  if (!open) return null;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -38,6 +38,14 @@ export default function NewGroupDialog({ open, onClose, onGroupCreated }: NewGro
 
       setGroupName('');
       onGroupCreated?.(result.groupId);
+
+      try {
+        const inviteLink = `${window.location.origin}/chat/${result.groupId}`;
+        await navigator.clipboard.writeText(inviteLink);
+      } catch (clipboardError) {
+        console.error('Failed to copy to clipboard', clipboardError);
+      }
+
       onClose();
       router.push(`/chat/${result.groupId}`);
     } catch (err) {
@@ -56,64 +64,61 @@ export default function NewGroupDialog({ open, onClose, onGroupCreated }: NewGro
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/50"
-        onClick={handleClose}
-      />
+    <Dialog.Root open={open} onOpenChange={(isOpen) => { if (!isOpen) handleClose(); }}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 bg-black/50 z-50" />
+        <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[95vw] max-w-md card-base bg-[var(--background)] p-6 focus:outline-none">
+          <Dialog.Title className="text-xl font-bold mb-4">Create New Group</Dialog.Title>
+          <Dialog.Description className="sr-only">Enter a name for your new group.</Dialog.Description>
 
-      {/* Dialog */}
-      <div className="relative brutal-card bg-[var(--background)] p-6 w-full max-w-md mx-4">
-        <h2 className="text-xl font-bold mb-4">Create New Group</h2>
-
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label
-              htmlFor="groupName"
-              className="block text-sm font-medium mb-2"
-            >
-              Group Name
-            </label>
-            <input
-              id="groupName"
-              type="text"
-              value={groupName}
-              onChange={(e) => setGroupName(e.target.value)}
-              placeholder="Enter group name..."
-              disabled={loading}
-              className="w-full p-3 brutal-border bg-[var(--background)] focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
-              autoFocus
-            />
-          </div>
-
-          {error && (
-            <div className="mb-4 p-3 brutal-border bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm">
-              {error}
+          <form onSubmit={handleSubmit}>
+            <div className="mb-4">
+              <label
+                htmlFor="groupName"
+                className="block text-sm font-medium mb-2"
+              >
+                Group Name
+              </label>
+              <input
+                id="groupName"
+                type="text"
+                value={groupName}
+                onChange={(e) => setGroupName(e.target.value)}
+                placeholder="Enter group name..."
+                disabled={loading}
+                className="w-full p-3 border-base bg-[var(--background)] focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+                autoFocus
+              />
             </div>
-          )}
 
-          <div className="flex gap-3 justify-end">
-            <button
-              type="button"
-              onClick={handleClose}
-              disabled={loading}
-              className="px-4 py-2 brutal-border hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading || !groupName.trim()}
-              className="brutal-btn disabled:opacity-50 flex items-center gap-2"
-            >
-              {loading && <LoadingSpinner />}
-              Create
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+            {error && (
+              <div className="mb-4 p-3 border-base bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm">
+                {error}
+              </div>
+            )}
+
+            <div className="flex gap-3 justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleClose}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="colorful"
+                disabled={loading || !groupName.trim()}
+              >
+                {loading && <LoadingSpinner />}
+                Create & Copy Link
+              </Button>
+            </div>
+          </form>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
 
