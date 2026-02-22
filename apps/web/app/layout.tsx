@@ -24,9 +24,46 @@ const jost = Jost({
 });
 
 export const metadata: Metadata = {
-  title: 'MicroChat — Private Group Messaging',
+  metadataBase: new URL('https://microchat.smoxu.com'),
+  title: {
+    default: 'MicroChat — Private Group Messaging',
+    template: '%s | MicroChat',
+  },
   description:
     'End-to-end encrypted group messaging built on the MLS protocol (RFC 9420).',
+  openGraph: {
+    title: 'MicroChat — Private Group Messaging',
+    description: 'End-to-end encrypted group messaging built on the MLS protocol (RFC 9420).',
+    url: 'https://microchat.smoxu.com',
+    siteName: 'MicroChat',
+    images: [
+      {
+        url: '/images/og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'MicroChat — Private Group Messaging',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'MicroChat — Private Group Messaging',
+    description: 'End-to-end encrypted group messaging built on the MLS protocol (RFC 9420).',
+    images: ['/images/og-image.jpg'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
 };
 
 export default function RootLayout({

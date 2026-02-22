@@ -7,6 +7,18 @@ import { ChangelogList } from '@/components/ChangelogList';
 import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
 
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Changelog',
+  description: 'Track the latest updates, security improvements, and new features in MicroChat.',
+  openGraph: {
+    title: 'Changelog | MicroChat',
+    description: 'Track the latest updates, security improvements, and new features in MicroChat.',
+    url: '/changelog',
+  },
+};
+
 export interface ChangelogItem {
   date: string;
   title: string;

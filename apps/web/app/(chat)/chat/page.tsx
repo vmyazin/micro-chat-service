@@ -1,3 +1,15 @@
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Chats',
+  description: 'Your end-to-end encrypted chats.',
+  openGraph: {
+    title: 'Chats | MicroChat',
+    description: 'Your end-to-end encrypted chats.',
+    url: '/chat',
+  },
+};
+
 export default function ChatPage() {
   return (
     <div className="flex flex-col items-center justify-center h-full p-4">
