@@ -8,6 +8,7 @@ import {
 } from '@phosphor-icons/react';
 import { useEffect, useState } from 'react';
 import type { CallSession, CallState, GroupId, MicroChatClient, UserId } from '@microchat/client';
+import { Button } from './Button';
 
 interface CallButtonProps {
   client: MicroChatClient;
@@ -186,7 +187,11 @@ export function CallButton({
           )}
           <span className="text-sm font-medium">
             {statusLabel}
-            {isLive ? ` ${formatDuration(duration)}` : ''}
+            {isLive ? (
+              <span className="tabular-nums inline-block min-w-[5ch] text-right">
+                {` ${formatDuration(duration)}`}
+              </span>
+            ) : null}
           </span>
         </div>
         <button
@@ -229,13 +234,16 @@ export function CallButton({
   };
 
   return (
-    <button
+    <Button
       type="button"
       onClick={handleClick}
-      className="p-2 border-base hover:bg-gray-100 dark:hover:bg-gray-800"
+      variant="success"
+      size="md"
+      className="shadow-sm"
       aria-label="Start call"
     >
       <Phone aria-hidden="true" className="w-5 h-5" />
-    </button>
+      <span className="text-sm font-semibold">Call</span>
+    </Button>
   );
 }
