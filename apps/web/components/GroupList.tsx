@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { MicroChatClient, type GroupListItem } from '@microchat/client';
+import { Button } from '@/components/Button';
+import { SidebarItem } from '@/components/SidebarItem';
 
 interface GroupListProps {
   onNewGroup: () => void;
@@ -47,13 +49,13 @@ export default function GroupList({ onNewGroup, selectedGroupId, refreshKey }: G
 
   return (
     <div className="flex flex-col h-full">
-      <button
+      <Button variant="primary"
         onClick={onNewGroup}
-        className="w-full btn-base mb-4 flex items-center justify-center gap-2"
+        className="w-full  mb-4 flex items-center justify-center gap-2"
       >
         <PlusIcon />
         New Group
-      </button>
+      </Button>
 
       {loading && (
         <div className="flex items-center justify-center py-8">
@@ -64,17 +66,17 @@ export default function GroupList({ onNewGroup, selectedGroupId, refreshKey }: G
       {error && (
         <div className="p-3 border-base bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm mb-4">
           {error}
-          <button
+          <Button variant="ghost"
             onClick={fetchGroups}
             className="block mt-2 text-xs underline hover:no-underline"
           >
             Retry
-          </button>
+          </Button>
         </div>
       )}
 
       {!loading && !error && groups.length === 0 && (
-        <p className="text-sm text-[var(--text-muted)] text-center py-4">
+        <p className="text-sm text-(--text-muted) text-center py-4">
           No groups yet. Create one to get started!
         </p>
       )}
@@ -83,27 +85,14 @@ export default function GroupList({ onNewGroup, selectedGroupId, refreshKey }: G
         <ul className="space-y-2 flex-1 overflow-y-auto">
           {groups.map((group) => (
             <li key={group.groupId}>
-              <button
+              <SidebarItem
                 onClick={() => handleGroupClick(group.groupId)}
-                className={`group-list-item w-full text-left p-4 border-base transition-colors ${
-                  selectedGroupId === group.groupId
-                    ? 'bg-[var(--accent)] text-white border-[var(--accent-hover)]'
-                    : 'bg-[var(--surface-elevated)] hover:bg-[var(--surface-muted)]'
-                }`}
-              >
-                <div className="font-semibold truncate">
-                  {decodeGroupName(group.encryptedName)}
-                </div>
-                <div className={`text-xs mt-1 ${
-                  selectedGroupId === group.groupId
-                    ? 'text-white/70'
-                    : 'text-[var(--text-secondary)]'
-                }`}>
-                  {group.memberCount < 4 && group.memberNames.length > 0
-                    ? group.memberNames.join(', ')
-                    : `${group.memberCount} member${group.memberCount !== 1 ? 's' : ''}`}
-                </div>
-              </button>
+                isActive={selectedGroupId === group.groupId}
+                title={decodeGroupName(group.encryptedName)}
+                description={group.memberCount < 4 && group.memberNames.length > 0
+                  ? group.memberNames.join(', ')
+                  : `${group.memberCount} member${group.memberCount !== 1 ? 's' : ''}`}
+              />
             </li>
           ))}
         </ul>
