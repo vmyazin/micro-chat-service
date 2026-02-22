@@ -127,7 +127,8 @@ function RegisterForm() {
             </div>
           )}
 
-          <Button variant="primary"
+          <Button
+            variant="primary"
             type="button"
             onClick={handleRegister}
             disabled={state === 'loading'}

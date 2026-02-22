@@ -1,4 +1,4 @@
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Create Account',
@@ -10,6 +10,10 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RegisterLayout({ children }: { children: React.ReactNode }) {
+export default function RegisterLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return <>{children}</>;
 }

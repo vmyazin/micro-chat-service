@@ -3,18 +3,19 @@ import fs from 'node:fs';
 import path from 'node:path';
 import yaml from 'js-yaml';
 import { History } from 'lucide-react';
+import type { Metadata } from 'next';
 import { ChangelogList } from '@/components/ChangelogList';
 import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
 
-import { Metadata } from 'next';
-
 export const metadata: Metadata = {
   title: 'Changelog',
-  description: 'Track the latest updates, security improvements, and new features in MicroChat.',
+  description:
+    'Track the latest updates, security improvements, and new features in MicroChat.',
   openGraph: {
     title: 'Changelog | MicroChat',
-    description: 'Track the latest updates, security improvements, and new features in MicroChat.',
+    description:
+      'Track the latest updates, security improvements, and new features in MicroChat.',
     url: '/changelog',
   },
 };

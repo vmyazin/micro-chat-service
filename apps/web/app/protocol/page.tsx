@@ -13,9 +13,9 @@ import {
   Users,
 } from 'lucide-react';
 import { useState } from 'react';
+import { Button } from '@/components/Button';
 import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
-import { Button } from '@/components/Button';
 
 export default function ProtocolPage() {
   const [mode, setMode] = useState<'layman' | 'nerd'>('layman');
@@ -52,7 +52,8 @@ export default function ProtocolPage() {
       {/* Mode Switcher */}
       <div className="flex justify-center mb-20 px-6">
         <div className="bg-white p-1.5 rounded-full border border-gray-200 shadow-sm flex items-center gap-1">
-          <Button variant="ghost"
+          <Button
+            variant="ghost"
             type="button"
             onClick={() => setMode('layman')}
             className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all ${
@@ -63,7 +64,8 @@ export default function ProtocolPage() {
           >
             For Everyone
           </Button>
-          <Button variant="ghost"
+          <Button
+            variant="ghost"
             type="button"
             onClick={() => setMode('nerd')}
             className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all ${

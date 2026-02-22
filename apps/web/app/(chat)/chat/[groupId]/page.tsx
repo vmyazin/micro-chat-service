@@ -34,7 +34,7 @@ export default function ConversationPage() {
 
   const { getClient } = useChatClientStore();
   const client = getClient();
-  const playSfx = useSfx();
+  const _playSfx = useSfx();
 
   // Server state with React Query
   const {
@@ -62,8 +62,8 @@ export default function ConversationPage() {
   const toggleHighlightedId = useChatStore(
     (state) => state.toggleHighlightedId,
   );
-  const addHighlightedId = useChatStore((state) => state.addHighlightedId);
-  const removeHighlightedId = useChatStore(
+  const _addHighlightedId = useChatStore((state) => state.addHighlightedId);
+  const _removeHighlightedId = useChatStore(
     (state) => state.removeHighlightedId,
   );
 
@@ -276,7 +276,7 @@ export default function ConversationPage() {
 
       const arrayBuffer = await audioBlob.arrayBuffer();
       const base64 = uint8ArrayToBase64(new Uint8Array(arrayBuffer));
-      const payload: MessagePayload = {
+      const _payload: MessagePayload = {
         type: 'audio',
         data: base64,
         duration,

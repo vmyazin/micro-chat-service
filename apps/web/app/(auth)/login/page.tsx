@@ -92,7 +92,8 @@ function LoginForm() {
             </div>
           )}
 
-          <Button variant="primary"
+          <Button
+            variant="primary"
             type="button"
             onClick={handleLogin}
             disabled={state === 'loading'}
