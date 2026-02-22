@@ -158,7 +158,7 @@ export function CallButton({
             setIsMuted(newMuted);
             activeSession.setMute(newMuted);
           }}
-          className={`p-2 border-base transition-colors ${isMuted ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50' : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+          className={`px-3 py-2 border-base transition-colors flex items-center gap-2 ${isMuted ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50' : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
           aria-label={isMuted ? 'Unmute' : 'Mute'}
           title={isMuted ? 'Unmute microphone' : 'Mute microphone'}
         >
@@ -167,6 +167,9 @@ export function CallButton({
           ) : (
             <Microphone className="w-5 h-5" />
           )}
+          <span className="text-sm font-medium">
+            {isMuted ? 'Muted' : 'Mute'}
+          </span>
         </button>
         <div
           className={`flex items-center gap-2 px-3 py-2 border-base ${statusTone} transition-all duration-300 ${
@@ -189,11 +192,12 @@ export function CallButton({
         <button
           type="button"
           onClick={() => activeSession.hangup()}
-          className="p-2 border-base bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 flex items-center justify-center transition-all duration-300 ease-in-out"
+          className="px-3 py-2 border-base bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 flex items-center justify-center gap-2 transition-all duration-300 ease-in-out"
           aria-label="Hang up"
           title="End call"
         >
           <PhoneX aria-hidden="true" className="w-5 h-5 shrink-0" />
+          <span className="text-sm font-medium">End</span>
         </button>
       </>
     );
