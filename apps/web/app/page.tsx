@@ -3,13 +3,13 @@
 
 import { motion } from 'framer-motion';
 import {
-  AlertTriangle,
+  CaretRight,
   Check,
-  ChevronRight,
   Lock,
   Shield,
-  Trash2,
-} from 'lucide-react';
+  Trash,
+  Warning,
+} from '@phosphor-icons/react';
 import Link from 'next/link';
 import { Button } from '@/components/Button';
 import { SiteFooter } from '@/components/site-footer';
@@ -30,7 +30,7 @@ export default function Home() {
         "Compromise of current keys doesn't expose past messages. Each message epoch uses fresh key material derived via HKDF.",
     },
     {
-      icon: <Trash2 className="w-6 h-6" />,
+      icon: <Trash className="w-6 h-6" />,
       title: 'Server-Side Crypto-Erasure',
       description:
         'When a group is deleted, we destroy all key material. Stored ciphertext becomes permanently unrecoverable.',
@@ -195,7 +195,7 @@ export default function Home() {
                   {limitations.map((limitation) => (
                     <div key={limitation} className="flex items-start gap-3">
                       <div className="w-5 h-5 bg-amber-100 rounded-full flex items-center justify-center shrink-0 mt-0.5">
-                        <AlertTriangle className="w-3 h-3 text-amber-600" />
+                        <Warning className="w-3 h-3 text-amber-600" />
                       </div>
                       <span className="text-gray-600 font-light">
                         {limitation}
@@ -240,7 +240,7 @@ export default function Home() {
                 className="text-white/60 hover:text-white transition-colors flex items-center gap-2 group cursor-pointer text-lg"
               >
                 Read the Whitepaper
-                <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                <CaretRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </a>
             </div>
           </motion.div>

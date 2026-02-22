@@ -2,7 +2,6 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  AlertTriangle,
   CheckCircle,
   Database,
   Eye,
@@ -10,8 +9,9 @@ import {
   Lock,
   Server,
   Shield,
+  Warning,
   XCircle,
-} from 'lucide-react';
+} from '@phosphor-icons/react';
 import { useState } from 'react';
 import { Button } from '@/components/Button';
 import { SiteFooter } from '@/components/site-footer';
@@ -138,7 +138,7 @@ function LaymanContent() {
       <section className="grid lg:grid-cols-2 gap-16 items-center">
         <div className="lg:order-2">
           <div className="w-12 h-12 bg-red-100 text-red-600 rounded-xl flex items-center justify-center mb-6">
-            <AlertTriangle className="w-6 h-6" />
+            <Warning className="w-6 h-6" />
           </div>
           <h2
             className="text-3xl md:text-4xl mb-6 font-bold text-slate-900"
@@ -466,7 +466,7 @@ function LaymanHackerDemo() {
         transition={{ duration: 3, repeat: Infinity }}
       >
         <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center border-2 border-red-300">
-          <AlertTriangle className="w-8 h-8 text-red-600" />
+          <Warning className="w-8 h-8 text-red-600" />
         </div>
         <span className="mt-2 text-xs font-bold text-red-600">Attacker</span>
       </motion.div>

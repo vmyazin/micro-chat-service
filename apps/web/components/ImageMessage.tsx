@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { X } from '@phosphor-icons/react';
 import * as Dialog from '@radix-ui/react-dialog';
 
 interface ImageMessageProps {
@@ -162,9 +163,7 @@ export function ImageMessage({
               />
             )}
             <Dialog.Close className="absolute top-4 right-4 p-2 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors focus:outline-none focus:ring-2 focus:ring-white">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <X className="w-5 h-5" />
               <span className="sr-only">Close preview</span>
             </Dialog.Close>
           </Dialog.Content>

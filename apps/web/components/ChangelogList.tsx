@@ -4,17 +4,17 @@ import { motion } from 'framer-motion';
 import {
   Ghost,
   Image as ImageIcon,
+  Lightning,
   Shield,
-  Sparkles,
-  Zap,
-} from 'lucide-react';
+  StarFour,
+} from '@phosphor-icons/react';
 import Link from 'next/link';
 import type { ChangelogCategory } from '@/app/changelog/page';
 
 const iconMap: Record<string, React.ReactNode> = {
   shield: <Shield className="w-6 h-6" />,
   image: <ImageIcon className="w-6 h-6" />,
-  sparkles: <Sparkles className="w-6 h-6" />,
+  sparkles: <StarFour className="w-6 h-6" />,
   ghost: <Ghost className="w-6 h-6" />,
 };
 
@@ -94,7 +94,7 @@ export function ChangelogList({ updates }: { updates: ChangelogCategory[] }) {
 
       <div className="max-w-4xl mx-auto px-6 mt-20 text-center">
         <div className="bg-linear-to-br from-blue-50 to-slate-50 rounded-3xl p-10 border border-blue-100 inline-block">
-          <Zap className="w-10 h-10 text-blue-600 mx-auto mb-4" />
+          <Lightning className="w-10 h-10 text-blue-600 mx-auto mb-4" />
           <h3
             className="text-2xl font-bold text-slate-900 mb-2"
             style={{ fontFamily: 'var(--font-bodoni)' }}

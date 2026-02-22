@@ -1,7 +1,14 @@
 'use client';
 
 import * as Dialog from '@radix-ui/react-dialog';
-import { Image, Mic, Square, X, Smile, Paperclip, Send } from 'lucide-react';
+import {
+  Microphone,
+  Paperclip,
+  PaperPlaneRight,
+  Smiley,
+  SpinnerGap,
+  X,
+} from '@phosphor-icons/react';
 import { useState, useRef, useEffect } from 'react';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
 import { useImagePicker } from '@/hooks/useImagePicker';
@@ -173,7 +180,7 @@ export function MessageInput({
             className="min-w-[48px] h-[48px] rounded-[1.25rem] flex items-center justify-center bg-[#00A980] hover:bg-[#00906D] text-white transition-colors p-0"
             aria-label="Stop recording and send"
           >
-            <Send className="w-5 h-5" />
+            <PaperPlaneRight className="w-5 h-5" />
           </Button>
         </div>
         {recorderState.error && (
@@ -259,7 +266,7 @@ export function MessageInput({
 
         <div className="flex items-center gap-1 px-2 text-gray-300">
           <button type="button" className="p-2 hover:text-gray-500 transition-colors" aria-label="Add emoji">
-            <Smile className="w-6 h-6" />
+            <Smiley className="w-6 h-6" />
           </button>
 
           {onSendImage && (
@@ -270,7 +277,11 @@ export function MessageInput({
               className="p-2 hover:text-gray-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Attach image"
             >
-              {imagePicker.compressing ? <SendingSpinner /> : <Paperclip className="w-5 h-5" />}
+              {imagePicker.compressing ? (
+                <SendingSpinner />
+              ) : (
+                <Paperclip className="w-5 h-5" />
+              )}
             </button>
           )}
         </div>
@@ -283,7 +294,7 @@ export function MessageInput({
             className="w-12 h-12 rounded-[1.25rem] flex items-center justify-center bg-[var(--accent)] text-white hover:opacity-90 font-semibold transition-opacity disabled:opacity-50 disabled:cursor-not-allowed p-0"
             aria-label="Record voice message"
           >
-            <Mic className="w-5 h-5" />
+            <Microphone className="w-5 h-5" />
           </Button>
         ) : (
           <Button variant="primary"
@@ -292,7 +303,11 @@ export function MessageInput({
             className="min-w-[48px] h-[48px] rounded-[1.25rem] flex items-center justify-center bg-[#00A980] hover:bg-[#00906D] text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors p-0"
             aria-label="Send message"
           >
-            {sending ? <SendingSpinner /> : <Send className="w-5 h-5" />}
+            {sending ? (
+              <SendingSpinner />
+            ) : (
+              <PaperPlaneRight className="w-5 h-5" />
+            )}
           </Button>
         )}
       </div>
@@ -327,25 +342,6 @@ function extractClipboardImage(clipboard: DataTransfer | null): File | null {
 
 function SendingSpinner() {
   return (
-    <svg
-      className="animate-spin h-5 w-5"
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-    >
-      <circle
-        className="opacity-25"
-        cx="12"
-        cy="12"
-        r="10"
-        stroke="currentColor"
-        strokeWidth="4"
-      />
-      <path
-        className="opacity-75"
-        fill="currentColor"
-        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-      />
-    </svg>
+    <SpinnerGap className="animate-spin h-5 w-5" />
   );
 }

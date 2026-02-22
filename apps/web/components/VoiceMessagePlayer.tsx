@@ -1,7 +1,7 @@
 'use client';
 
 import { base64ToUint8Array } from '@microchat/client';
-import { Pause, Play } from 'lucide-react';
+import { Pause, Play } from '@phosphor-icons/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/Button';
 

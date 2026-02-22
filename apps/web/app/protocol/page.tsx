@@ -2,16 +2,16 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import {
+  ArrowClockwise,
   FileCode,
   Ghost,
   Key,
   Lock,
-  RefreshCw,
   Server,
   Shield,
   Terminal,
   Users,
-} from 'lucide-react';
+} from '@phosphor-icons/react';
 import { useState } from 'react';
 import { Button } from '@/components/Button';
 import { SiteFooter } from '@/components/site-footer';
@@ -321,7 +321,7 @@ function NerdContent() {
         <div className="grid md:grid-cols-2 gap-8">
           <div className="bg-white p-8 rounded-2xl border border-gray-200 hover:shadow-lg transition-all">
             <div className="flex items-center gap-4 mb-4">
-              <RefreshCw className="w-8 h-8 text-green-600" />
+              <ArrowClockwise className="w-8 h-8 text-green-600" />
               <h3 className="text-xl font-bold text-slate-900">
                 Forward Secrecy
               </h3>
@@ -660,7 +660,7 @@ function NerdTreeDemo() {
         transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 5.5 }}
       >
         <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center shadow-[0_0_15px_rgba(37,99,235,0.5)]">
-          <RefreshCw className="w-5 h-5 text-white" />
+          <ArrowClockwise className="w-5 h-5 text-white" />
         </div>
         <span className="text-xs text-blue-400 mt-2 font-bold">Update</span>
       </motion.div>

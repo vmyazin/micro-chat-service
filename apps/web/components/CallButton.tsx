@@ -1,5 +1,11 @@
 'use client';
 
+import {
+  Microphone,
+  MicrophoneSlash,
+  Phone,
+  PhoneX,
+} from '@phosphor-icons/react';
 import { useEffect, useState } from 'react';
 import type { CallSession, CallState, GroupId, MicroChatClient, UserId } from '@microchat/client';
 
@@ -150,14 +156,9 @@ export function CallButton({
           title={isMuted ? 'Unmute microphone' : 'Mute microphone'}
         >
           {isMuted ? (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
-            </svg>
+            <MicrophoneSlash className="w-5 h-5" />
           ) : (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-            </svg>
+            <Microphone className="w-5 h-5" />
           )}
         </button>
         <button
@@ -167,15 +168,7 @@ export function CallButton({
           aria-label="Hang up"
           title="End call"
         >
-          <svg
-            aria-hidden="true"
-            className="w-5 h-5 shrink-0"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M5 3a2 2 0 00-2 2v1c0 8.284 6.716 15 15 15h1a2 2 0 002-2v-3.28a1 1 0 00-.684-.948l-4.493-1.498a1 1 0 00-1.21.502l-1.13 2.257a11.042 11.042 0 01-5.516-5.516l2.257-1.13a1 1 0 00.502-1.21L9.228 3.683A1 1 0 008.279 3H5z" />
-          </svg>
+          <PhoneX aria-hidden="true" className="w-5 h-5 shrink-0" />
           <span 
             className={`whitespace-nowrap font-medium text-sm overflow-hidden transition-all duration-500 ease-out flex items-center ${
               isExpanded ? 'max-w-[100px] opacity-100 ml-2 mr-1' : 'max-w-0 opacity-0 ml-0 mr-0'
@@ -216,20 +209,7 @@ export function CallButton({
       className="p-2 border-base hover:bg-gray-100 dark:hover:bg-gray-800"
       aria-label="Start call"
     >
-      <svg
-        aria-hidden="true"
-        className="w-5 h-5"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M2 4.5A2.5 2.5 0 014.5 2h2.1a2 2 0 011.9 1.4l.9 2.7a2 2 0 01-.5 2l-1.2 1.2a14 14 0 006.6 6.6l1.2-1.2a2 2 0 012-.5l2.7.9a2 2 0 011.4 1.9v2.1A2.5 2.5 0 0119.5 22h-.5C9.3 22 2 14.7 2 5v-.5z"
-        />
-      </svg>
+      <Phone aria-hidden="true" className="w-5 h-5" />
     </button>
   );
 }

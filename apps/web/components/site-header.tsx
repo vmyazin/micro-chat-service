@@ -1,6 +1,6 @@
 "use client";
 
-import { Lock, Menu } from "lucide-react";
+import { List } from "@phosphor-icons/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -43,7 +43,7 @@ export function SiteHeader() {
             Create Private Group
           </Link>
           <Button variant="ghost" className="md:hidden">
-             <Menu className="w-6 h-6 text-slate-900" />
+             <List className="w-6 h-6 text-slate-900" />
           </Button>
         </div>
       </div>

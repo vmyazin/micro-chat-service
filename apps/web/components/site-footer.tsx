@@ -1,4 +1,4 @@
-import { Github } from 'lucide-react';
+import { GithubLogo } from '@phosphor-icons/react';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -51,7 +51,7 @@ export function SiteFooter() {
             rel="noopener noreferrer"
             aria-label="GitHub"
           >
-            <Github className="w-4 h-4" />
+            <GithubLogo className="w-4 h-4" />
           </a>
         </div>
 
