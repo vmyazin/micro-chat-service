@@ -70,6 +70,16 @@ body {
 }
 
 /* Custom Classes */
+@layer utilities {
+  .chat-container {
+    width: 100%;
+    max-width: 75rem;
+    margin-left: auto;
+    margin-right: auto;
+    margin-inline: auto;
+  }
+}
+
 .border-base {
   border: var(--border-thick) solid var(--border-color);
   border-radius: var(--radius-md);
