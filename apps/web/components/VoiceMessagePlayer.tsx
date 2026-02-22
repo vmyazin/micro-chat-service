@@ -1,9 +1,8 @@
 'use client';
 
 import { base64ToUint8Array } from '@microchat/client';
-import { Pause, Play } from '@phosphor-icons/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Button } from '@/components/Button';
+import { PlayPauseButton } from '@/components/PlayPauseButton';
 
 interface VoiceMessagePlayerProps {
   audioData: string;
@@ -72,25 +71,7 @@ export function VoiceMessagePlayer({
 
   return (
     <div className="flex items-center gap-3 min-w-[200px]">
-      <Button variant="ghost"
-        type="button"
-        onClick={togglePlay}
-        className={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-colors ${
-          isOwn
-            ? 'bg-white/20 hover:bg-white/30'
-            : 'bg-[var(--accent)]/10 hover:bg-[var(--accent)]/20'
-        }`}
-      >
-        {isPlaying ? (
-          <Pause
-            className={`w-4 h-4 ${isOwn ? 'text-white' : 'text-[var(--accent)]'}`}
-          />
-        ) : (
-          <Play
-            className={`w-4 h-4 ${isOwn ? 'text-white' : 'text-[var(--accent)]'}`}
-          />
-        )}
-      </Button>
+      <PlayPauseButton isPlaying={isPlaying} isOwn={isOwn} onClick={togglePlay} />
 
       <div className="flex-1 flex flex-col gap-1.5">
         <div
