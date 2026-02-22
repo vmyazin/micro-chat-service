@@ -94,12 +94,14 @@ export default function ConversationPage() {
   const setCallState = useCallStore((state) => state.setCallState);
 
   // Presence state
-  const isTargetUserOnline = usePresenceStore((state) =>
-    targetUserId ? state.isUserOnline(groupId as GroupId, targetUserId) : false,
+  const onlineUsersByGroup = usePresenceStore(
+    (state) => state.onlineUsersByGroup,
   );
-  const onlineUserCount = usePresenceStore((state) =>
-    state.getOnlineUserCount(groupId as GroupId),
-  );
+  const onlineUsers = onlineUsersByGroup[groupId as GroupId];
+  const isTargetUserOnline = targetUserId
+    ? onlineUsers?.has(targetUserId)
+    : false;
+  const onlineUserCount = onlineUsers?.size ?? 0;
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const remoteAudioRef = useRef<HTMLAudioElement>(null);
@@ -638,12 +640,7 @@ export default function ConversationPage() {
                           }
                           isSenderOnline={
                             message.senderId
-                              ? usePresenceStore
-                                  .getState()
-                                  .isUserOnline(
-                                    groupId as GroupId,
-                                    message.senderId,
-                                  )
+                              ? onlineUsers?.has(message.senderId)
                               : false
                           }
                         />

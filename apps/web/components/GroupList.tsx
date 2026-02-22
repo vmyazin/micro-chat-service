@@ -15,6 +15,7 @@ interface GroupListProps {
 export default function GroupList({ onNewGroup, selectedGroupId }: GroupListProps) {
   const router = useRouter();
   const { data: groups, isLoading, error, refetch } = useGroups();
+  const onlineUsersByGroup = usePresenceStore((state) => state.onlineUsersByGroup);
 
   function handleGroupClick(groupId: string) {
     router.push(`/chat/${groupId}`);
@@ -71,7 +72,11 @@ export default function GroupList({ onNewGroup, selectedGroupId }: GroupListProp
                 description={group.memberCount < 4 && group.memberNames.length > 0
                   ? group.memberNames.join(', ')
                   : `${group.memberCount} member${group.memberCount !== 1 ? 's' : ''}`}
-                isOnline={usePresenceStore.getState().getOnlineUserCount(group.groupId) > 0}
+                isOnline={
+                  group.memberCount <= 2 
+                    ? (onlineUsersByGroup[group.groupId]?.size ?? 0) > 0
+                    : undefined
+                }
               />
             </li>
           ))}

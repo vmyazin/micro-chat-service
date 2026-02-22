@@ -23,6 +23,8 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
   
   // Server state with React Query
   const { data: members = [], isLoading: loading, error: membersError } = useMembers(groupId);
+  const onlineUsersByGroup = usePresenceStore((state) => state.onlineUsersByGroup);
+  const onlineUsers = onlineUsersByGroup[groupId];
   
   // Mutations
   const createInvite = useCreateInvite(groupId);
@@ -154,12 +156,12 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
                 >
                   <div className="flex items-center gap-2">
                     <span 
-                      className={`inline-block w-2 h-2 rounded-full ${usePresenceStore.getState().isUserOnline(groupId, member.userId) ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`} 
+                      className={`inline-block w-2 h-2 rounded-full ${onlineUsers?.has(member.userId) ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`} 
                       aria-hidden="true" 
                     />
                     <span className="font-medium">{member.displayName}</span>
                     <span className="sr-only">
-                      {usePresenceStore.getState().isUserOnline(groupId, member.userId) ? 'Online' : 'Offline'}
+                      {onlineUsers?.has(member.userId) ? 'Online' : 'Offline'}
                     </span>
                     {member.isOwner && (
                       <span className="ml-2 text-xs px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 rounded">

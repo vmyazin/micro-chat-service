@@ -9,16 +9,18 @@ import { usePresenceStore } from '@/stores/presence-store';
 import type { GroupId, MessageListItem, WebSocketEvent } from '@microchat/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useCallback } from 'react';
+import { useGroups } from '@/hooks/useGroups';
 
-export function useWebSocket(groupId: GroupId | null) {
+export function useWebSocket(activeGroupId?: GroupId | null) {
   const client = useChatClientStore((state) => state.client);
   const getClient = useChatClientStore((state) => state.getClient);
   const queryClient = useQueryClient();
+  const { data: groups } = useGroups();
 
   const setConnectionStatus = useChatStore((state) => state.setConnectionStatus);
 
-  // Track subscribed group to avoid duplicate subscriptions
-  const subscribedGroupRef = useRef<GroupId | null>(null);
+  // Track the primary active group
+  const activeGroupRef = useRef<GroupId | null>(null);
 
   // Memoize the event handler with stable dependencies
   const handleEvent = useCallback((event: WebSocketEvent) => {
@@ -129,32 +131,30 @@ export function useWebSocket(groupId: GroupId | null) {
   ]);
 
   useEffect(() => {
-    if (!groupId) return;
-
     const c = client ?? getClient();
+    
+    // Connect universally
+    c.connect();
 
-    // Only subscribe if not already subscribed to this group
-    if (subscribedGroupRef.current !== groupId) {
-      // Unsubscribe from previous group if any
-      if (subscribedGroupRef.current) {
-        c.unsubscribe(subscribedGroupRef.current);
+    // Subscribe to all available groups the user is a member of
+    if (groups) {
+      for (const group of groups) {
+        c.subscribe(group.groupId as GroupId);
       }
-      
-      c.connect();
-      c.subscribe(groupId);
-      subscribedGroupRef.current = groupId;
+    }
+
+    // Also explicitly ensure the active group router parametrically is subscribed
+    if (activeGroupId && activeGroupRef.current !== activeGroupId) {
+      c.subscribe(activeGroupId);
+      activeGroupRef.current = activeGroupId;
     }
 
     const unsubscribe = client?.onEvent(handleEvent) ?? getClient().onEvent(handleEvent);
 
     return () => {
       unsubscribe();
-      if (subscribedGroupRef.current === groupId) {
-        c.unsubscribe(groupId);
-        subscribedGroupRef.current = null;
-      }
     };
-  }, [client, getClient, groupId, handleEvent]);
+  }, [client, getClient, activeGroupId, groups, handleEvent]);
 
   return {
     client: client ?? getClient(),

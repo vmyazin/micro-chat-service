@@ -1,5 +1,6 @@
 'use client';
 
+import type { GroupId } from '@microchat/client';
 import { AuthClient } from '@microchat/client';
 import {
   ListIcon,
@@ -14,6 +15,7 @@ import { Button } from '@/components/Button';
 import { CallFaviconUpdater } from '@/components/CallFaviconUpdater';
 import GroupList from '@/components/GroupList';
 import NewGroupDialog from '@/components/NewGroupDialog';
+import { useWebSocket } from '@/hooks/useWebSocket';
 import { useUiStore } from '@/stores/ui-store';
 
 export default function ChatLayout({
@@ -43,6 +45,9 @@ export default function ChatLayout({
   function handleGroupCreated() {
     refreshGroupList();
   }
+
+  // Preserve global WebSocket connection universally
+  useWebSocket(selectedGroupId as GroupId | undefined);
 
   async function handleSignOut() {
     setIsSigningOut(true);
