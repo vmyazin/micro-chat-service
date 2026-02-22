@@ -40,10 +40,26 @@ export function IncomingCallModal({ session, onAccept, onReject }: IncomingCallM
       }
     });
 
+    const ringtone = new Audio('/sfx/call-ring.mp3');
+    let ringTimeout: ReturnType<typeof setTimeout>;
+
+    const playRingtone = () => {
+      ringtone.play().catch(console.warn);
+    };
+
+    ringtone.addEventListener('ended', () => {
+      ringTimeout = setTimeout(playRingtone, 1000);
+    });
+
+    playRingtone();
+
     return () => {
       clearInterval(interval);
       clearTimeout(timeout);
+      clearTimeout(ringTimeout);
       offState();
+      ringtone.pause();
+      ringtone.src = '';
     };
   }, [session, onReject]);
 
