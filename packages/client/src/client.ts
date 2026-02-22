@@ -126,6 +126,10 @@ export class MicroChatClient {
     return this.groupClient.removeMember(groupId, userId);
   }
 
+  joinGroup(groupId: GroupId): Promise<void> {
+    return this.groupClient.joinGroup(groupId);
+  }
+
   getMembers(groupId: GroupId): Promise<GroupMembersResult> {
     return this.groupClient.getMembers(groupId);
   }

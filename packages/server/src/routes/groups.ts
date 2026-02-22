@@ -142,6 +142,43 @@ groupsRouter.post('/api/groups', requireAuth, async (c) => {
   });
 });
 
+groupsRouter.post('/api/groups/:id/join', requireAuth, async (c) => {
+  const groupId = c.req.param('id') as GroupId;
+  const user = c.get('user');
+  const db = new Database(c.env.DB);
+  const now = new Date().toISOString();
+
+  const membership = await db.query<{ id: string }>(
+    'SELECT id FROM group_members WHERE group_id = ? AND user_id = ?',
+    [groupId, user.id],
+  );
+
+  if (membership.length > 0) {
+    return c.json({ success: true, message: 'Already a member' });
+  }
+
+  const groupExists = await db.query<{ id: string }>(
+    'SELECT id FROM groups WHERE id = ?',
+    [groupId],
+  );
+
+  if (groupExists.length === 0) {
+    return c.json({ error: 'Group not found' }, 404);
+  }
+
+  const memberId = generateMemberId();
+  try {
+    await db.execute(
+      'INSERT OR IGNORE INTO group_members (id, group_id, user_id, joined_at) VALUES (?, ?, ?, ?)',
+      [memberId, groupId, user.id, now],
+    );
+  } catch (e) {
+    // Ignore concurrent insert errors
+  }
+
+  return c.json({ success: true });
+});
+
 groupsRouter.post('/api/groups/:id/invites', requireAuth, async (c) => {
   const groupId = c.req.param('id') as GroupId;
   const user = c.get('user');

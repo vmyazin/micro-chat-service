@@ -22,6 +22,7 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useDeleteMessage } from '@/hooks/useDeleteMessage';
 import { useMembers } from '@/hooks/useMembers';
 import { useMessages } from '@/hooks/useMessages';
+import { useJoinGroup } from '@/hooks/useJoinGroup';
 import { useSendMessage } from '@/hooks/useSendMessage';
 import { useSfx } from '@/hooks/useSfx';
 import { useWebSocket } from '@/hooks/useWebSocket';
@@ -48,6 +49,7 @@ export default function ConversationPage() {
   const { data: currentUser } = useCurrentUser();
 
   // Mutations
+  const joinGroup = useJoinGroup();
   const sendMessage = useSendMessage(groupId as GroupId);
   const deleteMessage = useDeleteMessage(groupId as GroupId);
 
@@ -101,6 +103,15 @@ export default function ConversationPage() {
       console.error('[call] Failed to initialize call cipher', err);
     });
   }, [groupId, ensureCallKey]);
+
+  // Auto-join group if not a member
+  useEffect(() => {
+    if (groupId && error && error.message.includes('Not a member')) {
+      if (!joinGroup.isPending && !joinGroup.isSuccess) {
+        joinGroup.mutate(groupId as GroupId);
+      }
+    }
+  }, [groupId, error, joinGroup]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -389,17 +400,24 @@ export default function ConversationPage() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-4">
-        <div className="p-4 border-base bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 max-w-md">
-          <p className="mb-2">{error.message}</p>
-          <Button
-            variant="ghost"
-            type="button"
-            onClick={() => refetch()}
-            className="text-sm underline hover:no-underline"
-          >
-            Retry
-          </Button>
-        </div>
+        {joinGroup.isPending || joinGroup.isSuccess ? (
+          <div className="flex flex-col items-center gap-3 text-emerald-600 dark:text-emerald-400">
+            <LoadingSpinner />
+            <p>Joining group...</p>
+          </div>
+        ) : (
+          <div className="p-4 border-base bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 max-w-md">
+            <p className="mb-2">{error.message}</p>
+            <Button
+              variant="ghost"
+              type="button"
+              onClick={() => refetch()}
+              className="text-sm underline hover:no-underline"
+            >
+              Retry
+            </Button>
+          </div>
+        )}
       </div>
     );
   }

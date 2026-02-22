@@ -132,6 +132,21 @@ export class GroupClient {
     return response.json();
   }
 
+  async joinGroup(groupId: GroupId): Promise<void> {
+    const response = await fetch(
+      `${this.baseUrl}/api/groups/${groupId}/join`,
+      {
+        method: 'POST',
+        credentials: 'include',
+      },
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to join group');
+    }
+  }
+
   async leaveGroup(groupId: GroupId): Promise<void> {
     const response = await fetch(
       `${this.baseUrl}/api/groups/${groupId}/leave`,
