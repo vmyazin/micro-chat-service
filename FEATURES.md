@@ -204,7 +204,7 @@ idle → ringing-in  → ended                         (incoming, rejected/misse
 
 ## Display Users' Online Status
 
-**Status:** not implemented.
+**Status:** Completed (Feb 22, 2026)
 
 ### UX Improvements
 - **Visual Indicator:** Show a clear, accessible green dot (with a subtle pulse animation when coming online) next to the user's avatar in 1-on-1 chats, group member lists, and the sidebar.
