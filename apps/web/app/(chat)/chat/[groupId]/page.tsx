@@ -20,9 +20,9 @@ import { MessageInput } from '@/components/MessageInput';
 import { VoiceMessagePlayer } from '@/components/VoiceMessagePlayer';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useDeleteMessage } from '@/hooks/useDeleteMessage';
+import { useJoinGroup } from '@/hooks/useJoinGroup';
 import { useMembers } from '@/hooks/useMembers';
 import { useMessages } from '@/hooks/useMessages';
-import { useJoinGroup } from '@/hooks/useJoinGroup';
 import { useSendMessage } from '@/hooks/useSendMessage';
 import { useSfx } from '@/hooks/useSfx';
 import { useWebSocket } from '@/hooks/useWebSocket';
@@ -88,7 +88,7 @@ export default function ConversationPage() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const remoteAudioRef = useRef<HTMLAudioElement>(null);
-  const [callDuration, setCallDuration] = useState(0);
+  const [_callDuration, setCallDuration] = useState(0);
 
   // Get call key initializer from store
   const ensureCallKey = useChatClientStore((state) => state.ensureCallKey);
@@ -431,7 +431,7 @@ export default function ConversationPage() {
         onReject={handleRejectCall}
       />
 
-      {(callState === 'in-call' || callState === 'calling') ? (
+      {callState === 'in-call' || callState === 'calling' ? (
         <header className="chat-header shrink-0 z-20 w-full flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-emerald-200/70 dark:border-emerald-800/60 bg-emerald-50/80 dark:bg-emerald-950/40 shadow-[0_1px_0_rgba(16,185,129,0.12),0_8px_24px_rgba(0,0,0,0.18)]">
           <div className="flex items-center gap-3 min-w-0">
             {callState === 'in-call' ? (
@@ -506,7 +506,6 @@ export default function ConversationPage() {
             <div className="px-4 py-2 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 text-sm text-center">
               Reconnecting to real-time updates...
             </div>
-
           )}
           {sendMessage.isError && (
             <div className="px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 text-sm text-center">
@@ -553,13 +552,13 @@ export default function ConversationPage() {
                         isOwn={isOwnMessage(message)}
                         showDeleteConfirm={deleteConfirmId === message.id}
                         onRequestDelete={() => setDeleteConfirmId(message.id)}
-                        onConfirmDelete={() =>
-                          handleDeleteMessage(message.id)
-                        }
+                        onConfirmDelete={() => handleDeleteMessage(message.id)}
                         onCancelDelete={() => setDeleteConfirmId(null)}
                         deleting={deleting && deleteConfirmId === message.id}
                         isHighlighted={highlightedIds.has(message.id)}
-                        onToggleHighlight={() => toggleHighlightedId(message.id)}
+                        onToggleHighlight={() =>
+                          toggleHighlightedId(message.id)
+                        }
                       />
                     </div>
                   );
@@ -640,7 +639,7 @@ function MessageBubble({
   const createdAtDate = new Date(message.createdAt);
   const ageMs = now.getTime() - createdAtDate.getTime();
   const TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
-  const FADE_START_MS = TTL_MS - (1 * 60 * 60 * 1000); // 1 hour before expiration
+  const FADE_START_MS = TTL_MS - 1 * 60 * 60 * 1000; // 1 hour before expiration
 
   let opacityStyle = 1;
   const isFading = ageMs > FADE_START_MS && ageMs < TTL_MS;
@@ -651,8 +650,8 @@ function MessageBubble({
   } else if (isFading) {
     const fadeProgress = (ageMs - FADE_START_MS) / (TTL_MS - FADE_START_MS);
     // Ease-in curve (starts slow, accelerates towards the end)
-    const easedProgress = Math.pow(fadeProgress, 3);
-    opacityStyle = 1 - (easedProgress * 0.95);
+    const easedProgress = fadeProgress ** 3;
+    opacityStyle = 1 - easedProgress * 0.95;
   }
 
   // Deleted message: subtle tombstone aligned to sender side
@@ -660,9 +659,7 @@ function MessageBubble({
     return (
       <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
         <div className="max-w-[72%] px-4 py-2.5 rounded-2xl bg-(--surface-muted) opacity-60">
-          <p className="text-sm italic text-(--text-muted)">
-            Message deleted
-          </p>
+          <p className="text-sm italic text-(--text-muted)">Message deleted</p>
         </div>
       </div>
     );
@@ -861,7 +858,5 @@ function decodeContent(encryptedContent: string): MessagePayload | string {
 }
 
 function LoadingSpinner() {
-  return (
-    <SpinnerGap aria-hidden="true" className="animate-spin h-6 w-6" />
-  );
+  return <SpinnerGap aria-hidden="true" className="animate-spin h-6 w-6" />;
 }

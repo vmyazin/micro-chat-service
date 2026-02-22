@@ -1,8 +1,8 @@
 // Server Component — reads changelog.yaml at build/render time
 import fs from 'node:fs';
 import path from 'node:path';
-import yaml from 'js-yaml';
 import { ClockCounterClockwise } from '@phosphor-icons/react/ssr';
+import yaml from 'js-yaml';
 import type { Metadata } from 'next';
 import { ChangelogList } from '@/components/ChangelogList';
 import { SiteFooter } from '@/components/site-footer';

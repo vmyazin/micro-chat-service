@@ -172,7 +172,7 @@ groupsRouter.post('/api/groups/:id/join', requireAuth, async (c) => {
       'INSERT OR IGNORE INTO group_members (id, group_id, user_id, joined_at) VALUES (?, ?, ?, ?)',
       [memberId, groupId, user.id, now],
     );
-  } catch (e) {
+  } catch (_error) {
     // Ignore concurrent insert errors
   }
 

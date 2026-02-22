@@ -6,9 +6,9 @@ import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Button } from '@/components/Button';
+import { CallFaviconUpdater } from '@/components/CallFaviconUpdater';
 import GroupList from '@/components/GroupList';
 import NewGroupDialog from '@/components/NewGroupDialog';
-import { CallFaviconUpdater } from '@/components/CallFaviconUpdater';
 import { useUiStore } from '@/stores/ui-store';
 
 export default function ChatLayout({
@@ -151,7 +151,9 @@ export default function ChatLayout({
         </div>
 
         {/* Page content */}
-        <div className="flex-1 overflow-hidden flex flex-col min-h-0">{children}</div>
+        <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+          {children}
+        </div>
       </main>
 
       {/* New Group Dialog */}
@@ -160,14 +162,12 @@ export default function ChatLayout({
         onClose={() => setShowNewGroupDialog(false)}
         onGroupCreated={handleGroupCreated}
       />
-      
+
       <CallFaviconUpdater />
     </div>
   );
 }
 
 function SignOutSpinner() {
-  return (
-    <SpinnerGap aria-hidden="true" className="animate-spin h-4 w-4" />
-  );
+  return <SpinnerGap aria-hidden="true" className="animate-spin h-4 w-4" />;
 }

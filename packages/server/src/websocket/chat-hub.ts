@@ -105,7 +105,10 @@ export class ChatHub implements DurableObject {
       } else if (data.action === 'unsubscribe' && data.groupId) {
         session.groups.delete(data.groupId as GroupId);
       } else if (data.type === 'deliveryReceipt') {
-        const receiptEvent = data as Extract<WebSocketEvent, { type: 'deliveryReceipt' }>;
+        const receiptEvent = data as Extract<
+          WebSocketEvent,
+          { type: 'deliveryReceipt' }
+        >;
         await this.handleDeliveryReceipt(session, receiptEvent);
       } else if (this.isCallEvent(data)) {
         await this.handleCallEvent(session, data as WebSocketEvent);
@@ -226,19 +229,23 @@ export class ChatHub implements DurableObject {
       console.log(`[chathub] Message ${messageId} fully delivered. Erasing.`);
 
       // Get any associated R2 image keys so the client/server can clean those up too
-      const imageRows = await db.query<{ r2_key: string }>(
+      const _imageRows = await db.query<{ r2_key: string }>(
         'SELECT r2_key FROM image_attachments WHERE message_id = ?',
         [messageId],
       );
 
-      // (We can't easily delete R2 from ChatHub as it doesn't have the IMAGES binding, 
-      // but the retention cron handles orphaned images later, or we let the API handle it. 
+      // (We can't easily delete R2 from ChatHub as it doesn't have the IMAGES binding,
+      // but the retention cron handles orphaned images later, or we let the API handle it.
       // For immediate DB deletion, we drop it.)
-      await db.execute('DELETE FROM image_attachments WHERE message_id = ?', [messageId]);
-      await db.execute('DELETE FROM delivery_receipts WHERE message_id = ?', [messageId]);
+      await db.execute('DELETE FROM image_attachments WHERE message_id = ?', [
+        messageId,
+      ]);
+      await db.execute('DELETE FROM delivery_receipts WHERE message_id = ?', [
+        messageId,
+      ]);
       await db.execute('DELETE FROM messages WHERE id = ?', [messageId]);
 
-      // Broadcast an event to UI that it was completely deleted from server (optional, 
+      // Broadcast an event to UI that it was completely deleted from server (optional,
       // but good to notify clients if they need to update sync status).
       // For secrecy, we ensure the cloud is wiped.
     }

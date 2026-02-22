@@ -133,13 +133,10 @@ export class GroupClient {
   }
 
   async joinGroup(groupId: GroupId): Promise<void> {
-    const response = await fetch(
-      `${this.baseUrl}/api/groups/${groupId}/join`,
-      {
-        method: 'POST',
-        credentials: 'include',
-      },
-    );
+    const response = await fetch(`${this.baseUrl}/api/groups/${groupId}/join`, {
+      method: 'POST',
+      credentials: 'include',
+    });
 
     if (!response.ok) {
       const error = await response.json();

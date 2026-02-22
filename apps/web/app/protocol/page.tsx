@@ -1,6 +1,5 @@
 'use client';
 
-import { AnimatePresence, motion } from 'framer-motion';
 import {
   ArrowClockwise,
   FileCode,
@@ -12,6 +11,7 @@ import {
   Terminal,
   Users,
 } from '@phosphor-icons/react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
 import { Button } from '@/components/Button';
 import { SiteFooter } from '@/components/site-footer';

@@ -1,7 +1,6 @@
 // apps/web/app/page.tsx
 'use client';
 
-import { motion } from 'framer-motion';
 import {
   CaretRight,
   Check,
@@ -10,6 +9,7 @@ import {
   Trash,
   Warning,
 } from '@phosphor-icons/react';
+import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { Button } from '@/components/Button';
 import { SiteFooter } from '@/components/site-footer';

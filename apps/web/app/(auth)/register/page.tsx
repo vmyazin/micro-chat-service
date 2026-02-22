@@ -187,9 +187,7 @@ function RegisterPageSkeleton() {
 }
 
 function LoadingSpinner() {
-  return (
-    <SpinnerGap aria-hidden="true" className="animate-spin h-5 w-5" />
-  );
+  return <SpinnerGap aria-hidden="true" className="animate-spin h-5 w-5" />;
 }
 
 function base64urlToBuffer(base64url: string): ArrayBuffer {

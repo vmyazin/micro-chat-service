@@ -237,14 +237,24 @@ export class MockD1Database implements D1Database {
           localIdx++;
           return (row[col] as string) < (params[localIdx - 1] as string);
         }
-        
+
         // Handle IN (SELECT id FROM messages WHERE created_at < ?)
-        const inMatch = cond.trim().match(/^(\w+(?:\.\w+)?)\s+IN\s+\(SELECT\s+id\s+FROM\s+messages\s+WHERE\s+created_at\s*<\s*\?\)$/i);
+        const inMatch = cond
+          .trim()
+          .match(
+            /^(\w+(?:\.\w+)?)\s+IN\s+\(SELECT\s+id\s+FROM\s+messages\s+WHERE\s+created_at\s*<\s*\?\)$/i,
+          );
         if (inMatch) {
-          const col = inMatch[1].includes('.') ? inMatch[1].split('.')[1] : inMatch[1];
+          const col = inMatch[1].includes('.')
+            ? inMatch[1].split('.')[1]
+            : inMatch[1];
           const cutoff = params[localIdx++];
           const msgTable = this.tables.get('messages');
-          const validIds = new Set(msgTable?.rows.filter(r => (r.created_at as string) < (cutoff as string)).map(r => r.id));
+          const validIds = new Set(
+            msgTable?.rows
+              .filter((r) => (r.created_at as string) < (cutoff as string))
+              .map((r) => r.id),
+          );
           return validIds.has(row[col] as string);
         }
 
