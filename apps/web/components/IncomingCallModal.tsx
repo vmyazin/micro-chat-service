@@ -114,7 +114,10 @@ export function IncomingCallModal({ session, onAccept, onReject }: IncomingCallM
           <div className="call-actions flex gap-4">
             <Button variant="ghost"
               type="button"
-              onClick={onReject}
+              onClick={() => {
+                new Audio('/sfx/hungup.mp3').play().catch(console.warn);
+                onReject();
+              }}
               className="call-action-reject flex-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 font-semibold hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors flex items-center justify-center ga"
             >
               <PhoneX className="call-action-icon w-5 h-5" />
