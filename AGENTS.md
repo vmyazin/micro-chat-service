@@ -115,3 +115,14 @@ When creating HTML elements, follow these guidelines:
 
 - Always run linting first with `pnpm lint` before proceeding to build
 - Never run a build automatically — instead, suggest "Run `pnpm build` to build the project."
+
+## State Management (Zustand & React Query)
+
+Follow these 6 core principles for reliable and performant state architecture:
+
+1. **Strict Separation of State Types:** Use **React Query** exclusively for server state (async data, caching, invalidation) and **Zustand** exclusively for client state (UI toggles, active sessions, themes).
+2. **Atomic Selectors:** Always select the minimal required slice of state from Zustand to prevent unnecessary component re-renders (e.g., `useStore((state) => state.isOpen)` instead of `useStore()`).
+3. **Colocate and Invalidate:** Keep React Query mutations near their related queries. Always invalidate affected query keys on successful mutations to ensure the UI stays synchronized with the backend.
+4. **Stable Callbacks:** Wrap event handlers and store actions passed as props in `useCallback`. This prevents inline functions from breaking `useEffect` dependency arrays in child components (crucial for WebRTC and WebSocket event listeners).
+5. **Idempotent Actions:** Design store actions and effect cleanups to be safe if executed multiple times. React Strict Mode will mount/unmount/remount components — your state logic must survive this without creating duplicate connections or hanging up active calls.
+6. **No Derived State in Stores:** Never store derived or computed state in Zustand. Store only the absolute source of truth, and compute derived values in components or custom hooks (using `useMemo` if computationally expensive).
