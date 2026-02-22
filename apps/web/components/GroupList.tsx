@@ -27,7 +27,7 @@ export default function GroupList({ onNewGroup, selectedGroupId }: GroupListProp
 
   return (
     <div className="flex flex-col h-full">
-      <Button variant="primary"
+      <Button variant="outline"
         onClick={onNewGroup}
         className="w-full mb-4 flex items-center justify-center ga"
       >

@@ -110,7 +110,7 @@ export default function ChatLayout({
               Home Page
             </a>
             <Button
-              variant="primary"
+              variant="outline"
               size="sm"
               type="button"
               onClick={handleSignOut}
