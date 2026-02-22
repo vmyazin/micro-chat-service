@@ -1,7 +1,7 @@
 'use client';
 
 import * as Dialog from '@radix-ui/react-dialog';
-import { Image, Mic, Square, X } from 'lucide-react';
+import { Image, Mic, Square, X, Smile, Paperclip, Send } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
 import { useImagePicker } from '@/hooks/useImagePicker';
@@ -143,26 +143,26 @@ export function MessageInput({
 
   if (isRecording) {
     return (
-      <div className="p-4 border-t-[var(--border-thick)] border-[var(--border-color)] bg-[var(--surface-elevated)]">
-        <div className="flex items-center gap-3">
+      <div className="p-4 bg-(--background)">
+        <div className="flex items-center gap-2 rounded-4xl bg-white w-full shadow-md p-1.5 border border-gray-200 dark:border-gray-800 dark:bg-(--surface-elevated)">
           <Button variant="ghost"
             type="button"
             onClick={recorderControls.cancel}
-            className="border-base hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500"
+            className="w-12 h-12 rounded-[1.25rem] hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 flex items-center justify-center p-0"
             aria-label="Cancel recording"
           >
-            <X className="w-5 h-5" />
+            <X className="w-6 h-6" />
           </Button>
 
-          <div className="flex-1 flex items-center gap-3 px-4 py-2 border-base bg-[var(--surface-muted)]">
+          <div className="flex-1 flex items-center justify-center gap-3 px-4 py-2 bg-red-50 dark:bg-red-900/10 rounded-[1.25rem] mx-2">
             <span className="relative flex h-3 w-3">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500" />
             </span>
-            <span className="text-sm font-mono tabular-nums">
+            <span className="text-sm font-mono tabular-nums font-medium text-red-600 dark:text-red-400">
               {formatDuration(recorderState.duration)}
             </span>
-            <span className="text-sm text-[var(--text-muted)]">
+            <span className="text-sm text-red-400 dark:text-red-500/70">
               / 1:00
             </span>
           </div>
@@ -170,22 +170,21 @@ export function MessageInput({
           <Button variant="primary"
             type="button"
             onClick={recorderControls.stop}
-            className="bg-[var(--accent)] text-white font-semibold flex items-center ga"
+            className="min-w-[48px] h-[48px] rounded-[1.25rem] flex items-center justify-center bg-[#00A980] hover:bg-[#00906D] text-white transition-colors p-0"
             aria-label="Stop recording and send"
           >
-            <Square className="w-4 h-4" />
-            Send
+            <Send className="w-5 h-5" />
           </Button>
         </div>
         {recorderState.error && (
-          <p className="mt-2 text-xs text-red-500">{recorderState.error}</p>
+          <p className="mt-2 text-xs text-red-500 text-center">{recorderState.error}</p>
         )}
       </div>
     );
   }
 
   return (
-    <div className="p-4 border-t-[var(--border-thick)] border-[var(--border-color)] bg-[var(--surface-elevated)]">
+    <div className="p-4 bg-(--background)">
       <Dialog.Root
         open={Boolean(pastedImageFile && pastedImageUrl)}
         onOpenChange={(open) => {
@@ -198,7 +197,7 @@ export function MessageInput({
           <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50" />
           <Dialog.Content className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div
-              className="relative card-base bg-[var(--background)] p-6 w-full max-w-lg"
+              className="relative card-base bg-(--background) p-6 w-full max-w-lg"
               onKeyDown={handlePreviewKeyDown}
             >
               <div className="flex items-center justify-between mb-4">
@@ -208,7 +207,7 @@ export function MessageInput({
                 <Dialog.Close asChild>
                   <Button variant="ghost"
                     type="button"
-                    className="border-base hover:bg-[var(--surface-muted)]"
+                    className="border-base hover:bg-(--surface-muted)"
                     aria-label="Close image preview"
                     disabled={sending || imagePicker.compressing}
                   >
@@ -217,7 +216,7 @@ export function MessageInput({
                 </Dialog.Close>
               </div>
               {pastedImageUrl && (
-                <div className="border-base bg-[var(--surface-muted)] p-2 mb-4">
+                <div className="border-base bg-(--surface-muted) p-2 mb-4">
                   <img
                     src={pastedImageUrl}
                     alt="Image preview"
@@ -235,7 +234,7 @@ export function MessageInput({
                   type="button"
                   onClick={handleSendPastedImage}
                   disabled={sending || imagePicker.compressing}
-                  className="bg-[var(--accent)] text-white font-semibold disabled:opacity-50 flex items-center ga"
+                  className="bg-(--accent) text-white font-semibold disabled:opacity-50 flex items-center ga"
                 >
                   {(sending || imagePicker.compressing) ? <SendingSpinner /> : 'Send'}
                 </Button>
@@ -245,18 +244,7 @@ export function MessageInput({
         </Dialog.Portal>
       </Dialog.Root>
       <input {...imagePicker.inputProps} />
-      <div className="flex gap-2">
-        {onSendImage && (
-          <Button variant="primary"
-            type="button"
-            onClick={imagePicker.pickImage}
-            disabled={isDisabled || imagePicker.compressing}
-            className="bg-[var(--surface-muted)] hover:bg-[var(--accent)] hover:text-white font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            aria-label="Send image"
-          >
-            {imagePicker.compressing ? <SendingSpinner /> : <Image className="w-5 h-5" />}
-          </Button>
-        )}
+      <div className="flex items-center gap-2 rounded-4xl bg-white w-full shadow-md p-1.5 border border-gray-200 dark:border-gray-800 dark:bg-(--surface-elevated)">
         <input
           ref={inputRef}
           type="text"
@@ -264,16 +252,35 @@ export function MessageInput({
           onChange={(e) => setContent(e.target.value)}
           onKeyDown={handleKeyDown}
           onPaste={handlePaste}
-          placeholder="Type a message..."
+          placeholder="Write your message..."
           disabled={isDisabled}
-          className="flex-1 px-4 py-2 border-base bg-[var(--surface-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex-1 px-4 py-2 bg-transparent text-gray-700 dark:text-gray-200 border-none focus:outline-none focus:ring-0 disabled:opacity-50 disabled:cursor-not-allowed placeholder:text-gray-400 font-medium"
         />
+
+        <div className="flex items-center gap-1 px-2 text-gray-300">
+          <button type="button" className="p-2 hover:text-gray-500 transition-colors" aria-label="Add emoji">
+            <Smile className="w-6 h-6" />
+          </button>
+
+          {onSendImage && (
+            <button
+              type="button"
+              onClick={imagePicker.pickImage}
+              disabled={isDisabled || imagePicker.compressing}
+              className="p-2 hover:text-gray-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Attach image"
+            >
+              {imagePicker.compressing ? <SendingSpinner /> : <Paperclip className="w-5 h-5" />}
+            </button>
+          )}
+        </div>
+
         {onSendVoice && !content.trim() ? (
           <Button variant="ghost"
             type="button"
             onClick={() => recorderControls.start()}
             disabled={isDisabled}
-            className="px-4 py-2 btn-base bg-[var(--surface-muted)] hover:bg-[var(--accent)] hover:text-white font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-12 h-12 rounded-[1.25rem] flex items-center justify-center bg-[var(--accent)] text-white hover:opacity-90 font-semibold transition-opacity disabled:opacity-50 disabled:cursor-not-allowed p-0"
             aria-label="Record voice message"
           >
             <Mic className="w-5 h-5" />
@@ -282,9 +289,10 @@ export function MessageInput({
           <Button variant="primary"
             onClick={handleSend}
             disabled={isDisabled || !content.trim()}
-            className="bg-[var(--accent)] text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+            className="min-w-[48px] h-[48px] rounded-[1.25rem] flex items-center justify-center bg-[#00A980] hover:bg-[#00906D] text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors p-0"
+            aria-label="Send message"
           >
-            {sending ? <SendingSpinner /> : 'Send'}
+            {sending ? <SendingSpinner /> : <Send className="w-5 h-5" />}
           </Button>
         )}
       </div>
