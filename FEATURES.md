@@ -201,3 +201,33 @@ idle → ringing-in  → ended                         (incoming, rejected/misse
 - **Security:** Audio messages use group keys; voice calls use DTLS-SRTP (WebRTC-native) + sealed-sender signaling
 - **Server Load:** Audio messages stored like text; voice calls are peer-to-peer after signaling
 - **NAT Traversal:** Multi-provider TURN (Cloudflare + self-hosted) for resilience in restricted networks
+
+## Display Users' Online Status
+
+**Status:** not implemented.
+
+### UX Improvements
+- **Visual Indicator:** Show a clear, accessible green dot (with a subtle pulse animation when coming online) next to the user's avatar in 1-on-1 chats, group member lists, and the sidebar.
+- **Real-time State:** Instantly reflect online/offline transitions without requiring page refreshes using WebSocket events.
+- **Accessibility:** Include descriptive `aria-label`s or visually hidden text (e.g., `<span class="sr-only">Online</span>`) for screen readers.
+- **Group Context:** In group chats, display a summary such as "3 members online" under the group name, expanding to show who is active when hovered or clicked.
+
+## Display Users' Last Seen
+
+**Status:** not implemented.
+
+### UX Improvements
+- **Human-Readable Timestamps:** Display relative, easily digestible times (e.g., "Last seen 5 mins ago", "Last seen yesterday at 14:00") below the user's name in 1-on-1 conversations.
+- **Smooth Transitions:** Crossfade the "Last seen" text with "Typing..." indicators using smooth animations to avoid jarring layout shifts.
+- **Privacy Controls:** Allow users to opt-out of sharing their last seen timestamp in settings. If both users disable it, hide the indicator entirely or show a generic "Offline" state.
+- **Graceful Degradation:** If the device is offline or the server falls out of sync, gracefully fallback to the latest cached timestamp without showing error states.
+
+## Use Framer Animations In Calls
+
+**Status:** not implemented.
+
+### UX Improvements
+- **Incoming Call:** Animate the call modal bounding into view from the top of the screen to the center using spring physics. Add a continuous, soft pulsing glow effect behind the "Accept" button.
+- **Active Call Morphing:** Use Framer Motion's `layoutId` to transform the large incoming call modal down into the compact active call status bar when a call is accepted with a fluid structural morph.
+- **Call End Animation:** Seamlessly transform the status bar from the active call state back to the default chat header, using an elegant shrink, slide-up, and fade-out sequence.
+
