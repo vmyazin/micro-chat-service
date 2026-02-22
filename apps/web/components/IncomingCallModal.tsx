@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import type { CallSession } from '@microchat/client';
 import { Button } from '@/components/Button';
+import * as Dialog from '@radix-ui/react-dialog';
 
 interface IncomingCallModalProps {
   session: CallSession | null;
@@ -52,10 +53,20 @@ export function IncomingCallModal({ session, onAccept, onReject }: IncomingCallM
     session.remoteUserName ?? session.remoteUserId ?? 'Unknown';
 
   return (
-    <div className="call-modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-      <section className="call-modal-dialog bg-[var(--surface-elevated)] border-base rounded-2xl p-8 max-w-sm w-full mx-4 text-center">
-        <header className="call-modal-header mb-6">
-          <div className="call-avatar-container w-20 h-20 mx-auto mb-4 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+    <Dialog.Root open={!!session}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="call-modal-overlay fixed inset-0 z-50 bg-black/70" />
+        <Dialog.Content 
+          className="call-modal-dialog fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-[var(--surface-elevated)] border-base rounded-2xl p-8 max-w-sm w-[95vw] text-center focus:outline-none"
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+        >
+          <Dialog.Title className="sr-only">Incoming Call</Dialog.Title>
+          <Dialog.Description className="sr-only">You are receiving an incoming call from {callerName}.</Dialog.Description>
+          
+          <header className="call-modal-header mb-6">
+            <div className="call-avatar-container w-20 h-20 mx-auto mb-4 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
             <svg
               className="call-avatar-icon w-10 h-10 text-green-600 dark:text-green-400 animate-pulse"
               fill="none"
@@ -107,7 +118,8 @@ export function IncomingCallModal({ session, onAccept, onReject }: IncomingCallM
             Accept
           </Button>
         </div>
-      </section>
-    </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }

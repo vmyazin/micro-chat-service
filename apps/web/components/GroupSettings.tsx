@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { MicroChatClient, type GroupId, type GroupMember } from '@microchat/client';
 import { Button } from '@/components/Button';
+import * as Dialog from '@radix-ui/react-dialog';
 
 interface GroupSettingsProps {
   groupId: GroupId;
@@ -118,15 +119,17 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
   const isOwner = members.some((m) => m.isOwner && m.userId === ownerId);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div
-        className="absolute inset-0 bg-black/50"
-        onClick={() => !actionLoading && onClose()}
-      />
-
-      <div className="relative card-base bg-[var(--background)] p-6 w-full max-w-md mx-4 max-h-[80vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">Group Settings</h2>
+    <Dialog.Root open={open} onOpenChange={(isOpen) => { if (!isOpen && !actionLoading) onClose(); }}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 bg-black/50 z-50" />
+        <Dialog.Content 
+          className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 card-base bg-[var(--background)] p-6 w-[95vw] max-w-md max-h-[80vh] overflow-y-auto focus:outline-none"
+          onInteractOutside={(e) => { if (actionLoading) e.preventDefault(); }}
+          onEscapeKeyDown={(e) => { if (actionLoading) e.preventDefault(); }}
+        >
+          <div className="flex justify-between items-center mb-4">
+            <Dialog.Title className="text-xl font-bold">Group Settings</Dialog.Title>
+            <Dialog.Description className="sr-only">Manage your group members and configurations.</Dialog.Description>
           <Button variant="ghost"
             onClick={onClose}
             disabled={actionLoading}
@@ -279,8 +282,9 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
             </>
           )}
         </div>
-      </div>
-    </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
 

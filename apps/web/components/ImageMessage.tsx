@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import * as Dialog from '@radix-ui/react-dialog';
 
 interface ImageMessageProps {
   groupId: string;
@@ -143,25 +144,32 @@ export function ImageMessage({
       </div>
 
       {/* Lightbox overlay */}
-      {lightbox && src && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
-          onClick={closeLightbox}
-          onKeyDown={(e) => {
-            if (e.key === 'Escape') closeLightbox();
-          }}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Image preview"
-        >
-          <img
-            src={src}
-            alt="Shared image (full size)"
-            className="max-w-full max-h-full object-contain rounded-lg"
-            onClick={(e) => e.stopPropagation()}
-          />
-        </div>
-      )}
+      <Dialog.Root open={lightbox && !!src} onOpenChange={setLightbox}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-50 bg-black/80" />
+          <Dialog.Content 
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 focus:outline-none"
+            onPointerDownOutside={closeLightbox}
+          >
+            <Dialog.Title className="sr-only">Image preview</Dialog.Title>
+            <Dialog.Description className="sr-only">A full-size preview of the shared image.</Dialog.Description>
+            {src && (
+              <img
+                src={src}
+                alt="Shared image (full size)"
+                className="max-w-full max-h-full object-contain rounded-lg shadow-xl"
+                onClick={(e) => e.stopPropagation()}
+              />
+            )}
+            <Dialog.Close className="absolute top-4 right-4 p-2 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors focus:outline-none focus:ring-2 focus:ring-white">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              <span className="sr-only">Close preview</span>
+            </Dialog.Close>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </>
   );
 }
