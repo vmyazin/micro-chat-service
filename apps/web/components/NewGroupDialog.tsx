@@ -31,16 +31,33 @@ export default function NewGroupDialog({ open, onClose, onGroupCreated }: NewGro
     setLocalError(null);
 
     try {
-      const result = await createGroup.mutateAsync(groupName.trim());
+      const createPromise = createGroup.mutateAsync(groupName.trim());
+
+      let safariCopied = false;
+      try {
+        if (typeof window !== 'undefined' && window.ClipboardItem && navigator.clipboard?.write) {
+          const item = new ClipboardItem({
+            'text/plain': createPromise.then(result => new Blob([`${window.location.origin}/chat/${result.groupId}`], { type: 'text/plain' }))
+          });
+          navigator.clipboard.write([item]).catch(console.error);
+          safariCopied = true;
+        }
+      } catch (e) {
+        // Ignored, fallback below
+      }
+
+      const result = await createPromise;
 
       setGroupName('');
       onGroupCreated?.(result.groupId);
 
-      try {
-        const inviteLink = `${window.location.origin}/chat/${result.groupId}`;
-        await navigator.clipboard.writeText(inviteLink);
-      } catch (clipboardError) {
-        console.error('Failed to copy to clipboard', clipboardError);
+      if (!safariCopied) {
+        try {
+          const inviteLink = `${window.location.origin}/chat/${result.groupId}`;
+          await navigator.clipboard.writeText(inviteLink);
+        } catch (clipboardError) {
+          console.error('Failed to copy to clipboard', clipboardError);
+        }
       }
 
       onClose();
