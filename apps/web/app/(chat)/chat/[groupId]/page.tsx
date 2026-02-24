@@ -129,13 +129,15 @@ export default function ConversationPage() {
   }, [groupId, ensureCallKey]);
 
   // Auto-join group if not a member
+  const joinAttemptedRef = useRef(false);
   useEffect(() => {
     if (groupId && error && error.message.includes('Not a member')) {
-      if (!joinGroup.isPending && !joinGroup.isSuccess) {
+      if (!joinAttemptedRef.current) {
+        joinAttemptedRef.current = true;
         joinGroup.mutate(groupId as GroupId);
       }
     }
-  }, [groupId, error, joinGroup]);
+  }, [groupId, error]); // intentionally omit joinGroup to avoid loop
 
   // Scroll to bottom on new messages
   useEffect(() => {
