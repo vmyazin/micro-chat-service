@@ -6,6 +6,7 @@ import {
   ListIcon,
   SignOutIcon,
   SpinnerGapIcon,
+  UserIcon,
   XIcon,
 } from '@phosphor-icons/react';
 import Image from 'next/image';
@@ -15,6 +16,7 @@ import { Button } from '@/components/Button';
 import { CallFaviconUpdater } from '@/components/CallFaviconUpdater';
 import GroupList from '@/components/GroupList';
 import NewGroupDialog from '@/components/NewGroupDialog';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { useUiStore } from '@/stores/ui-store';
 
@@ -37,6 +39,7 @@ export default function ChatLayout({
   const refreshGroupList = useUiStore((state) => state.refreshGroupList);
 
   const selectedGroupId = params?.groupId as string | undefined;
+  const { data: currentUser } = useCurrentUser();
 
   function handleNewGroup() {
     setShowNewGroupDialog(true);
@@ -120,26 +123,39 @@ export default function ChatLayout({
             >
               Home Page
             </a>
-            <Button
-              variant="outline"
-              size="sm"
-              type="button"
-              onClick={handleSignOut}
-              disabled={isSigningOut}
-              className="w-full flex items-center justify-center ga disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSigningOut ? (
-                <>
-                  <SignOutSpinner />
-                  Signing out...
-                </>
-              ) : (
-                <>
-                  <SignOutIcon className="w-4 h-4" />
-                  Sign Out
-                </>
+            <div className="flex items-center justify-between gap-4">
+              {currentUser?.displayName && (
+                <div 
+                  className="flex items-center gap-1.5 max-w-[50%] overflow-hidden text-sm font-medium text-gray-700 dark:text-gray-300"
+                  title={currentUser.displayName}
+                >
+                  <UserIcon className="w-4 h-4 shrink-0" />
+                  <span className="truncate">
+                    {currentUser.displayName}
+                  </span>
+                </div>
               )}
-            </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                type="button"
+                onClick={handleSignOut}
+                disabled={isSigningOut}
+                className="flex-1 min-w-0 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSigningOut ? (
+                  <>
+                    <SignOutSpinner />
+                    <span className="truncate">Signing out...</span>
+                  </>
+                ) : (
+                  <>
+                    <SignOutIcon className="w-4 h-4 shrink-0" />
+                    <span className="truncate">Sign Out</span>
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       </aside>
