@@ -22,7 +22,13 @@ export class ChatHub implements DurableObject {
   private sessions = new Map<WebSocket, WebSocketSession>();
   private calls = new Map<
     CallId,
-    { callerId: UserId; calleeId: UserId; groupId: GroupId }
+    {
+      callerId: UserId;
+      calleeId: UserId;
+      groupId: GroupId;
+      callerWs: WebSocket;
+      calleeWs?: WebSocket;
+    }
   >();
   private db: Database | null = null;
 
@@ -360,13 +366,21 @@ export class ChatHub implements DurableObject {
     const { callId, groupId, toUserId } = event;
     const callerId = session.userId;
 
-    this.calls.set(callId, { callerId, calleeId: toUserId, groupId });
+    // Track the specific WebSocket session the caller is using so we can
+    // route the answer back to exactly that one connection (rather than all
+    // open sessions for that user, which causes duplicate delivery).
+    this.calls.set(callId, {
+      callerId,
+      calleeId: toUserId,
+      groupId,
+      callerWs: session.ws,
+    });
 
     const delivered = this.sendToUser(toUserId, event);
 
     if (delivered === 0) {
       this.calls.delete(callId);
-      this.sendToUser(callerId, {
+      this.sendTo(session.ws, {
         type: 'callEnd',
         groupId,
         callId,
@@ -403,23 +417,32 @@ export class ChatHub implements DurableObject {
     }
 
     const senderId = session.userId;
-    let targetUserId: UserId | null = null;
 
+    // Route to exactly one target WebSocket session rather than spreading
+    // to all open connections for a user, which causes duplicate delivery.
     if (senderId === call.callerId) {
-      targetUserId = call.calleeId;
+      // Caller is sending (e.g. iceCandidate, callEnd) → send to the callee's
+      // pinned WebSocket, or fall back to any session for that user.
+      if (call.calleeWs) {
+        this.sendTo(call.calleeWs, event);
+      } else {
+        this.sendToUser(call.calleeId, event);
+      }
     } else if (senderId === call.calleeId) {
-      targetUserId = call.callerId;
-    }
-
-    if (!targetUserId) {
+      // Callee is sending (e.g. callAnswer, iceCandidate) → pin the callee's
+      // WebSocket on the first message so future messages from the caller go
+      // back to this exact connection.
+      if (!call.calleeWs || call.calleeWs !== session.ws) {
+        call.calleeWs = session.ws;
+      }
+      this.sendTo(call.callerWs, event);
+    } else {
       this.sendTo(session.ws, {
         type: 'error',
         error: 'Not a participant in this call',
       });
       return;
     }
-
-    this.sendToUser(targetUserId, event);
 
     if (event.type === 'callEnd') {
       this.calls.delete(callId);

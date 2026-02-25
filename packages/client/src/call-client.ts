@@ -86,6 +86,8 @@ class CallSessionImpl implements CallSession {
   private wsClient: WebSocketClient;
   private iceServers: RTCIceServer[];
   private answerProcessed = false;
+  private disconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private pendingIceCandidates: RTCIceCandidateInit[] = [];
 
   constructor(options: {
     callId: CallId;
@@ -118,6 +120,87 @@ class CallSessionImpl implements CallSession {
     }
   }
 
+  private clearDisconnectTimer(): void {
+    if (this.disconnectTimer) {
+      clearTimeout(this.disconnectTimer);
+      this.disconnectTimer = null;
+    }
+  }
+
+  private scheduleDisconnectHangup(): void {
+    if (this.disconnectTimer) return;
+
+    this.disconnectTimer = setTimeout(() => {
+      this.disconnectTimer = null;
+      if (this.pc?.connectionState === 'disconnected') {
+        console.warn(
+          '[call] Connection stayed disconnected; hanging up to avoid a stuck call',
+        );
+        this.hangup();
+      }
+    }, 8000);
+  }
+
+  private handleConnectionStateChange(): void {
+    const state = this.pc?.connectionState;
+    console.log('[call] Connection state changed:', state);
+
+    if (state === 'connected') {
+      this.clearDisconnectTimer();
+      this.setState('active');
+      return;
+    }
+
+    if (state === 'disconnected') {
+      // Disconnected can be transient during ICE restarts or network switches.
+      // Allow a grace period before tearing down the call.
+      this.scheduleDisconnectHangup();
+      return;
+    }
+
+    this.clearDisconnectTimer();
+
+    if (state === 'failed' || state === 'closed') {
+      this.hangup();
+    }
+  }
+
+  private queueIceCandidate(candidate: RTCIceCandidateInit): void {
+    this.pendingIceCandidates.push(candidate);
+  }
+
+  private flushPendingIceCandidates(): void {
+    if (!this.pc || !this.pc.remoteDescription) {
+      return;
+    }
+
+    const pending = this.pendingIceCandidates;
+    if (pending.length === 0) {
+      return;
+    }
+
+    this.pendingIceCandidates = [];
+    for (const candidate of pending) {
+      this.addIceCandidateInternal(candidate);
+    }
+  }
+
+  private addIceCandidateInternal(candidate: RTCIceCandidateInit): void {
+    if (!this.pc) return;
+
+    this.pc.addIceCandidate(new RTCIceCandidate(candidate)).catch((err) => {
+      if (
+        err instanceof DOMException &&
+        (err.name === 'InvalidStateError' ||
+          err.message.includes('remote description'))
+      ) {
+        this.queueIceCandidate(candidate);
+        return;
+      }
+      console.error('[call] Failed to add ICE candidate:', err);
+    });
+  }
+
   async initOutgoing(
     targetUserId: UserId,
     signalOptions: OutgoingSignalOptions,
@@ -129,6 +212,10 @@ class CallSessionImpl implements CallSession {
         audio: true,
       });
 
+      console.log(
+        '[call] Creating RTCPeerConnection with iceServers:',
+        JSON.stringify(this.iceServers),
+      );
       this.pc = new RTCPeerConnection({ iceServers: this.iceServers });
 
       // Add local tracks
@@ -138,12 +225,20 @@ class CallSessionImpl implements CallSession {
 
       // Handle remote stream
       this.pc.ontrack = (event) => {
-        this.remoteStream = event.streams[0];
+        if (event.streams[0]) {
+          this.remoteStream = event.streams[0];
+        } else {
+          this.remoteStream = new MediaStream([event.track]);
+        }
       };
 
       // ICE candidate handling
       this.pc.onicecandidate = (event) => {
         if (event.candidate) {
+          console.log(
+            '[call] Generating local ICE candidate (outgoing):',
+            event.candidate.candidate,
+          );
           this.wsClient.sendEvent({
             type: 'iceCandidate',
             groupId: this.groupId,
@@ -156,21 +251,28 @@ class CallSessionImpl implements CallSession {
               sdpMLineIndex: event.candidate.sdpMLineIndex,
             },
           });
+        } else {
+          console.log('[call] ICE candidate gathering complete (outgoing)');
         }
       };
 
       // Connection state changes
       this.pc.onconnectionstatechange = () => {
-        const state = this.pc?.connectionState;
-        if (state === 'connected') {
-          this.setState('active');
-        } else if (
-          state === 'failed' ||
-          state === 'disconnected' ||
-          state === 'closed'
-        ) {
-          this.hangup();
-        }
+        this.handleConnectionStateChange();
+      };
+
+      this.pc.oniceconnectionstatechange = () => {
+        console.log(
+          '[call] ICE connection state (outgoing):',
+          this.pc?.iceConnectionState,
+        );
+      };
+
+      this.pc.onicegatheringstatechange = () => {
+        console.log(
+          '[call] ICE gathering state (outgoing):',
+          this.pc?.iceGatheringState,
+        );
       };
 
       // Create offer
@@ -215,6 +317,10 @@ class CallSessionImpl implements CallSession {
         return;
       }
 
+      console.log(
+        '[call] Creating RTCPeerConnection (incoming) with iceServers:',
+        JSON.stringify(this.iceServers),
+      );
       this.pc = new RTCPeerConnection({ iceServers: this.iceServers });
 
       // Add local tracks
@@ -224,12 +330,20 @@ class CallSessionImpl implements CallSession {
 
       // Handle remote stream
       this.pc.ontrack = (event) => {
-        this.remoteStream = event.streams[0];
+        if (event.streams[0]) {
+          this.remoteStream = event.streams[0];
+        } else {
+          this.remoteStream = new MediaStream([event.track]);
+        }
       };
 
       // ICE candidate handling
       this.pc.onicecandidate = (event) => {
         if (event.candidate) {
+          console.log(
+            '[call] Generating local ICE candidate (incoming):',
+            event.candidate.candidate,
+          );
           this.wsClient.sendEvent({
             type: 'iceCandidate',
             groupId: this.groupId,
@@ -242,24 +356,18 @@ class CallSessionImpl implements CallSession {
               sdpMLineIndex: event.candidate.sdpMLineIndex,
             },
           });
+        } else {
+          console.log('[call] ICE candidate gathering complete (incoming)');
         }
       };
 
       // Connection state changes
       this.pc.onconnectionstatechange = () => {
-        const state = this.pc?.connectionState;
-        if (state === 'connected') {
-          this.setState('active');
-        } else if (
-          state === 'failed' ||
-          state === 'disconnected' ||
-          state === 'closed'
-        ) {
-          this.hangup();
-        }
+        this.handleConnectionStateChange();
       };
 
       await this.pc.setRemoteDescription(offer);
+      this.flushPendingIceCandidates();
     } catch (err) {
       console.error('[call] Failed to handle incoming offer:', err);
       this.cleanup();
@@ -269,6 +377,7 @@ class CallSessionImpl implements CallSession {
 
   async accept(): Promise<void> {
     if (this._state === 'ended') {
+      console.log('[call] Accept ignored: session already ended');
       return;
     }
     if (this._state === 'connecting' || this._state === 'active') {
@@ -276,6 +385,10 @@ class CallSessionImpl implements CallSession {
       return;
     }
     if (!this.pc || this.direction !== 'incoming') {
+      console.log('[call] Accept rejected: invalid session', {
+        hasPeerConnection: !!this.pc,
+        direction: this.direction,
+      });
       throw new Error('Can only accept incoming calls');
     }
 
@@ -289,7 +402,9 @@ class CallSessionImpl implements CallSession {
     }
 
     try {
+      console.log('[call] Creating answer for incoming call');
       const answer = await this.pc.createAnswer();
+      console.log('[call] Setting local description for incoming call');
       await this.pc.setLocalDescription(answer);
 
       this.setState('connecting');
@@ -297,6 +412,7 @@ class CallSessionImpl implements CallSession {
       if (!answer.sdp) {
         throw new Error('Failed to create answer: no SDP');
       }
+      console.log('[call] Sending callAnswer event', { callId: this.callId });
       this.wsClient.sendEvent({
         type: 'callAnswer',
         groupId: this.groupId,
@@ -388,6 +504,7 @@ class CallSessionImpl implements CallSession {
     pc.setRemoteDescription(answer)
       .then(() => {
         console.log('[call] Remote description set successfully');
+        this.flushPendingIceCandidates();
       })
       .catch((err: unknown) => {
         // If the PC is already stable (e.g. due to a race with a duplicate
@@ -410,9 +527,12 @@ class CallSessionImpl implements CallSession {
   handleIceCandidate(candidate: RTCIceCandidateInit): void {
     if (!this.pc) return;
 
-    this.pc.addIceCandidate(new RTCIceCandidate(candidate)).catch((err) => {
-      console.error('[call] Failed to add ICE candidate:', err);
-    });
+    if (!this.pc.remoteDescription) {
+      this.queueIceCandidate(candidate);
+      return;
+    }
+
+    this.addIceCandidateInternal(candidate);
   }
 
   handleEnd(reason: 'hangup' | 'rejected' | 'missed' | 'error'): void {
@@ -437,6 +557,8 @@ class CallSessionImpl implements CallSession {
   private cleanup(): void {
     this.setState('ended');
 
+    this.clearDisconnectTimer();
+
     // Stop all tracks
     for (const track of this.localStream?.getTracks() ?? []) {
       track.stop();
@@ -456,6 +578,7 @@ class CallSessionImpl implements CallSession {
 
     // Reset answer processed flag
     this.answerProcessed = false;
+    this.pendingIceCandidates = [];
   }
 }
 

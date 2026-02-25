@@ -96,6 +96,8 @@ export class WebSocketClient {
   private send(data: object): void {
     if (this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(data));
+    } else {
+      console.warn('[ws] Dropping message because websocket is not OPEN', data);
     }
   }
 

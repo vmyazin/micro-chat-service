@@ -137,7 +137,7 @@ export default function ConversationPage() {
         joinGroup.mutate(groupId as GroupId);
       }
     }
-  }, [groupId, error]); // intentionally omit joinGroup to avoid loop
+  }, [groupId, error, joinGroup.mutate]); // intentionally omit joinGroup to avoid loop
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -265,8 +265,39 @@ export default function ConversationPage() {
   // Stable callbacks for IncomingCallModal — must not change identity on re-render
   // to prevent useEffect in IncomingCallModal from re-running and calling accept() twice.
   const handleAcceptCall = useCallback(() => {
-    incomingSession?.accept().catch(console.error);
-  }, [incomingSession]);
+    if (!incomingSession) {
+      console.warn('[call] Accept clicked but no incoming session');
+      return;
+    }
+
+    console.log('[call] Accepting incoming call', {
+      callId: incomingSession.callId,
+      state: incomingSession.state,
+      direction: incomingSession.direction,
+    });
+
+    incomingSession
+      .accept()
+      .then(() => {
+        console.log(
+          '[call] Accept resolved, session state:',
+          incomingSession.state,
+        );
+        setActiveSession(incomingSession);
+        setIncomingSession(null);
+        setIsCalling(false);
+        setCallState('calling');
+      })
+      .catch((error) => {
+        console.error('[call] Accept failed', error);
+      });
+  }, [
+    incomingSession,
+    setActiveSession,
+    setIncomingSession,
+    setIsCalling,
+    setCallState,
+  ]);
 
   const handleRejectCall = useCallback(() => {
     incomingSession?.reject().catch(console.error);

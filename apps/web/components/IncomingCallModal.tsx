@@ -128,6 +128,7 @@ export function IncomingCallModal({ session, onAccept, onReject }: IncomingCallM
               onClick={() => {
                 if (acceptedRef.current) return;
                 acceptedRef.current = true;
+                console.log('[call] Accept button clicked');
                 onAccept();
               }}
               className="call-action-accept flex-1 bg-green-600 text-white font-semibold hover:bg-green-700 transition-colors flex items-center justify-center ga"

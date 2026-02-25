@@ -2,7 +2,7 @@
 
 import { SpinnerGapIcon } from '@phosphor-icons/react';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/Button';
 import { useAcceptInvite } from '@/hooks/useAcceptInvite';
 
@@ -34,7 +34,7 @@ export default function InvitePage() {
           err instanceof Error ? err.message : 'Failed to accept invite',
         );
       });
-  }, [params.code, router]);
+  }, [params.code, router, acceptInvite.mutateAsync]);
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">

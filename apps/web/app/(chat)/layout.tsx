@@ -125,14 +125,12 @@ export default function ChatLayout({
             </a>
             <div className="flex items-center justify-between gap-4">
               {currentUser?.displayName && (
-                <div 
+                <div
                   className="flex items-center gap-1.5 max-w-[50%] overflow-hidden text-sm font-medium text-gray-700 dark:text-gray-300"
                   title={currentUser.displayName}
                 >
                   <UserIcon className="w-4 h-4 shrink-0" />
-                  <span className="truncate">
-                    {currentUser.displayName}
-                  </span>
+                  <span className="truncate">{currentUser.displayName}</span>
                 </div>
               )}
               <Button
