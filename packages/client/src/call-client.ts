@@ -212,11 +212,10 @@ class CallSessionImpl implements CallSession {
         audio: true,
       });
 
-      console.log(
-        '[call] Creating RTCPeerConnection with iceServers:',
-        JSON.stringify(this.iceServers),
-      );
       this.pc = new RTCPeerConnection({ iceServers: this.iceServers });
+
+      // Force a bogus data channel just to guarantee ICE gathering starts
+      this.pc.createDataChannel('ice-kickstart');
 
       // Add local tracks
       for (const track of this.localStream.getTracks()) {
@@ -235,10 +234,6 @@ class CallSessionImpl implements CallSession {
       // ICE candidate handling
       this.pc.onicecandidate = (event) => {
         if (event.candidate) {
-          console.log(
-            '[call] Generating local ICE candidate (outgoing):',
-            event.candidate.candidate,
-          );
           this.wsClient.sendEvent({
             type: 'iceCandidate',
             groupId: this.groupId,
@@ -251,28 +246,11 @@ class CallSessionImpl implements CallSession {
               sdpMLineIndex: event.candidate.sdpMLineIndex,
             },
           });
-        } else {
-          console.log('[call] ICE candidate gathering complete (outgoing)');
         }
       };
 
-      // Connection state changes
       this.pc.onconnectionstatechange = () => {
         this.handleConnectionStateChange();
-      };
-
-      this.pc.oniceconnectionstatechange = () => {
-        console.log(
-          '[call] ICE connection state (outgoing):',
-          this.pc?.iceConnectionState,
-        );
-      };
-
-      this.pc.onicegatheringstatechange = () => {
-        console.log(
-          '[call] ICE gathering state (outgoing):',
-          this.pc?.iceGatheringState,
-        );
       };
 
       // Create offer
@@ -317,10 +295,6 @@ class CallSessionImpl implements CallSession {
         return;
       }
 
-      console.log(
-        '[call] Creating RTCPeerConnection (incoming) with iceServers:',
-        JSON.stringify(this.iceServers),
-      );
       this.pc = new RTCPeerConnection({ iceServers: this.iceServers });
 
       // Add local tracks
@@ -340,10 +314,6 @@ class CallSessionImpl implements CallSession {
       // ICE candidate handling
       this.pc.onicecandidate = (event) => {
         if (event.candidate) {
-          console.log(
-            '[call] Generating local ICE candidate (incoming):',
-            event.candidate.candidate,
-          );
           this.wsClient.sendEvent({
             type: 'iceCandidate',
             groupId: this.groupId,
@@ -356,8 +326,6 @@ class CallSessionImpl implements CallSession {
               sdpMLineIndex: event.candidate.sdpMLineIndex,
             },
           });
-        } else {
-          console.log('[call] ICE candidate gathering complete (incoming)');
         }
       };
 
@@ -402,9 +370,7 @@ class CallSessionImpl implements CallSession {
     }
 
     try {
-      console.log('[call] Creating answer for incoming call');
       const answer = await this.pc.createAnswer();
-      console.log('[call] Setting local description for incoming call');
       await this.pc.setLocalDescription(answer);
 
       this.setState('connecting');
@@ -412,7 +378,6 @@ class CallSessionImpl implements CallSession {
       if (!answer.sdp) {
         throw new Error('Failed to create answer: no SDP');
       }
-      console.log('[call] Sending callAnswer event', { callId: this.callId });
       this.wsClient.sendEvent({
         type: 'callAnswer',
         groupId: this.groupId,
@@ -479,18 +444,8 @@ class CallSessionImpl implements CallSession {
     // If it's 'stable', the answer was already processed
     // If it's anything else, we're in an invalid state
     const signalingState = this.pc.signalingState;
-    console.log(
-      '[call] handleAnswer called, signaling state:',
-      signalingState,
-      'answerProcessed:',
-      this.answerProcessed,
-    );
 
     if (signalingState !== 'have-local-offer') {
-      console.log(
-        '[call] Ignoring answer: peer connection not in have-local-offer state, current state:',
-        signalingState,
-      );
       return;
     }
 
@@ -500,10 +455,8 @@ class CallSessionImpl implements CallSession {
     // Capture pc locally — this.pc could be nulled by cleanup() before the
     // promise resolves, so we hold a stable reference.
     const pc = this.pc;
-    console.log('[call] Setting remote answer description');
     pc.setRemoteDescription(answer)
       .then(() => {
-        console.log('[call] Remote description set successfully');
         this.flushPendingIceCandidates();
       })
       .catch((err: unknown) => {
@@ -525,7 +478,9 @@ class CallSessionImpl implements CallSession {
   }
 
   handleIceCandidate(candidate: RTCIceCandidateInit): void {
-    if (!this.pc) return;
+    if (!this.pc) {
+      return;
+    }
 
     if (!this.pc.remoteDescription) {
       this.queueIceCandidate(candidate);
@@ -813,16 +768,18 @@ export class CallClient {
       return null;
     }
 
-    const callKey = await this.tryDeriveCallKey(groupId, callId);
-    if (!callKey) {
-      return null;
-    }
-
     try {
+      const callKey = await this.tryDeriveCallKey(groupId, callId);
+      if (!callKey) {
+        return null;
+      }
       const payload = await decryptCallerId(sealedSender, callKey);
       return { senderId: payload.senderId, senderName: payload.senderName };
     } catch (error) {
-      console.error('[call] Failed to decrypt caller identity', error);
+      console.error(
+        '[call] Failed to decrypt caller identity or derive key',
+        error,
+      );
       return null;
     }
   }
@@ -896,37 +853,22 @@ export class CallClient {
       }
 
       case 'callAnswer': {
-        console.log(
-          '[call] Received callAnswer event for callId:',
-          event.callId,
-        );
-
         if (!this.activeSession || this.activeSession.callId !== event.callId) {
-          console.log('[call] Ignoring answer for unknown call');
           return;
         }
 
         // Only the outgoing side (caller) should process answers
         // The incoming side (callee) sends the answer and shouldn't receive it back
-        console.log(
-          '[call] Active session direction:',
-          this.activeSession.direction,
-        );
         if (this.activeSession.direction !== 'outgoing') {
-          console.log(
-            '[call] Ignoring answer on incoming call (should only be processed by caller)',
-          );
           return;
         }
 
-        console.log('[call] Processing answer on outgoing call');
         this.activeSession.handleAnswer({ type: 'answer', sdp: event.sdp });
         break;
       }
 
       case 'iceCandidate': {
         if (!this.activeSession || this.activeSession.callId !== event.callId) {
-          console.log('[call] Ignoring ICE candidate for unknown call');
           return;
         }
 
@@ -936,7 +878,6 @@ export class CallClient {
 
       case 'callEnd': {
         if (!this.activeSession || this.activeSession.callId !== event.callId) {
-          console.log('[call] Ignoring callEnd for unknown call');
           return;
         }
 
