@@ -1,6 +1,6 @@
 'use client';
 
-import type { CallSession, IncomingCallSession, UserId } from '@microchat/client';
+import type { CallSession, GroupId, IncomingCallSession, UserId } from '@microchat/client';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
@@ -18,6 +18,10 @@ interface CallStore {
 
   isCalling: boolean;
   setIsCalling: (calling: boolean) => void;
+
+  /** The group in which the current call is happening. */
+  callGroupId: GroupId | null;
+  setCallGroupId: (id: GroupId | null) => void;
 
   targetUserId: UserId | null;
   setTargetUserId: (id: UserId | null) => void;
@@ -54,6 +58,9 @@ export const useCallStore = create<CallStore>()(
       isCalling: false,
       setIsCalling: (calling) => set({ isCalling: calling }, false, 'setIsCalling'),
 
+      callGroupId: null,
+      setCallGroupId: (id) => set({ callGroupId: id }, false, 'setCallGroupId'),
+
       targetUserId: null,
       setTargetUserId: (id) => set({ targetUserId: id }, false, 'setTargetUserId'),
 
@@ -78,6 +85,7 @@ export const useCallStore = create<CallStore>()(
             incomingSession: null,
             callState: 'idle',
             isCalling: false,
+            callGroupId: null,
             targetUserId: null,
             targetUserName: null,
             memberCount: null,

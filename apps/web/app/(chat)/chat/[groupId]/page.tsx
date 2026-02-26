@@ -94,6 +94,7 @@ export default function ConversationPage() {
   const setMemberCount = useCallStore((state) => state.setMemberCount);
   const callState = useCallStore((state) => state.callState);
   const setCallState = useCallStore((state) => state.setCallState);
+  const setCallGroupId = useCallStore((state) => state.setCallGroupId);
 
   // Presence state
   const onlineUsersByGroup = usePresenceStore(
@@ -167,6 +168,7 @@ export default function ConversationPage() {
       console.log('[call] Incoming call received', session);
       setIncomingSession(session);
       setCallState('incoming');
+      setCallGroupId(session.groupId);
 
       // Subscribe to state changes
       let offState = () => {};
@@ -200,10 +202,15 @@ export default function ConversationPage() {
     setIncomingSession,
     setIsCalling,
     setCallState,
+    setCallGroupId,
   ]);
 
-  // Update call target info when members change
+  // Update call target info when members change.
+  // Skip when a call is active — the store already holds the call's target
+  // and overwriting it would break the persistent call bar on navigation.
   useEffect(() => {
+    if (callState !== 'idle') return;
+
     if (!groupId || !currentUser) {
       setTargetUserId(null);
       setMemberCount(null);
@@ -219,6 +226,7 @@ export default function ConversationPage() {
     groupId,
     currentUser,
     members,
+    callState,
     setTargetUserId,
     setMemberCount,
     setTargetUserName,
@@ -323,6 +331,7 @@ export default function ConversationPage() {
       setActiveSession(session);
       setIsCalling(true);
       setCallState('calling');
+      setCallGroupId(groupId as GroupId);
 
       let offState = () => {};
       offState = session.onStateChange((state) => {
@@ -495,134 +504,64 @@ export default function ConversationPage() {
         onReject={handleRejectCall}
       />
 
-      <AnimatePresence mode="popLayout">
-        {callState === 'in-call' || callState === 'calling' ? (
-          <motion.header
-            key="active-call"
-            layoutId="call-ui"
-            className="chat-header shrink-0 z-20 w-full flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-emerald-200/70 dark:border-emerald-800/60 bg-emerald-50/80 dark:bg-emerald-950/40 shadow-[0_1px_0_rgba(16,185,129,0.12),0_8px_24px_rgba(0,0,0,0.18)]"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{
-              opacity: 0,
-              scaleY: 0,
-              y: -20,
-            }}
-            transition={{
-              layout: { type: 'spring', stiffness: 300, damping: 30 },
-              exit: { duration: 0.35, ease: [0.4, 0, 0.2, 1] },
-            }}
-            style={{ originY: 0, borderRadius: 0, overflow: 'hidden' }}
-          >
-            <div className="flex items-center gap-3 min-w-0">
-              {callState === 'in-call' ? (
+      {callState === 'idle' && <header className="chat-header shrink-0 z-20 w-full flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-(--surface-elevated)">
+        <div className="flex flex-col min-w-0">
+          <h1 className="chat-title text-lg font-bold truncate">
+            {t('groupChat')}
+          </h1>
+          <div className="flex items-center gap-1.5 text-xs text-(--text-muted) select-none">
+            {(memberCount ?? 0) <= 2 ? (
+              <>
                 <span
-                  className="inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.18)] animate-pulse"
+                  className={`inline-block w-2 h-2 rounded-full ${isTargetUserOnline ? 'bg-green-500' : 'bg-gray-400 dark:bg-gray-500'}`}
                   aria-hidden="true"
                 />
-              ) : (
+                <span>{isTargetUserOnline ? t('online') : t('offline')}</span>
+              </>
+            ) : (
+              <>
                 <span
-                  className="inline-flex h-3 w-3 rounded-full border-2 border-emerald-500/70 border-t-transparent animate-spin"
+                  className="inline-block w-2 h-2 rounded-full bg-green-500"
                   aria-hidden="true"
                 />
-              )}
-              <div className="min-w-0">
-                <p className="text-lg font-semibold text-emerald-950 dark:text-emerald-100 truncate">
-                  {callState === 'in-call' ? t('liveCall') : t('connectingCall')}
-                  {targetUserName ? ` ${t('with')} ${targetUserName}` : ''}
-                </p>
-              </div>
-            </div>
-            <div className="chat-actions flex items-center gap-2">
-              <CallButton
-                client={client}
-                groupId={groupId as GroupId}
-                currentUserId={currentUser?.userId}
-                onStartCall={handleStartCall}
-                memberCount={memberCount}
-                targetUserId={targetUserId}
-                calling={isCalling}
-                activeSession={activeSession}
-              />
-              <Button
-                variant="ghost"
-                type="button"
-                onClick={() => setShowSettings(true)}
-                className="chat-action-settings p-2 border-base hover:bg-gray-100 dark:hover:bg-gray-800"
-                aria-label="Group Settings"
-              >
-                <DotsThreeVerticalIcon
-                  aria-hidden="true"
-                  className="chat-action-icon w-5 h-5"
-                />
-              </Button>
-            </div>
-          </motion.header>
-        ) : (
-          <motion.header
-            key="default"
-            className="chat-header shrink-0 z-20 w-full flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-(--surface-elevated)"
-            initial={false}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+                <span>
+                  {onlineUserCount}{' '}
+                  {onlineUserCount === 1
+                    ? t('memberOnline')
+                    : t('membersOnline')}
+                </span>
+              </>
+            )}
+          </div>
+        </div>
+        <div className="chat-actions flex items-center gap-2">
+          {/* Call controls only shown when idle — active call is handled by ActiveCallBar in the layout */}
+          {callState === 'idle' && (
+            <CallButton
+              client={client}
+              groupId={groupId as GroupId}
+              currentUserId={currentUser?.userId}
+              onStartCall={handleStartCall}
+              memberCount={memberCount}
+              targetUserId={targetUserId}
+              calling={isCalling}
+              activeSession={null}
+            />
+          )}
+          <Button
+            variant="ghost"
+            type="button"
+            onClick={() => setShowSettings(true)}
+            className="chat-action-settings p-2 border-base hover:bg-gray-100 dark:hover:bg-gray-800"
+            aria-label="Group Settings"
           >
-            <div className="flex flex-col min-w-0">
-              <h1 className="chat-title text-lg font-bold truncate">
-                {t('groupChat')}
-              </h1>
-              <div className="flex items-center gap-1.5 text-xs text-(--text-muted) select-none">
-                {(memberCount ?? 0) <= 2 ? (
-                  <>
-                    <span
-                      className={`inline-block w-2 h-2 rounded-full ${isTargetUserOnline ? 'bg-green-500' : 'bg-gray-400 dark:bg-gray-500'}`}
-                      aria-hidden="true"
-                    />
-                    <span>{isTargetUserOnline ? t('online') : t('offline')}</span>
-                  </>
-                ) : (
-                  <>
-                    <span
-                      className="inline-block w-2 h-2 rounded-full bg-green-500"
-                      aria-hidden="true"
-                    />
-                    <span>
-                      {onlineUserCount}{' '}
-                      {onlineUserCount === 1
-                        ? t('memberOnline')
-                        : t('membersOnline')}
-                    </span>
-                  </>
-                )}
-              </div>
-            </div>
-            <div className="chat-actions flex items-center gap-2">
-              <CallButton
-                client={client}
-                groupId={groupId as GroupId}
-                currentUserId={currentUser?.userId}
-                onStartCall={handleStartCall}
-                memberCount={memberCount}
-                targetUserId={targetUserId}
-                calling={isCalling}
-                activeSession={activeSession}
-              />
-              <Button
-                variant="ghost"
-                type="button"
-                onClick={() => setShowSettings(true)}
-                className="chat-action-settings p-2 border-base hover:bg-gray-100 dark:hover:bg-gray-800"
-                aria-label="Group Settings"
-              >
-                <DotsThreeVerticalIcon
-                  aria-hidden="true"
-                  className="chat-action-icon w-5 h-5"
-                />
-              </Button>
-            </div>
-          </motion.header>
-        )}
-      </AnimatePresence>
+            <DotsThreeVerticalIcon
+              aria-hidden="true"
+              className="chat-action-icon w-5 h-5"
+            />
+          </Button>
+        </div>
+      </header>}
       <section className="chat-surface flex-1 w-full min-h-0 overflow-hidden">
         <div className="chat-container min-h-0 h-full flex flex-col">
           {connectionStatus === 'reconnecting' && (

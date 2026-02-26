@@ -13,6 +13,8 @@ import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
+import { LayoutGroup } from 'framer-motion';
+import { ActiveCallBar } from '@/components/ActiveCallBar';
 import { Button } from '@/components/Button';
 import { CallFaviconUpdater } from '@/components/CallFaviconUpdater';
 import GroupList from '@/components/GroupList';
@@ -177,10 +179,18 @@ export default function ChatLayout({
           <span className="ml-3 font-bold">MicroChat</span>
         </div>
 
-        {/* Page content */}
-        <div className="flex-1 overflow-hidden flex flex-col min-h-0">
-          {children}
-        </div>
+        {/* LayoutGroup ensures the shared layoutId="call-ui" between
+            IncomingCallModal (inside children) and ActiveCallBar resolves
+            correctly across different tree levels. */}
+        <LayoutGroup>
+          {/* Persistent call bar — visible across all routes during a call */}
+          <ActiveCallBar />
+
+          {/* Page content */}
+          <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+            {children}
+          </div>
+        </LayoutGroup>
       </main>
 
       {/* New Group Dialog */}

@@ -135,10 +135,9 @@ export function CallButton({
   }, [client, currentUserId, groupId, memberCountProp, targetUserIdProp]);
 
   if (!client.calls) return null;
-  if (memberCount === null) return null;
-  if (memberCount > 2) return null;
-  if (!targetUserId) return null;
 
+  // Active session controls must render regardless of the current route's
+  // member count / target — the call may belong to a different group.
   if (activeSession) {
     const isLive = callState === 'active';
     const statusLabel = isLive ? t('live') : t('connecting');
@@ -204,6 +203,11 @@ export function CallButton({
       </>
     );
   }
+
+  // Guards for the "start call" button — only relevant when idle
+  if (memberCount === null) return null;
+  if (memberCount > 2) return null;
+  if (!targetUserId) return null;
 
   if (calling) {
     return (
