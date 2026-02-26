@@ -29,7 +29,10 @@
     "cancel": "Cancel",
     "highlight": "Highlight",
     "unhighlight": "Unhighlight",
-    "deleteFailed": "Failed to delete message"
+    "deleteFailed": "Failed to delete message",
+    "countdownHour": "h",
+    "countdownMinute": "m",
+    "countdownSecond": "s"
   },
   "GroupList": {
     "newGroup": "New Group",

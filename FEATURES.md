@@ -301,7 +301,7 @@ New WebSocket event variants:
 
 ## QR Code For Invites
 
-**Status:** Completed (Feb 26, 2026)
+**Status:** Completed (Feb 26, 2026) ✅
 
 ### Implementation Details
 

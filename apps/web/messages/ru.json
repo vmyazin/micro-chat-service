@@ -29,7 +29,10 @@
     "cancel": "Отмена",
     "highlight": "Выделить",
     "unhighlight": "Снять выделение",
-    "deleteFailed": "Не удалось удалить сообщение"
+    "deleteFailed": "Не удалось удалить сообщение",
+    "countdownHour": "ч",
+    "countdownMinute": "м",
+    "countdownSecond": "с"
   },
   "GroupList": {
     "newGroup": "Новая группа",

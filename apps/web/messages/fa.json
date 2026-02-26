@@ -29,7 +29,10 @@
     "cancel": "لغو",
     "highlight": "برجسته کردن",
     "unhighlight": "حذف برجستگی",
-    "deleteFailed": "حذف پیام ناموفق بود"
+    "deleteFailed": "حذف پیام ناموفق بود",
+    "countdownHour": "ساعت",
+    "countdownMinute": "د",
+    "countdownSecond": "ث"
   },
   "GroupList": {
     "newGroup": "گروه جدید",

@@ -8,6 +8,7 @@ import {
   uint8ArrayToBase64,
 } from '@microchat/client';
 import {
+  ClockIcon,
   DotsThreeVerticalIcon,
   HighlighterIcon,
   SpinnerGapIcon,
@@ -702,6 +703,16 @@ function MessageBubble({
   const t = useTranslations('GroupChat');
   const isSystem = message.senderId === ('system' as UserId);
 
+  // Countdown timer for message expiry
+  const [isHovered, setIsHovered] = useState(false);
+  const [localNow, setLocalNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (!isHovered) return;
+    const id = setInterval(() => setLocalNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [isHovered]);
+
   // System messages: centered pill (always plain text)
   if (isSystem) {
     return (
@@ -722,11 +733,11 @@ function MessageBubble({
   // Opacity fading logic for ephemeral messages
   // Messages expire 24 hours after creation.
   // We start fading them 1 hour before they expire.
-  const now = new Date();
   const createdAtDate = new Date(message.createdAt);
-  const ageMs = now.getTime() - createdAtDate.getTime();
+  const ageMs = (isHovered ? localNow : Date.now()) - createdAtDate.getTime();
   const TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
   const FADE_START_MS = TTL_MS - 1 * 60 * 60 * 1000; // 1 hour before expiration
+  const timeLeft = TTL_MS - ageMs;
 
   let opacityStyle = 1;
   const isFading = ageMs > FADE_START_MS && ageMs < TTL_MS;
@@ -745,7 +756,7 @@ function MessageBubble({
     <ContextMenu.Root>
       <ContextMenu.Trigger asChild>
         <div
-          className={`flex items-end gap-2 ${isOwn ? 'justify-end' : 'justify-start'}`}
+          className={`chat-bubble-wrapper flex items-end gap-2 ${isOwn ? 'justify-end' : 'justify-start'}`}
         >
           {/* Avatar for others */}
           {!isOwn && (
@@ -785,7 +796,7 @@ function MessageBubble({
 
             {/* Bubble */}
             <div
-              className={`relative px-4 py-2.5 text-base leading-relaxed wrap-break-word transition-all duration-200 ${
+              className={`chat-bubble relative px-4 py-2.5 text-base leading-relaxed wrap-break-word transition-all duration-200 min-w-[160px] ${
                 isHighlighted
                   ? `scale-[1.15] z-10 ring-4 ring-(--highlight) ${isOwn ? 'origin-right' : 'origin-left'}`
                   : ''
@@ -800,6 +811,8 @@ function MessageBubble({
                   : undefined,
                 opacity: opacityStyle,
               }}
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
             >
               {isAudio && decodedObj?.type === 'audio' ? (
                 <VoiceMessagePlayer
@@ -822,15 +835,42 @@ function MessageBubble({
                 decodedObj.content
               ) : null}
 
-              {/* Timestamp row */}
+              {/* Timestamp + Countdown row */}
               <div
-                className={`flex items-center gap-2 mt-1.5 ${isOwn ? 'justify-end' : 'justify-start'}`}
+                className={`flex items-center gap-2 mt-1.5 h-[11px] ${isOwn ? 'justify-end' : 'justify-start'}`}
               >
                 <span
                   className={`text-[11px] leading-none ${isOwn ? 'text-blue-200' : 'text-(--text-muted)'}`}
                 >
                   {formatTime(message.createdAt)}
                 </span>
+
+                {timeLeft > 0 && (() => {
+                  const countdownColor = isOwn ? 'text-blue-200/70' : 'text-(--text-muted)';
+                  // Format countdown with translations
+                  const totalSec = Math.ceil(timeLeft / 1000);
+                  const h = Math.floor(totalSec / 3600);
+                  const m = Math.floor((totalSec % 3600) / 60);
+                  const s = totalSec % 60;
+                  let countdownText = `${s}${t('countdownSecond')}`;
+                  if (m > 0) countdownText = `${m}${t('countdownMinute')} ${s}${t('countdownSecond')}`;
+                  if (h > 0) countdownText = `${h}${t('countdownHour')} ${m}${t('countdownMinute')}`;
+
+                  return (
+                    <motion.div
+                      animate={{
+                        maxWidth: isHovered ? '200px' : '0px',
+                        opacity: isHovered ? 1 : 0,
+                      }}
+                      transition={{ duration: 0.15 }}
+                      className={`overflow-hidden flex items-center gap-1 text-[11px] leading-none ${countdownColor}`}
+                    >
+                      <span>•</span>
+                      <ClockIcon className="w-2.5 h-2.5 shrink-0" />
+                      <span>{countdownText}</span>
+                    </motion.div>
+                  );
+                })()}
               </div>
 
               {/* Delete confirmation */}
