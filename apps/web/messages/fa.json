@@ -48,6 +48,7 @@
     "copied": "کپی شد!",
     "copy": "کپی",
     "linkCopied": "لینک کپی شد!",
+    "showQRCode": "نمایش کد QR",
     "leaveGroup": "ترک گروه",
     "leaveConfirm": "آیا مطمئن هستید که می‌خواهید این گروه را ترک کنید؟",
     "cancel": "لغو",
@@ -58,6 +59,15 @@
     "failedCreateInvite": "ایجاد دعوت‌نامه ناموفق بود",
     "failedLeaveGroup": "ترک گروه ناموفق بود",
     "failedDeleteGroup": "حذف گروه ناموفق بود"
+  },
+  "InviteQRDialog": {
+    "title": "دعوت از طریق کد QR",
+    "description": "این کد QR را برای دوستتان بفرستید.",
+    "groupLabel": "گروه",
+    "copyImage": "کپی تصویر",
+    "download": "دانلود",
+    "copied": "کپی شد!",
+    "downloaded": "دانلود شد!"
   },
   "NewGroupDialog": {
     "title": "ایجاد گروه جدید",

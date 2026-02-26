@@ -48,6 +48,7 @@
     "copied": "Скопировано!",
     "copy": "Копировать",
     "linkCopied": "Ссылка скопирована!",
+    "showQRCode": "Показать QR код",
     "leaveGroup": "Покинуть группу",
     "leaveConfirm": "Вы уверены, что хотите покинуть эту группу?",
     "cancel": "Отмена",
@@ -58,6 +59,15 @@
     "failedCreateInvite": "Не удалось создать приглашение",
     "failedLeaveGroup": "Не удалось покинуть группу",
     "failedDeleteGroup": "Не удалось удалить группу"
+  },
+  "InviteQRDialog": {
+    "title": "Пригласить через QR код",
+    "description": "Отсканируйте этот QR код, чтобы переслать его собеседнику.",
+    "groupLabel": "Группа",
+    "copyImage": "Копировать код",
+    "download": "Загрузить",
+    "copied": "Скопировано!",
+    "downloaded": "Загружено!"
   },
   "NewGroupDialog": {
     "title": "Создать группу",

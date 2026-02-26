@@ -298,8 +298,50 @@ New WebSocket event variants:
 
 ## QR Code For Invites
 
-- Generate QR code for group invites and display in a dialog
-- Add option to copy invite image to clipboard
-- Apply logo branding to QR code
+**Status:** Completed (Feb 26, 2026)
+
+### Implementation Details
+
+- **QR Code Generation**: Uses `qrcode.react` library to generate canvas-based QR codes containing the full invite URL
+- **Dialog Display**: InviteQRDialog component displays the QR code in a centered modal with blur backdrop
+- **Copy to Clipboard**: Users can copy the QR code image as PNG to clipboard via the clipboard API
+- **Download**: Users can download the QR code as a PNG file with timestamp-based naming
+- **Group Context**: Displays the group name below the QR code for context
+- **Logo Watermark**: The MicroChat logo is overlaid on the QR code as a faint watermark (70% opacity) with a semi-transparent white background for enhanced visibility
+- **Multilingual**: Translations in English, Russian, and Farsi
+
+### Components
+
+- **InviteQRDialog.tsx**: New dialog component that displays:
+  - QR code canvas (256x256px, high error correction level H)
+  - Logo watermark overlay (70% opacity with semi-transparent background)
+  - Group name label
+  - Copy image button (with success feedback)
+  - Download button (with success feedback)
+  - Close button
+
+- **GroupSettings.tsx** (updated):
+  - Added "Show QR Code" button that appears after invite link is generated
+  - Integrated InviteQRDialog as child component
+  - Added state management for QR dialog visibility
+
+### Features
+
+- **Logo Watermark**: Canvas-based logo overlay with 70% opacity and semi-transparent background for subtle branding
+- **Copy Image**: Copies QR code with logo to clipboard as PNG using Clipboard API
+- **Download**: Downloads QR code with logo as timestamped PNG file
+- **Visual Feedback**: Buttons show success state (checkmark + "Copied!" / "Downloaded!") that auto-resets after 2 seconds
+- **Canvas-Based**: Uses canvas rendering for better control over logo overlay and image export
+- **Responsive Design**: Dialog is centered and works on all screen sizes
+- **Dark Mode**: Fully themed with CSS custom properties for light/dark modes
+
+### Files Modified
+
+- `apps/web/components/InviteQRDialog.tsx` (new)
+- `apps/web/components/GroupSettings.tsx` (updated to add QR button and dialog)
+- `apps/web/messages/en.json` (added translations)
+- `apps/web/messages/ru.json` (added translations)
+- `apps/web/messages/fa.json` (added translations)
+- `apps/web/package.json` (added qrcode.react dependency)
 
 

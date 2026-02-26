@@ -1,6 +1,6 @@
 'use client';
 
-import { SpinnerGapIcon, XIcon, CopyIcon, CheckIcon, UserPlusIcon, SignOutIcon, TrashIcon, UsersIcon, CrownIcon } from '@phosphor-icons/react';
+import { SpinnerGapIcon, XIcon, CopyIcon, CheckIcon, UserPlusIcon, SignOutIcon, TrashIcon, UsersIcon, CrownIcon, QrCodeIcon } from '@phosphor-icons/react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useLocale, useTranslations } from 'next-intl';
@@ -15,6 +15,7 @@ import type { GroupId } from '@microchat/client';
 import { Button } from '@/components/Button';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { usePresenceStore } from '@/stores/presence-store';
+import InviteQRDialog from '@/components/InviteQRDialog';
 
 interface GroupSettingsProps {
   groupId: GroupId;
@@ -43,6 +44,7 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
   const [copied, setCopied] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showQRDialog, setShowQRDialog] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
   // Reset state when dialog opens
@@ -121,8 +123,9 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
   }
 
   return (
-    <Dialog.Root open={open} onOpenChange={(isOpen) => { if (!isOpen && !actionLoading) onClose(); }}>
-      <AnimatePresence>
+    <>
+      <Dialog.Root open={open} onOpenChange={(isOpen) => { if (!isOpen && !actionLoading) onClose(); }}>
+        <AnimatePresence>
         {open && (
           <Dialog.Portal forceMount>
             {/* Backdrop */}
@@ -303,6 +306,14 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
                                 )}
                               </Button>
                             </div>
+                            <button
+                              type="button"
+                              onClick={() => setShowQRDialog(true)}
+                              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium bg-(--accent) text-white hover:bg-(--accent)/90 transition-colors"
+                            >
+                              <QrCodeIcon className="w-3.5 h-3.5" />
+                              {t('showQRCode')}
+                            </button>
                             {copied && (
                               <p className="text-xs text-green-600 dark:text-green-400">
                                 {t('linkCopied')}
@@ -408,7 +419,14 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
           </Dialog.Portal>
         )}
       </AnimatePresence>
-    </Dialog.Root>
+      </Dialog.Root>
+
+      <InviteQRDialog
+        open={showQRDialog}
+        onClose={() => setShowQRDialog(false)}
+        inviteLink={inviteLink || ''}
+      />
+    </>
   );
 }
 

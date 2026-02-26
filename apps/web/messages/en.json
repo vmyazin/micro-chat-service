@@ -48,6 +48,7 @@
     "copied": "Copied!",
     "copy": "Copy",
     "linkCopied": "Link copied to clipboard!",
+    "showQRCode": "Show QR Code",
     "leaveGroup": "Leave Group",
     "leaveConfirm": "Are you sure you want to leave this group?",
     "cancel": "Cancel",
@@ -58,6 +59,15 @@
     "failedCreateInvite": "Failed to create invite",
     "failedLeaveGroup": "Failed to leave group",
     "failedDeleteGroup": "Failed to delete group"
+  },
+  "InviteQRDialog": {
+    "title": "Invite via QR Code",
+    "description": "Scan this QR code to share it with your friend.",
+    "groupLabel": "Group",
+    "copyImage": "Copy Image",
+    "download": "Download",
+    "copied": "Copied!",
+    "downloaded": "Downloaded!"
   },
   "NewGroupDialog": {
     "title": "Create New Group",
