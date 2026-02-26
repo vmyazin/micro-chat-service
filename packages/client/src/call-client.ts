@@ -88,6 +88,8 @@ class CallSessionImpl implements CallSession {
   private iceServers: RTCIceServer[];
   private answerProcessed = false;
   private disconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private connectingTimer: ReturnType<typeof setTimeout> | null = null;
+  private iceRestartAttempted = false;
   private pendingIceCandidates: RTCIceCandidateInit[] = [];
 
   constructor(options: {
@@ -139,7 +141,54 @@ class CallSessionImpl implements CallSession {
         );
         this.hangup();
       }
-    }, 8000);
+    }, 15_000);
+  }
+
+  private scheduleConnectingTimeout(): void {
+    this.clearConnectingTimer();
+    this.connectingTimer = setTimeout(() => {
+      this.connectingTimer = null;
+      if (this._state === 'connecting' || this._state === 'ringing-out') {
+        console.warn('[call] Connection setup timed out after 30s');
+        this.hangup();
+      }
+    }, 30_000);
+  }
+
+  private clearConnectingTimer(): void {
+    if (this.connectingTimer) {
+      clearTimeout(this.connectingTimer);
+      this.connectingTimer = null;
+    }
+  }
+
+  private attemptIceRestart(): void {
+    if (!this.pc || this.iceRestartAttempted) return;
+    if (this.direction !== 'outgoing') return;
+
+    this.iceRestartAttempted = true;
+    console.log('[call] Attempting ICE restart');
+
+    this.pc
+      .createOffer({ iceRestart: true })
+      .then((offer) => this.pc?.setLocalDescription(offer))
+      .then(() => {
+        if (!this.pc?.localDescription?.sdp) return;
+        this.wsClient.sendEvent({
+          type: 'callOffer',
+          groupId: this.groupId,
+          callId: this.callId,
+          toUserId: (this.remoteUserId ?? '') as UserId,
+          fromUserId: null,
+          sealedSender: undefined,
+          sdp: this.pc.localDescription.sdp,
+          timestamp: new Date().toISOString(),
+        });
+      })
+      .catch((err) => {
+        console.error('[call] ICE restart failed:', err);
+        this.hangup();
+      });
   }
 
   private handleConnectionStateChange(): void {
@@ -148,6 +197,8 @@ class CallSessionImpl implements CallSession {
 
     if (state === 'connected') {
       this.clearDisconnectTimer();
+      this.clearConnectingTimer();
+      this.iceRestartAttempted = false;
       this.setState('active');
       return;
     }
@@ -161,7 +212,14 @@ class CallSessionImpl implements CallSession {
 
     this.clearDisconnectTimer();
 
-    if (state === 'failed' || state === 'closed') {
+    if (state === 'failed') {
+      // Try ICE restart before giving up (only caller initiates)
+      if (!this.iceRestartAttempted && this.direction === 'outgoing') {
+        this.attemptIceRestart();
+        return;
+      }
+      this.hangup();
+    } else if (state === 'closed') {
       this.hangup();
     }
   }
@@ -273,6 +331,8 @@ class CallSessionImpl implements CallSession {
         sdp: offer.sdp,
         timestamp: new Date().toISOString(),
       });
+
+      this.scheduleConnectingTimeout();
     } catch (err) {
       console.error('[call] Failed to start outgoing call:', err);
       this.cleanup();
@@ -387,6 +447,8 @@ class CallSessionImpl implements CallSession {
         sealedSender: undefined,
         sdp: answer.sdp,
       });
+
+      this.scheduleConnectingTimeout();
     } catch (err) {
       console.error('[call] Failed to accept call:', err);
       this.hangup();
@@ -514,6 +576,7 @@ class CallSessionImpl implements CallSession {
     this.setState('ended');
 
     this.clearDisconnectTimer();
+    this.clearConnectingTimer();
 
     // Stop all tracks
     for (const track of this.localStream?.getTracks() ?? []) {
@@ -532,8 +595,9 @@ class CallSessionImpl implements CallSession {
       this.pc = null;
     }
 
-    // Reset answer processed flag
+    // Reset flags
     this.answerProcessed = false;
+    this.iceRestartAttempted = false;
     this.pendingIceCandidates = [];
   }
 }
