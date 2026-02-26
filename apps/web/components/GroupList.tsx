@@ -1,6 +1,7 @@
 'use client';
 
 import { PlusIcon, SpinnerGapIcon } from '@phosphor-icons/react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useGroups } from '@/hooks/useGroups';
 import { Button } from '@/components/Button';
@@ -14,6 +15,7 @@ interface GroupListProps {
 
 export default function GroupList({ onNewGroup, selectedGroupId }: GroupListProps) {
   const router = useRouter();
+  const t = useTranslations('GroupList');
   const { data: groups, isLoading, error, refetch } = useGroups();
   const onlineUsersByGroup = usePresenceStore((state) => state.onlineUsersByGroup);
 
@@ -34,7 +36,7 @@ export default function GroupList({ onNewGroup, selectedGroupId }: GroupListProp
         className="w-full mb-4 flex items-center justify-center ga"
       >
         <PlusIcon className="w-5 h-5" />
-        New Group
+        {t('newGroup')}
       </Button>
 
       {isLoading && (
@@ -50,14 +52,14 @@ export default function GroupList({ onNewGroup, selectedGroupId }: GroupListProp
             onClick={() => refetch()}
             className="block mt-2 text-xs underline hover:no-underline"
           >
-            Retry
+            {t('retry')}
           </Button>
         </div>
       )}
 
       {!isLoading && !error && (!groups || groups.length === 0) && (
         <p className="text-sm text-(--text-muted) text-center py-4">
-          No groups yet. Create one to get started!
+          {t('noGroups')}
         </p>
       )}
 
@@ -71,7 +73,7 @@ export default function GroupList({ onNewGroup, selectedGroupId }: GroupListProp
                 title={decodeGroupName(group.encryptedName)}
                 description={group.memberCount < 4 && group.memberNames.length > 0
                   ? group.memberNames.join(', ')
-                  : `${group.memberCount} member${group.memberCount !== 1 ? 's' : ''}`}
+                  : `${group.memberCount} ${group.memberCount !== 1 ? t('members') : t('member')}`}
                 isOnline={
                   group.memberCount <= 2 
                     ? (onlineUsersByGroup[group.groupId]?.size ?? 0) > 0

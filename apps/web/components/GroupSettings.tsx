@@ -1,6 +1,7 @@
 'use client';
 
 import { SpinnerGapIcon, XIcon } from '@phosphor-icons/react';
+import { useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMembers } from '@/hooks/useMembers';
@@ -20,6 +21,7 @@ interface GroupSettingsProps {
 
 export default function GroupSettings({ groupId, open, onClose }: GroupSettingsProps) {
   const router = useRouter();
+  const t = useTranslations('GroupSettings');
   
   // Server state with React Query
   const { data: members = [], isLoading: loading, error: membersError } = useMembers(groupId);
@@ -71,7 +73,7 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
       const link = `${window.location.origin}/invite/${result.code}`;
       setInviteLink(link);
     } catch (err) {
-      setLocalError(err instanceof Error ? err.message : 'Failed to create invite');
+      setLocalError(err instanceof Error ? err.message : t('failedCreateInvite'));
     }
   }
 
@@ -98,7 +100,7 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
       onClose();
       router.push('/chat');
     } catch (err) {
-      setLocalError(err instanceof Error ? err.message : 'Failed to leave group');
+      setLocalError(err instanceof Error ? err.message : t('failedLeaveGroup'));
     }
   }
 
@@ -110,7 +112,7 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
       onClose();
       router.push('/chat');
     } catch (err) {
-      setLocalError(err instanceof Error ? err.message : 'Failed to delete group');
+      setLocalError(err instanceof Error ? err.message : t('failedDeleteGroup'));
     }
   }
 
@@ -124,7 +126,7 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
           onEscapeKeyDown={(e) => { if (actionLoading) e.preventDefault(); }}
         >
           <div className="flex justify-between items-center mb-4">
-            <Dialog.Title className="text-xl font-bold">Group Settings</Dialog.Title>
+            <Dialog.Title className="text-xl font-bold">{t('title')}</Dialog.Title>
             <Dialog.Description className="sr-only">Manage your group members and configurations.</Dialog.Description>
           <Button variant="ghost"
             onClick={onClose}
@@ -142,7 +144,7 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
         )}
 
         <div className="mb-6">
-          <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-3">Members</h3>
+          <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-3">{t('members')}</h3>
           {loading ? (
             <div className="flex justify-center py-4">
               <LoadingSpinner />
@@ -161,11 +163,11 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
                     />
                     <span className="font-medium">{member.displayName}</span>
                     <span className="sr-only">
-                      {onlineUsers?.has(member.userId) ? 'Online' : 'Offline'}
+                      {onlineUsers?.has(member.userId) ? t('online') : t('offline')}
                     </span>
                     {member.isOwner && (
                       <span className="ml-2 text-xs px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 rounded">
-                        Owner
+                        {t('owner')}
                       </span>
                     )}
                   </div>
@@ -182,7 +184,7 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
             className="w-full disabled:opacity-50 flex items-center justify-center ga"
           >
             {createInvite.isPending && <LoadingSpinner />}
-            Invite Member
+            {t('inviteMember')}
           </Button>
 
           {inviteLink && (
@@ -200,12 +202,12 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
                   onClick={handleCopyLink}
                   className="text-sm"
                 >
-                  {copied ? 'Copied!' : 'Copy'}
+                  {copied ? t('copied') : t('copy')}
                 </Button>
               </div>
               {copied && (
                 <p className="text-sm text-green-600 dark:text-green-400">
-                  Link copied to clipboard!
+                  {t('linkCopied')}
                 </p>
               )}
             </div>
@@ -219,12 +221,12 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
               disabled={actionLoading}
               className="w-full p-3 border-base text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20 disabled:opacity-50"
             >
-              Leave Group
+              {t('leaveGroup')}
             </Button>
           ) : (
             <div className="p-3 border-base bg-orange-50 dark:bg-orange-900/20">
               <p className="text-sm text-orange-700 dark:text-orange-400 mb-3">
-                Are you sure you want to leave this group?
+                {t('leaveConfirm')}
               </p>
               <div className="flex gap-2">
                 <Button variant="ghost"
@@ -232,7 +234,7 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
                   disabled={actionLoading}
                   className="flex-1 p-2 border-base hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50"
                 >
-                  Cancel
+                  {t('cancel')}
                 </Button>
                 <Button variant="warning"
                   onClick={handleLeave}
@@ -240,7 +242,7 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
                   className="flex-1 border-base flex items-center justify-center ga"
                 >
                   {leaveGroup.isPending && <LoadingSpinner />}
-                  Leave
+                  {t('leave')}
                 </Button>
               </div>
             </div>
@@ -254,12 +256,12 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
                   disabled={actionLoading}
                   className="w-full p-3 border-base text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50"
                 >
-                  Delete Group
+                  {t('deleteGroup')}
                 </Button>
               ) : (
                 <div className="p-3 border-base bg-red-50 dark:bg-red-900/20">
                   <p className="text-sm text-red-700 dark:text-red-400 mb-3">
-                    Are you sure? This will permanently delete the group and all messages.
+                    {t('deleteConfirm')}
                   </p>
                   <div className="flex gap-2">
                     <Button variant="ghost"
@@ -267,7 +269,7 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
                       disabled={actionLoading}
                       className="flex-1 p-2 border-base hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50"
                     >
-                      Cancel
+                      {t('cancel')}
                     </Button>
                     <Button variant="danger"
                       onClick={handleDelete}
@@ -275,7 +277,7 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
                       className="flex-1 border-base flex items-center justify-center ga"
                     >
                       {deleteGroup.isPending && <LoadingSpinner />}
-                      Delete
+                      {t('delete')}
                     </Button>
                   </div>
                 </div>

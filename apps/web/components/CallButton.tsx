@@ -1,6 +1,7 @@
 'use client';
 
 import { MicrophoneIcon, MicrophoneSlashIcon, PhoneIcon, PhoneXIcon } from '@phosphor-icons/react';
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import type { CallSession, CallState, GroupId, MicroChatClient, UserId } from '@microchat/client';
 import { Button } from './Button';
@@ -26,6 +27,7 @@ export function CallButton({
   calling = false,
   activeSession,
 }: CallButtonProps) {
+  const t = useTranslations('CallButton');
   const [memberCount, setMemberCount] = useState<number | null>(
     memberCountProp ?? null,
   );
@@ -139,7 +141,7 @@ export function CallButton({
 
   if (activeSession) {
     const isLive = callState === 'active';
-    const statusLabel = isLive ? 'Live' : 'Connecting...';
+    const statusLabel = isLive ? t('live') : t('connecting');
     const statusTone = isLive
       ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
       : 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300';
@@ -156,7 +158,7 @@ export function CallButton({
           }}
           className={`px-3 py-2 border-base transition-colors flex items-center gap-2 ${isMuted ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50' : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
           aria-label={isMuted ? 'Unmute' : 'Mute'}
-          title={isMuted ? 'Unmute microphone' : 'Mute microphone'}
+          title={isMuted ? t('unmuteMicrophone') : t('muteMicrophone')}
         >
           {isMuted ? (
             <MicrophoneSlashIcon className="w-5 h-5" />
@@ -164,7 +166,7 @@ export function CallButton({
             <MicrophoneIcon className="w-5 h-5" />
           )}
           <span className="text-sm font-medium">
-            {isMuted ? 'Muted' : 'Mute'}
+            {isMuted ? t('muted') : t('mute')}
           </span>
         </button>
         <div
@@ -194,10 +196,10 @@ export function CallButton({
           onClick={() => activeSession.hangup()}
           className="px-3 py-2 border-base bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 flex items-center justify-center gap-2 transition-all duration-300 ease-in-out"
           aria-label="Hang up"
-          title="End call"
+          title={t('endCall')}
         >
           <PhoneXIcon aria-hidden="true" className="w-5 h-5 shrink-0" />
-          <span className="text-sm font-medium">End</span>
+          <span className="text-sm font-medium">{t('end')}</span>
         </button>
       </>
     );
@@ -215,7 +217,7 @@ export function CallButton({
           className="h-3 w-3 rounded-full border-2 border-current border-t-transparent animate-spin"
           aria-hidden="true"
         />
-        Connecting...
+        {t('connecting')}
       </button>
     );
   }
@@ -238,7 +240,7 @@ export function CallButton({
       aria-label="Start call"
     >
       <PhoneIcon aria-hidden="true" className="w-5 h-5" />
-      <span className="text-sm font-semibold">Call</span>
+      <span className="text-sm font-semibold">{t('call')}</span>
     </Button>
   );
 }

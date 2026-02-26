@@ -1,0 +1,96 @@
+{
+  "ChatLayout": {
+    "homePage": "Главная",
+    "signOut": "Выйти",
+    "signingOut": "Выход..."
+  },
+  "GroupChat": {
+    "groupChat": "Групповой чат",
+    "liveCall": "Звонок",
+    "connectingCall": "Соединение",
+    "with": "с",
+    "memberOnline": "участник в сети",
+    "membersOnline": "участников в сети",
+    "online": "В сети",
+    "offline": "Не в сети",
+    "reconnecting": "Переподключение к обновлениям...",
+    "failedToSend": "Не удалось отправить сообщение",
+    "dismiss": "Скрыть",
+    "noMessages": "Пока нет сообщений. Начните общение!",
+    "selectGroup": "Выберите группу для просмотра сообщений",
+    "joining": "Вступление в группу...",
+    "retry": "Повторить",
+    "today": "Сегодня",
+    "yesterday": "Вчера",
+    "anonymous": "Аноним",
+    "deletePrompt": "Удалить это сообщение?",
+    "deleting": "Удаление...",
+    "delete": "Удалить",
+    "cancel": "Отмена",
+    "highlight": "Выделить",
+    "unhighlight": "Снять выделение",
+    "deleteFailed": "Не удалось удалить сообщение"
+  },
+  "GroupList": {
+    "newGroup": "Новая группа",
+    "retry": "Повторить",
+    "noGroups": "Пока нет групп. Создайте первую!",
+    "member": "участник",
+    "members": "участников"
+  },
+  "GroupSettings": {
+    "title": "Настройки группы",
+    "members": "Участники",
+    "online": "В сети",
+    "offline": "Не в сети",
+    "owner": "Владелец",
+    "inviteMember": "Пригласить участника",
+    "copied": "Скопировано!",
+    "copy": "Копировать",
+    "linkCopied": "Ссылка скопирована!",
+    "leaveGroup": "Покинуть группу",
+    "leaveConfirm": "Вы уверены, что хотите покинуть эту группу?",
+    "cancel": "Отмена",
+    "leave": "Покинуть",
+    "deleteGroup": "Удалить группу",
+    "deleteConfirm": "Вы уверены? Группа и все сообщения будут удалены безвозвратно.",
+    "delete": "Удалить",
+    "failedCreateInvite": "Не удалось создать приглашение",
+    "failedLeaveGroup": "Не удалось покинуть группу",
+    "failedDeleteGroup": "Не удалось удалить группу"
+  },
+  "NewGroupDialog": {
+    "title": "Создать группу",
+    "groupNameLabel": "Название группы",
+    "groupNamePlaceholder": "Введите название группы...",
+    "cancel": "Отмена",
+    "createAndCopy": "Создать и скопировать ссылку",
+    "enterGroupName": "Введите название группы",
+    "failedCreateGroup": "Не удалось создать группу"
+  },
+  "MessageInput": {
+    "previewImage": "Предпросмотр изображения",
+    "send": "Отправить",
+    "placeholder": "Напишите сообщение..."
+  },
+  "CallButton": {
+    "live": "На связи",
+    "connecting": "Соединение...",
+    "unmuteMicrophone": "Включить микрофон",
+    "muteMicrophone": "Выключить микрофон",
+    "muted": "Выкл.",
+    "mute": "Выкл. микр.",
+    "endCall": "Завершить звонок",
+    "end": "Конец",
+    "call": "Позвонить"
+  },
+  "IncomingCall": {
+    "unknown": "Неизвестный",
+    "incomingCall": "Входящий звонок...",
+    "decline": "Отклонить",
+    "accept": "Принять"
+  },
+  "ImageMessage": {
+    "failedToLoad": "Не удалось загрузить изображение"
+  }
+}

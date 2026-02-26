@@ -1,6 +1,7 @@
 'use client';
 
 import { PhoneIcon, PhoneXIcon } from '@phosphor-icons/react';
+import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import type { CallSession } from '@microchat/client';
 import { Button } from '@/components/Button';
@@ -13,6 +14,7 @@ interface IncomingCallModalProps {
 }
 
 export function IncomingCallModal({ session, onAccept, onReject }: IncomingCallModalProps) {
+  const t = useTranslations('IncomingCall');
   const [elapsed, setElapsed] = useState(0);
   // Guards against accept() being invoked more than once (e.g. double-click or
   // effect re-run before session is nulled out by the parent).
@@ -81,7 +83,7 @@ export function IncomingCallModal({ session, onAccept, onReject }: IncomingCallM
   if (!session) return null;
 
   const callerName =
-    session.remoteUserName ?? session.remoteUserId ?? 'Unknown';
+    session.remoteUserName ?? session.remoteUserId ?? t('unknown');
 
   return (
     <Dialog.Root open={!!session}>
@@ -104,7 +106,7 @@ export function IncomingCallModal({ session, onAccept, onReject }: IncomingCallM
               {callerName}
             </h2>
             <p className="call-status-text text-[var(--text-muted)]">
-              Incoming call...
+              {t('incomingCall')}
             </p>
             <p className="call-elapsed-time text-sm text-[var(--text-muted)] mt-2">
               {elapsed}s
@@ -121,7 +123,7 @@ export function IncomingCallModal({ session, onAccept, onReject }: IncomingCallM
               className="call-action-reject flex-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 font-semibold hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors flex items-center justify-center ga"
             >
               <PhoneXIcon className="call-action-icon w-5 h-5" />
-              Decline
+              {t('decline')}
             </Button>
             <Button variant="ghost"
               type="button"
@@ -134,7 +136,7 @@ export function IncomingCallModal({ session, onAccept, onReject }: IncomingCallM
               className="call-action-accept flex-1 bg-green-600 text-white font-semibold hover:bg-green-700 transition-colors flex items-center justify-center ga"
             >
               <PhoneIcon className="call-action-icon w-5 h-5" />
-              Accept
+              {t('accept')}
             </Button>
           </div>
         </Dialog.Content>

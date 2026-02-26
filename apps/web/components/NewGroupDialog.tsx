@@ -1,6 +1,7 @@
 'use client';
 
 import { SpinnerGapIcon } from '@phosphor-icons/react';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCreateGroup } from '@/hooks/useCreateGroup';
@@ -15,6 +16,7 @@ interface NewGroupDialogProps {
 
 export default function NewGroupDialog({ open, onClose, onGroupCreated }: NewGroupDialogProps) {
   const router = useRouter();
+  const t = useTranslations('NewGroupDialog');
   const [groupName, setGroupName] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
   
@@ -24,7 +26,7 @@ export default function NewGroupDialog({ open, onClose, onGroupCreated }: NewGro
     e.preventDefault();
 
     if (!groupName.trim()) {
-      setLocalError('Please enter a group name');
+      setLocalError(t('enterGroupName'));
       return;
     }
 
@@ -63,7 +65,7 @@ export default function NewGroupDialog({ open, onClose, onGroupCreated }: NewGro
       onClose();
       router.push(`/chat/${result.groupId}`);
     } catch (err) {
-      setLocalError(err instanceof Error ? err.message : 'Failed to create group');
+      setLocalError(err instanceof Error ? err.message : t('failedCreateGroup'));
     }
   }
 
@@ -80,7 +82,7 @@ export default function NewGroupDialog({ open, onClose, onGroupCreated }: NewGro
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/50 z-50" />
         <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[95vw] max-w-md card-base bg-[var(--background)] p-6 focus:outline-none">
-          <Dialog.Title className="text-xl font-bold mb-4">Create New Group</Dialog.Title>
+          <Dialog.Title className="text-xl font-bold mb-4">{t('title')}</Dialog.Title>
           <Dialog.Description className="sr-only">Enter a name for your new group.</Dialog.Description>
 
           <form onSubmit={handleSubmit}>
@@ -89,14 +91,14 @@ export default function NewGroupDialog({ open, onClose, onGroupCreated }: NewGro
                 htmlFor="groupName"
                 className="block text-sm font-medium mb-2"
               >
-                Group Name
+                {t('groupNameLabel')}
               </label>
               <input
                 id="groupName"
                 type="text"
                 value={groupName}
                 onChange={(e) => setGroupName(e.target.value)}
-                placeholder="Enter group name..."
+                placeholder={t('groupNamePlaceholder')}
                 disabled={createGroup.isPending}
                 className="w-full p-3 border-base bg-[var(--background)] focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
                 autoFocus
@@ -116,7 +118,7 @@ export default function NewGroupDialog({ open, onClose, onGroupCreated }: NewGro
                 onClick={handleClose}
                 disabled={createGroup.isPending}
               >
-                Cancel
+                {t('cancel')}
               </Button>
               <Button
                 type="submit"
@@ -124,7 +126,7 @@ export default function NewGroupDialog({ open, onClose, onGroupCreated }: NewGro
                 disabled={createGroup.isPending || !groupName.trim()}
               >
                 {createGroup.isPending && <LoadingSpinner />}
-                Create & Copy Link
+                {t('createAndCopy')}
               </Button>
             </div>
           </form>
