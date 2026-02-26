@@ -80,7 +80,7 @@ export default async function RootLayout({
   const dir = getDirection(locale);
 
   return (
-    <html lang={locale} dir={dir}>
+    <html lang={locale} dir={dir} suppressHydrationWarning>
       <head>
         {/* Inline script runs synchronously before paint to apply the saved
             theme class, preventing a flash of the wrong color scheme. */}
