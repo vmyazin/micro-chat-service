@@ -231,3 +231,59 @@ idle → ringing-in  → ended                         (incoming, rejected/misse
 - **Active Call Morphing:** Use Framer Motion's `layoutId` to transform the large incoming call modal down into the compact active call status bar when a call is accepted with a fluid structural morph.
 - **Call End Animation:** Seamlessly transform the status bar from the active call state back to the default chat header, using an elegant shrink, slide-up, and fade-out sequence.
 
+## Message Delivery & Read Receipts
+
+**Status:** not implemented.
+
+Telegram-style double-check indicators showing whether a message has been delivered to the recipient's device and whether they have actually read it.
+
+### Visual Indicators
+
+- **Sent (single check):** Message reached the server. Shown immediately after the server acknowledges the message.
+- **Delivered (double check):** Message was delivered to the recipient's device via WebSocket. Server sends a `messageDelivered` event back to the sender when the recipient's client confirms receipt.
+- **Read (double check, colored):** Recipient scrolled the message into view. Client sends a `messageRead` event; sender's check marks turn blue/accent-colored.
+- **Group chats:** Show delivered when **all** members have received it, and read when **all** members have read it. Optionally show per-member receipt detail on long-press/click.
+
+### Implementation Path
+
+**1. Shared Types (`packages/shared/src/types.ts`)**
+
+New WebSocket event variants:
+
+```ts
+| { type: 'messageDelivered'; groupId: GroupId; messageId: string; userId: UserId; timestamp: string }
+| { type: 'messageRead';      groupId: GroupId; messageId: string; userId: UserId; timestamp: string }
+| { type: 'receiptUpdate';    groupId: GroupId; messageId: string; status: 'delivered' | 'read'; count: number; total: number }
+```
+
+**2. Server (`packages/server`)**
+
+- Add `message_receipts` D1 table: `(message_id, user_id, delivered_at, read_at)` — tracks per-user delivery and read state.
+- On `messageDelivered` / `messageRead` from a client, upsert the receipt row and broadcast a `receiptUpdate` summary to the sender (aggregated count vs total members).
+- Receipts are lightweight — no encryption needed since they contain only message IDs and timestamps (no content).
+
+**3. Client SDK (`packages/client`)**
+
+- On receiving a message via WebSocket, automatically send `messageDelivered` back to the server.
+- Expose `markAsRead(groupId, messageIds)` for the UI to call when messages scroll into the viewport.
+- Track receipt state per message in the local query cache.
+
+**4. Web UI**
+
+| Component | Change |
+|-----------|--------|
+| `MessageBubble` | Render check marks next to timestamp on own messages: single gray (sent), double gray (delivered), double accent (read) |
+| `ConversationPage` | Use `IntersectionObserver` on message elements to detect visibility and batch `markAsRead` calls |
+| Zustand/React Query | Cache receipt state; update optimistically on send, then reconcile with server events |
+
+### Privacy Considerations
+
+- Read receipts should be opt-out per user (setting stored server-side). If disabled, that user's client never sends `messageRead` events, and their messages show delivery status only (no read marks).
+- Delivery receipts are always sent (not optional) since they don't reveal reading intent.
+
+### Out of Scope
+
+- Typing indicators ("User is typing...")
+- Message editing receipts
+- Delivery/read timestamps visible to the user (just the check marks)
+
