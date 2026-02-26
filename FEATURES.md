@@ -291,3 +291,15 @@ New WebSocket event variants:
 
 - Show as disabled if more than one user in chat
 - Show tooltip on hover with reason why it's disabled
+
+## Message Lifecycle Countdown
+
+- Show countdown timer over a message bubble on hover to indicate how much time left before the message is deleted.
+
+## QR Code For Invites
+
+- Generate QR code for group invites and display in a dialog
+- Add option to copy invite image to clipboard
+- Apply logo branding to QR code
+
+
