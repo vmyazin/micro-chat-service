@@ -15,6 +15,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
+import { NerdThreatDemo } from './demos/NerdThreatDemo';
 
 type Mode = 'layman' | 'nerd';
 
@@ -282,7 +283,7 @@ function NerdContent() {
           </div>
         </div>
         <div className="bg-slate-900 rounded-3xl p-8 shadow-2xl flex items-center justify-center w-full min-h-[500px] border border-slate-800">
-          <NerdThreatDiagram />
+          <NerdThreatDemo />
         </div>
       </section>
 
@@ -529,64 +530,6 @@ function LaymanDataDemo() {
             )}
           </motion.div>
         ))}
-      </div>
-    </div>
-  );
-}
-
-function NerdThreatDiagram() {
-  return (
-    <div className="relative w-full h-full flex flex-col items-center justify-center p-8 space-y-8">
-      {/* Client (Protected) */}
-      <div className="flex items-center gap-6">
-        <div className="w-16 h-16 bg-green-500/20 border-2 border-green-500 rounded-lg flex items-center justify-center">
-          <ShieldIcon className="w-8 h-8 text-green-400" />
-        </div>
-        <div className="text-left">
-          <div className="text-sm font-mono text-green-400">CLIENT</div>
-          <div className="text-xs text-slate-400">Keys, Decryption</div>
-        </div>
-      </div>
-
-      {/* Attack vectors (blocked) */}
-      <div className="flex flex-wrap justify-center gap-4">
-        {['Network Tap', 'Server Breach', 'Insider Threat'].map((threat) => (
-          <motion.div
-            key={threat}
-            className="relative"
-            animate={{
-              x: [0, 5, 0],
-              opacity: [0.5, 1, 0.5],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              repeatDelay: 1,
-            }}
-          >
-            <div className="px-4 py-2 bg-red-500/20 border border-red-500 rounded text-xs font-mono text-red-400">
-              {threat}
-            </div>
-            <motion.div
-              className="absolute -right-2 -top-2"
-              animate={{ rotate: [0, 10, 0] }}
-              transition={{ duration: 0.5, repeat: Infinity }}
-            >
-              <XCircleIcon className="w-5 h-5 text-red-500" />
-            </motion.div>
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Server (Untrusted) */}
-      <div className="flex items-center gap-6">
-        <div className="w-16 h-16 bg-slate-700 border-2 border-slate-600 rounded-lg flex items-center justify-center">
-          <HardDrivesIcon className="w-8 h-8 text-slate-400" />
-        </div>
-        <div className="text-left">
-          <div className="text-sm font-mono text-slate-400">SERVER</div>
-          <div className="text-xs text-slate-500">Zero Knowledge</div>
-        </div>
       </div>
     </div>
   );

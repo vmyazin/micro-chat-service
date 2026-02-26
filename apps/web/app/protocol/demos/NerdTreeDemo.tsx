@@ -130,7 +130,7 @@ export function NerdTreeDemo() {
         </defs>
 
         {/* Base edges — draw in on mount */}
-        {BASE_EDGES.map((d) => (
+        {BASE_EDGES.map((d, i) => (
           <motion.path
             key={d}
             d={d}
