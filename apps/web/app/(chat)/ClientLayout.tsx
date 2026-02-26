@@ -18,7 +18,7 @@ import { ActiveCallBar } from '@/components/ActiveCallBar';
 import { Button } from '@/components/Button';
 import { CallFaviconUpdater } from '@/components/CallFaviconUpdater';
 import GroupList from '@/components/GroupList';
-import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { AppControls } from '@/components/AppControls';
 import NewGroupDialog from '@/components/NewGroupDialog';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useWebSocket } from '@/hooks/useWebSocket';
@@ -126,7 +126,7 @@ export default function ChatLayout({
               <a href="/" className="text-sm font-medium hover:underline">
                 {t('homePage')}
               </a>
-              <LanguageSwitcher />
+              <AppControls />
             </div>
             <div className="flex items-center justify-between gap-4">
               {currentUser?.displayName && (

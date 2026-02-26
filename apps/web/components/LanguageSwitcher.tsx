@@ -35,7 +35,7 @@ export function LanguageSwitcher() {
           className="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 p-2 h-auto"
           aria-label="Select language"
         >
-          <GlobeIcon className="w-5 h-5" />
+          <GlobeIcon weight="regular" className="w-[18px] h-[18px]" />
         </Button>
       </Popover.Trigger>
 
