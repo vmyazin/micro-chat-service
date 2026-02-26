@@ -15,8 +15,8 @@ import {
 } from '@phosphor-icons/react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/Button';
 import { CallButton } from '@/components/CallButton';
@@ -441,9 +441,7 @@ export default function ConversationPage() {
   if (!groupId) {
     return (
       <div className="flex items-center justify-center h-full">
-        <p className="text-gray-500 dark:text-gray-400">
-          {t('selectGroup')}
-        </p>
+        <p className="text-gray-500 dark:text-gray-400">{t('selectGroup')}</p>
       </div>
     );
   }
@@ -565,7 +563,10 @@ export default function ConversationPage() {
                     aria-hidden="true"
                   />
                   <span>
-                    {onlineUserCount} {onlineUserCount === 1 ? t('memberOnline') : t('membersOnline')}
+                    {onlineUserCount}{' '}
+                    {onlineUserCount === 1
+                      ? t('memberOnline')
+                      : t('membersOnline')}
                   </span>
                 </>
               )}
@@ -606,9 +607,7 @@ export default function ConversationPage() {
           )}
           {sendMessage.isError && (
             <div className="px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 text-sm text-center">
-              <span>
-                {sendMessage.error?.message || t('failedToSend')}
-              </span>
+              <span>{sendMessage.error?.message || t('failedToSend')}</span>
               <Button
                 variant="ghost"
                 type="button"

@@ -11,12 +11,12 @@ import {
 } from '@phosphor-icons/react';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { useState } from 'react';
 import { Button } from '@/components/Button';
 import { CallFaviconUpdater } from '@/components/CallFaviconUpdater';
 import GroupList from '@/components/GroupList';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import NewGroupDialog from '@/components/NewGroupDialog';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useWebSocket } from '@/hooks/useWebSocket';
