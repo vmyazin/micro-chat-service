@@ -289,8 +289,11 @@ New WebSocket event variants:
 
 ## Call Button
 
-- Show as disabled if more than one user in chat
-- Show tooltip on hover with reason why it's disabled
+**Status:** Completed (Feb 26, 2026)
+
+- Show as disabled with reduced opacity in group chats (>2 members)
+- Native tooltip on hover explains: "Calls are only available in 1-on-1 chats"
+- Translations in English, Russian, and Farsi
 
 ## Message Lifecycle Countdown
 

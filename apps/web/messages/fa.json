@@ -92,7 +92,8 @@
     "mute": "بی‌صدا",
     "endCall": "پایان تماس",
     "end": "پایان",
-    "call": "تماس"
+    "call": "تماس",
+    "groupCallsUnavailable": "تماس فقط در چت‌های یک به یک امکان‌پذیر است"
   },
   "IncomingCall": {
     "unknown": "ناشناس",

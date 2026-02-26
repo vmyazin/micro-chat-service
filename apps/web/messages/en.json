@@ -92,7 +92,8 @@
     "mute": "Mute",
     "endCall": "End call",
     "end": "End",
-    "call": "Call"
+    "call": "Call",
+    "groupCallsUnavailable": "Calls are only available in 1-on-1 chats"
   },
   "IncomingCall": {
     "unknown": "Unknown",

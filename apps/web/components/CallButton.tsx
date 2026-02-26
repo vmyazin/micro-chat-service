@@ -206,7 +206,27 @@ export function CallButton({
 
   // Guards for the "start call" button — only relevant when idle
   if (memberCount === null) return null;
-  if (memberCount > 2) return null;
+
+  const isGroup = memberCount > 2;
+
+  if (isGroup) {
+    return (
+      <Button
+        type="button"
+        variant="success"
+        size="md"
+        className="shadow-sm opacity-40 cursor-not-allowed"
+        aria-label={t('call')}
+        aria-disabled="true"
+        title={t('groupCallsUnavailable')}
+        disabled
+      >
+        <PhoneIcon aria-hidden="true" className="w-5 h-5" />
+        <span className="text-sm font-semibold">{t('call')}</span>
+      </Button>
+    );
+  }
+
   if (!targetUserId) return null;
 
   if (calling) {
