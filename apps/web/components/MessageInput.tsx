@@ -2,6 +2,7 @@
 
 import * as Dialog from '@radix-ui/react-dialog';
 import { MicrophoneIcon, PaperclipIcon, PaperPlaneRightIcon, SmileyIcon, SpinnerGapIcon, XIcon } from '@phosphor-icons/react';
+import { useTranslations } from 'next-intl';
 import { useState, useRef, useEffect } from 'react';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
 import { useImagePicker } from '@/hooks/useImagePicker';
@@ -21,6 +22,7 @@ export function MessageInput({
   onSendImage,
   disabled = false,
 }: MessageInputProps) {
+  const t = useTranslations('MessageInput');
   const [content, setContent] = useState('');
   const [sending, setSending] = useState(false);
   const [pastedImageFile, setPastedImageFile] = useState<File | null>(null);
@@ -202,7 +204,7 @@ export function MessageInput({
             >
               <div className="flex items-center justify-between mb-4">
                 <Dialog.Title className="text-lg font-semibold">
-                  Preview image
+                  {t('previewImage')}
                 </Dialog.Title>
                 <Dialog.Close asChild>
                   <Button variant="ghost"
@@ -236,7 +238,7 @@ export function MessageInput({
                   disabled={sending || imagePicker.compressing}
                   className="bg-(--accent) text-white font-semibold disabled:opacity-50 flex items-center ga"
                 >
-                  {(sending || imagePicker.compressing) ? <SendingSpinner /> : 'Send'}
+                  {(sending || imagePicker.compressing) ? <SendingSpinner /> : t('send')}
                 </Button>
               </div>
             </div>
@@ -252,7 +254,7 @@ export function MessageInput({
           onChange={(e) => setContent(e.target.value)}
           onKeyDown={handleKeyDown}
           onPaste={handlePaste}
-          placeholder="Write your message..."
+          placeholder={t('placeholder')}
           disabled={isDisabled}
           className="flex-1 px-4 py-2 bg-transparent text-gray-700 dark:text-gray-200 border-none focus:outline-none focus:ring-0 disabled:opacity-50 disabled:cursor-not-allowed placeholder:text-gray-400 font-medium"
         />

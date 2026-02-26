@@ -15,6 +15,7 @@ import {
 } from '@phosphor-icons/react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/Button';
@@ -40,6 +41,7 @@ import { usePresenceStore } from '@/stores/presence-store';
 export default function ConversationPage() {
   const params = useParams();
   const groupId = params?.groupId as string | undefined;
+  const t = useTranslations('GroupChat');
 
   const { getClient } = useChatClientStore();
   const client = getClient();
@@ -400,7 +402,7 @@ export default function ConversationPage() {
       setDeleteConfirmId(null);
     } catch (err) {
       console.error('Failed to delete message:', err);
-      alert('Failed to delete message');
+      alert(t('deleteFailed'));
     } finally {
       setDeleting(false);
     }
@@ -429,9 +431,9 @@ export default function ConversationPage() {
     yesterday.setDate(yesterday.getDate() - 1);
 
     if (date.toDateString() === today.toDateString()) {
-      return 'Today';
+      return t('today');
     } else if (date.toDateString() === yesterday.toDateString()) {
-      return 'Yesterday';
+      return t('yesterday');
     }
     return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
   }
@@ -440,7 +442,7 @@ export default function ConversationPage() {
     return (
       <div className="flex items-center justify-center h-full">
         <p className="text-gray-500 dark:text-gray-400">
-          Select a group to view messages
+          {t('selectGroup')}
         </p>
       </div>
     );
@@ -460,7 +462,7 @@ export default function ConversationPage() {
         {joinGroup.isPending || joinGroup.isSuccess ? (
           <div className="flex flex-col items-center gap-3 text-emerald-600 dark:text-emerald-400">
             <LoadingSpinner />
-            <p>Joining group...</p>
+            <p>{t('joining')}</p>
           </div>
         ) : (
           <div className="p-4 border-base bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 max-w-md">
@@ -471,7 +473,7 @@ export default function ConversationPage() {
               onClick={() => refetch()}
               className="text-sm underline hover:no-underline"
             >
-              Retry
+              {t('retry')}
             </Button>
           </div>
         )}
@@ -511,8 +513,8 @@ export default function ConversationPage() {
             )}
             <div className="min-w-0">
               <p className="text-lg font-semibold text-emerald-950 dark:text-emerald-100 truncate">
-                {callState === 'in-call' ? 'Live call' : 'Connecting call'}
-                {targetUserName ? ` with ${targetUserName}` : ''}
+                {callState === 'in-call' ? t('liveCall') : t('connectingCall')}
+                {targetUserName ? ` ${t('with')} ${targetUserName}` : ''}
               </p>
             </div>
           </div>
@@ -545,7 +547,7 @@ export default function ConversationPage() {
         <header className="chat-header shrink-0 z-20 w-full flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-(--surface-elevated)">
           <div className="flex flex-col min-w-0">
             <h1 className="chat-title text-lg font-bold truncate">
-              Group Chat
+              {t('groupChat')}
             </h1>
             <div className="flex items-center gap-1.5 text-xs text-(--text-muted) select-none">
               {(memberCount ?? 0) <= 2 ? (
@@ -554,7 +556,7 @@ export default function ConversationPage() {
                     className={`inline-block w-2 h-2 rounded-full ${isTargetUserOnline ? 'bg-green-500' : 'bg-gray-400 dark:bg-gray-500'}`}
                     aria-hidden="true"
                   />
-                  <span>{isTargetUserOnline ? 'Online' : 'Offline'}</span>
+                  <span>{isTargetUserOnline ? t('online') : t('offline')}</span>
                 </>
               ) : (
                 <>
@@ -563,8 +565,7 @@ export default function ConversationPage() {
                     aria-hidden="true"
                   />
                   <span>
-                    {onlineUserCount}{' '}
-                    {onlineUserCount === 1 ? 'member' : 'members'} online
+                    {onlineUserCount} {onlineUserCount === 1 ? t('memberOnline') : t('membersOnline')}
                   </span>
                 </>
               )}
@@ -600,13 +601,13 @@ export default function ConversationPage() {
         <div className="chat-container min-h-0 h-full flex flex-col">
           {connectionStatus === 'reconnecting' && (
             <div className="px-4 py-2 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 text-sm text-center">
-              Reconnecting to real-time updates...
+              {t('reconnecting')}
             </div>
           )}
           {sendMessage.isError && (
             <div className="px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 text-sm text-center">
               <span>
-                {sendMessage.error?.message || 'Failed to send message'}
+                {sendMessage.error?.message || t('failedToSend')}
               </span>
               <Button
                 variant="ghost"
@@ -614,7 +615,7 @@ export default function ConversationPage() {
                 onClick={() => sendMessage.reset()}
                 className="ml-3 text-xs underline hover:no-underline"
               >
-                Dismiss
+                {t('dismiss')}
               </Button>
             </div>
           )}
@@ -622,7 +623,7 @@ export default function ConversationPage() {
             {visibleMessages.length === 0 ? (
               <div className="flex items-center justify-center h-full">
                 <p className="text-gray-500 dark:text-gray-400 text-center">
-                  No messages yet. Start the conversation!
+                  {t('noMessages')}
                 </p>
               </div>
             ) : (
@@ -733,6 +734,7 @@ function MessageBubble({
   onToggleHighlight,
   isSenderOnline,
 }: MessageBubbleProps) {
+  const t = useTranslations('GroupChat');
   const isSystem = message.senderId === ('system' as UserId);
 
   // System messages: centered pill (always plain text)
@@ -786,7 +788,7 @@ function MessageBubble({
               <div
                 className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-xs font-bold text-white select-none"
                 style={{
-                  background: avatarColor(message.senderName ?? 'Anonymous'),
+                  background: avatarColor(message.senderName ?? t('anonymous')),
                 }}
                 aria-hidden="true"
               >
@@ -809,10 +811,10 @@ function MessageBubble({
               <span
                 className="text-xs font-semibold mb-1 px-1"
                 style={{
-                  color: avatarColor(message.senderName ?? 'Anonymous'),
+                  color: avatarColor(message.senderName ?? t('anonymous')),
                 }}
               >
-                {message.senderName ?? 'Anonymous'}
+                {message.senderName ?? t('anonymous')}
               </span>
             )}
 
@@ -874,7 +876,7 @@ function MessageBubble({
                   <p
                     className={`text-xs mb-2 ${isOwn ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}
                   >
-                    Delete this message?
+                    {t('deletePrompt')}
                   </p>
                   <div className="flex gap-2">
                     <Button
@@ -884,7 +886,7 @@ function MessageBubble({
                       disabled={deleting}
                       className="flex-1 text-xs bg-red-500 text-white hover:bg-red-600 disabled:opacity-50 transition-colors"
                     >
-                      {deleting ? 'Deleting...' : 'Delete'}
+                      {deleting ? t('deleting') : t('delete')}
                     </Button>
                     <Button
                       variant="ghost"
@@ -897,7 +899,7 @@ function MessageBubble({
                           : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
                       }`}
                     >
-                      Cancel
+                      {t('cancel')}
                     </Button>
                   </div>
                 </div>
@@ -914,7 +916,7 @@ function MessageBubble({
             onSelect={onToggleHighlight}
           >
             <HighlighterIcon className="w-4 h-4" />
-            {isHighlighted ? 'Unhighlight' : 'Highlight'}
+            {isHighlighted ? t('unhighlight') : t('highlight')}
           </ContextMenu.Item>
 
           {isOwn && (
@@ -925,7 +927,7 @@ function MessageBubble({
                 onSelect={onRequestDelete}
               >
                 <TrashIcon className="w-4 h-4" />
-                Delete
+                {t('delete')}
               </ContextMenu.Item>
             </>
           )}

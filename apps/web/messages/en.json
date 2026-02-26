@@ -1,0 +1,96 @@
+{
+  "ChatLayout": {
+    "homePage": "Home Page",
+    "signOut": "Sign Out",
+    "signingOut": "Signing out..."
+  },
+  "GroupChat": {
+    "groupChat": "Group Chat",
+    "liveCall": "Live call",
+    "connectingCall": "Connecting call",
+    "with": "with",
+    "memberOnline": "member online",
+    "membersOnline": "members online",
+    "online": "Online",
+    "offline": "Offline",
+    "reconnecting": "Reconnecting to real-time updates...",
+    "failedToSend": "Failed to send message",
+    "dismiss": "Dismiss",
+    "noMessages": "No messages yet. Start the conversation!",
+    "selectGroup": "Select a group to view messages",
+    "joining": "Joining group...",
+    "retry": "Retry",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "anonymous": "Anonymous",
+    "deletePrompt": "Delete this message?",
+    "deleting": "Deleting...",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "highlight": "Highlight",
+    "unhighlight": "Unhighlight",
+    "deleteFailed": "Failed to delete message"
+  },
+  "GroupList": {
+    "newGroup": "New Group",
+    "retry": "Retry",
+    "noGroups": "No groups yet. Create one to get started!",
+    "member": "member",
+    "members": "members"
+  },
+  "GroupSettings": {
+    "title": "Group Settings",
+    "members": "Members",
+    "online": "Online",
+    "offline": "Offline",
+    "owner": "Owner",
+    "inviteMember": "Invite Member",
+    "copied": "Copied!",
+    "copy": "Copy",
+    "linkCopied": "Link copied to clipboard!",
+    "leaveGroup": "Leave Group",
+    "leaveConfirm": "Are you sure you want to leave this group?",
+    "cancel": "Cancel",
+    "leave": "Leave",
+    "deleteGroup": "Delete Group",
+    "deleteConfirm": "Are you sure? This will permanently delete the group and all messages.",
+    "delete": "Delete",
+    "failedCreateInvite": "Failed to create invite",
+    "failedLeaveGroup": "Failed to leave group",
+    "failedDeleteGroup": "Failed to delete group"
+  },
+  "NewGroupDialog": {
+    "title": "Create New Group",
+    "groupNameLabel": "Group Name",
+    "groupNamePlaceholder": "Enter group name...",
+    "cancel": "Cancel",
+    "createAndCopy": "Create & Copy Link",
+    "enterGroupName": "Please enter a group name",
+    "failedCreateGroup": "Failed to create group"
+  },
+  "MessageInput": {
+    "previewImage": "Preview image",
+    "send": "Send",
+    "placeholder": "Write your message..."
+  },
+  "CallButton": {
+    "live": "Live",
+    "connecting": "Connecting...",
+    "unmuteMicrophone": "Unmute microphone",
+    "muteMicrophone": "Mute microphone",
+    "muted": "Muted",
+    "mute": "Mute",
+    "endCall": "End call",
+    "end": "End",
+    "call": "Call"
+  },
+  "IncomingCall": {
+    "unknown": "Unknown",
+    "incomingCall": "Incoming call...",
+    "decline": "Decline",
+    "accept": "Accept"
+  },
+  "ImageMessage": {
+    "failedToLoad": "Image failed to load"
+  }
+}

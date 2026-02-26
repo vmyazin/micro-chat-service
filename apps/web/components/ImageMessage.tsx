@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { XIcon } from '@phosphor-icons/react';
+import { useTranslations } from 'next-intl';
 import * as Dialog from '@radix-ui/react-dialog';
 
 interface ImageMessageProps {
@@ -19,6 +20,7 @@ export function ImageMessage({
   height,
   isOwn,
 }: ImageMessageProps) {
+  const t = useTranslations('ImageMessage');
   const [src, setSrc] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -99,7 +101,7 @@ export function ImageMessage({
         <span
           className={`text-xs ${isOwn ? 'text-blue-200' : 'text-[var(--text-muted)]'}`}
         >
-          Image failed to load
+          {t('failedToLoad')}
         </span>
       </div>
     );

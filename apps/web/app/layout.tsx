@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Bodoni_Moda, Geist, Geist_Mono, Jost } from 'next/font/google';
+import { getLocale } from 'next-intl/server';
 import './globals.css';
 import { QueryProvider } from '@/providers/query-provider';
 
@@ -69,13 +70,15 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+
   return (
-    <html lang="en">
+    <html lang={locale}>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${bodoniModa.variable} ${jost.variable} antialiased`}
       >
