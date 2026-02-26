@@ -183,12 +183,42 @@ Contains `sender: <span className="text-purple-400 italic">null</span>`. Springs
 
 ---
 
+## Demo 4 — The Token Lifecycle (`NerdGhostDemo`)
+
+**Concept:** Sealed Sender for engineers. A three-node pipeline (Client · Server · Group) with inline code annotations that appear per phase, teaching the protocol by showing the actual request/response payloads.
+
+**Presentation style:** Horizontal journey (same layout as Demo 1 & 3) with a floating code annotation zone above the nodes.
+
+**Phases:** 8.
+
+```
+0  Idle              — three nodes at rest
+1  GET /tokens       — purple dot travels Client → Server; GET /api/tokens pill appears
+2  Token issued      — amber token pill travels Server → Client; "stored: SHA256(token)" annotation
+3  Message sealed    — code block shows { sender_id: null, token, payload: AES-GCM }
+4  Dispatching       — sealed purple box + token tag + "sender: null" label travels to Server
+5  Hash lookup       — Server pulses purple; db.lookup(SHA256(token)) annotation with pulsing "→ searching…"
+6  Null result       — ø badge on Server; annotation resolves to → { hash: "a3f9…", sender: null }
+7  Delivered         — box continues to Group; Group glows green; token tag fades to 30% opacity
+```
+
+**Code annotation zone:** `absolute` positioned at `top: 26%`, above the node row. Single `AnimatePresence mode="wait"` wrapping a `motion.div` keyed on phase (phases 6 and 7 share key `6` so the null result stays stable while delivery completes).
+
+**`sender: null` label:** Appears above the traveling message box during phases 3–6 as a dark monospace pill (`bg-slate-900 text-purple-400`), consistent with the Ghost Courier demo's popup style.
+
+**Pulsing search animation (phase 5):** `motion.span` with `opacity: [0.35, 1, 0.35]` looping at 0.9s — communicates "the server is trying but cannot find the sender."
+
+**Speed coefficient:** `T = 1.2` in DURATIONS.map — adjust to scale all phase durations globally.
+
+---
+
 ## Design Principles
 
 ### Each demo teaches differently
 - **Demo 1** (Sealed Box): Linear journey — reinforces the metaphor of a message physically traveling through intermediaries.
 - **Demo 2** (Ratchet): Center-stage spotlight — forces attention on the single key being destroyed; the accumulating graveyard makes "each message, unique key, gone forever" viscerally clear.
 - **Demo 3** (Ghost): Journey + identity transformation — the ghosting of the sender avatar is the message.
+- **Demo 4** (Token Lifecycle): Journey + code annotations — the actual protocol payloads appear inline, teaching what the server receives and why it cannot link sender identity.
 
 ### Color semantics
 - **Amber/gold**: Keys, encryption, protection — positive/constructive
