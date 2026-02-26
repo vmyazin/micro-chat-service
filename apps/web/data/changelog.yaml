@@ -57,6 +57,36 @@
   icon: sparkles
   color: green
   items:
+    - date: Feb 26, 2026
+      title: Dark Mode & Themes
+      description: >
+        Easily switch between Light, Dark, or System mode to match your vibe.
+        Your preference is remembered and applied beautifully across the app.
+    - date: Feb 26, 2026
+      title: Smarter Group Settings
+      description: >
+        Managing groups is smoother than ever with a new animated slide-in
+        drawer, an enhanced member list, and a persistent active call bar.
+    - date: Feb 25, 2026
+      title: Global Languages & RTL
+      description: >
+        MicroChat goes global. We've added internationalization support, starting
+        with Russian and Farsi (with full Right-To-Left layout support).
+    - date: Feb 24, 2026
+      title: User Profiles & Easy Invites
+      description: >
+        Your current username is now neatly displayed in the sidebar, and copying
+        group invite links is faster and more reliable across devices.
+    - date: Feb 22, 2026
+      title: Real-time Online Status
+      description: >
+        Always know who's around to chat. We've added instant, real-time green
+        dot indicators showing exactly which group members are currently online.
+    - date: Feb 22, 2026
+      title: Upgraded Voice Calls
+      description: >
+        Voice calls now feature a live duration timer, clear ringtones for
+        incoming calls, and improved connection stability for a seamless experience.
     - date: Feb 20, 2026
       title: New Branding & Changelog
       description: >
