@@ -3,8 +3,9 @@
 import { SpinnerGapIcon, XIcon, CopyIcon, CheckIcon, UserPlusIcon, SignOutIcon, TrashIcon, UsersIcon, CrownIcon } from '@phosphor-icons/react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useState, useEffect } from 'react';
+import { getDirection } from '@/i18n/config';
 import { useRouter } from 'next/navigation';
 import { useMembers } from '@/hooks/useMembers';
 import { useCreateInvite } from '@/hooks/useCreateInvite';
@@ -12,6 +13,7 @@ import { useLeaveGroup } from '@/hooks/useLeaveGroup';
 import { useDeleteGroup } from '@/hooks/useDeleteGroup';
 import type { GroupId } from '@microchat/client';
 import { Button } from '@/components/Button';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { usePresenceStore } from '@/stores/presence-store';
 
 interface GroupSettingsProps {
@@ -23,6 +25,8 @@ interface GroupSettingsProps {
 export default function GroupSettings({ groupId, open, onClose }: GroupSettingsProps) {
   const router = useRouter();
   const t = useTranslations('GroupSettings');
+  const locale = useLocale();
+  const isRtl = getDirection(locale) === 'rtl';
 
   // Server state with React Query
   const { data: members = [], isLoading: loading, error: membersError } = useMembers(groupId);
@@ -59,9 +63,9 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
   const error = localError || membersError?.message || createInvite.error?.message ||
                 leaveGroup.error?.message || deleteGroup.error?.message || null;
 
-  // Find owner
-  const ownerId = members.find((m) => m.isOwner)?.userId ?? null;
-  const isOwner = members.some((m) => m.isOwner);
+  // Check if current user is the group owner
+  const { data: currentUser } = useCurrentUser();
+  const isOwner = members.some((m) => m.isOwner && m.userId === currentUser?.userId);
   const onlineCount = members.filter((m) => onlineUsers?.has(m.userId)).length;
 
   async function handleInvite() {
@@ -138,10 +142,14 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
               onEscapeKeyDown={(e) => { if (actionLoading) e.preventDefault(); }}
             >
               <motion.aside
-                className="fixed inset-y-0 right-0 z-50 w-full max-w-sm flex flex-col bg-(--background) border-l border-(--border-color) shadow-[-8px_0_30px_rgba(0,0,0,0.12)] focus:outline-none"
-                initial={{ x: '100%' }}
+                className={`fixed inset-y-0 z-50 w-full max-w-sm flex flex-col bg-(--background) border-(--border-color) focus:outline-none ${
+                  isRtl
+                    ? 'left-0 border-r shadow-[8px_0_30px_rgba(0,0,0,0.12)]'
+                    : 'right-0 border-l shadow-[-8px_0_30px_rgba(0,0,0,0.12)]'
+                }`}
+                initial={{ x: isRtl ? '-100%' : '100%' }}
                 animate={{ x: 0 }}
-                exit={{ x: '100%' }}
+                exit={{ x: isRtl ? '-100%' : '100%' }}
                 transition={{ type: 'spring', damping: 28, stiffness: 300 }}
               >
                 {/* Header */}

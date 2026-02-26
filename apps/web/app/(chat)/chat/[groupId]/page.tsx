@@ -8,10 +8,10 @@ import {
   uint8ArrayToBase64,
 } from '@microchat/client';
 import {
-  GearIcon,
   HighlighterIcon,
   SpinnerGapIcon,
   TrashIcon,
+  DotsThreeVerticalIcon,
 } from '@phosphor-icons/react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -534,7 +534,7 @@ export default function ConversationPage() {
               className="chat-action-settings p-2 border-base hover:bg-gray-100 dark:hover:bg-gray-800"
               aria-label="Group Settings"
             >
-              <GearIcon
+              <DotsThreeVerticalIcon
                 aria-hidden="true"
                 className="chat-action-icon w-5 h-5"
               />
@@ -590,7 +590,7 @@ export default function ConversationPage() {
               className="chat-action-settings p-2 border-base hover:bg-gray-100 dark:hover:bg-gray-800"
               aria-label="Group Settings"
             >
-              <GearIcon
+              <DotsThreeVerticalIcon
                 aria-hidden="true"
                 className="chat-action-icon w-5 h-5"
               />
