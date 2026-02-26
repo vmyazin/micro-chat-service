@@ -9,16 +9,16 @@ import {
   UserIcon,
   XIcon,
 } from '@phosphor-icons/react';
+import { LayoutGroup } from 'framer-motion';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import { LayoutGroup } from 'framer-motion';
 import { ActiveCallBar } from '@/components/ActiveCallBar';
+import { AppControls } from '@/components/AppControls';
 import { Button } from '@/components/Button';
 import { CallFaviconUpdater } from '@/components/CallFaviconUpdater';
 import GroupList from '@/components/GroupList';
-import { AppControls } from '@/components/AppControls';
 import NewGroupDialog from '@/components/NewGroupDialog';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useWebSocket } from '@/hooks/useWebSocket';

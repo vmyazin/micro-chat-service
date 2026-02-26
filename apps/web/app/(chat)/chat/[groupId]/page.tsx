@@ -8,10 +8,10 @@ import {
   uint8ArrayToBase64,
 } from '@microchat/client';
 import {
+  DotsThreeVerticalIcon,
   HighlighterIcon,
   SpinnerGapIcon,
   TrashIcon,
-  DotsThreeVerticalIcon,
 } from '@phosphor-icons/react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -504,64 +504,66 @@ export default function ConversationPage() {
         onReject={handleRejectCall}
       />
 
-      {callState === 'idle' && <header className="chat-header shrink-0 z-20 w-full flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-(--surface-elevated)">
-        <div className="flex flex-col min-w-0">
-          <h1 className="chat-title text-lg font-bold truncate">
-            {t('groupChat')}
-          </h1>
-          <div className="flex items-center gap-1.5 text-xs text-(--text-muted) select-none">
-            {(memberCount ?? 0) <= 2 ? (
-              <>
-                <span
-                  className={`inline-block w-2 h-2 rounded-full ${isTargetUserOnline ? 'bg-green-500' : 'bg-gray-400 dark:bg-gray-500'}`}
-                  aria-hidden="true"
-                />
-                <span>{isTargetUserOnline ? t('online') : t('offline')}</span>
-              </>
-            ) : (
-              <>
-                <span
-                  className="inline-block w-2 h-2 rounded-full bg-green-500"
-                  aria-hidden="true"
-                />
-                <span>
-                  {onlineUserCount}{' '}
-                  {onlineUserCount === 1
-                    ? t('memberOnline')
-                    : t('membersOnline')}
-                </span>
-              </>
-            )}
+      {callState === 'idle' && (
+        <header className="chat-header shrink-0 z-20 w-full flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-(--surface-elevated)">
+          <div className="flex flex-col min-w-0">
+            <h1 className="chat-title text-lg font-bold truncate">
+              {t('groupChat')}
+            </h1>
+            <div className="flex items-center gap-1.5 text-xs text-(--text-muted) select-none">
+              {(memberCount ?? 0) <= 2 ? (
+                <>
+                  <span
+                    className={`inline-block w-2 h-2 rounded-full ${isTargetUserOnline ? 'bg-green-500' : 'bg-gray-400 dark:bg-gray-500'}`}
+                    aria-hidden="true"
+                  />
+                  <span>{isTargetUserOnline ? t('online') : t('offline')}</span>
+                </>
+              ) : (
+                <>
+                  <span
+                    className="inline-block w-2 h-2 rounded-full bg-green-500"
+                    aria-hidden="true"
+                  />
+                  <span>
+                    {onlineUserCount}{' '}
+                    {onlineUserCount === 1
+                      ? t('memberOnline')
+                      : t('membersOnline')}
+                  </span>
+                </>
+              )}
+            </div>
           </div>
-        </div>
-        <div className="chat-actions flex items-center gap-2">
-          {/* Call controls only shown when idle — active call is handled by ActiveCallBar in the layout */}
-          {callState === 'idle' && (
-            <CallButton
-              client={client}
-              groupId={groupId as GroupId}
-              currentUserId={currentUser?.userId}
-              onStartCall={handleStartCall}
-              memberCount={memberCount}
-              targetUserId={targetUserId}
-              calling={isCalling}
-              activeSession={null}
-            />
-          )}
-          <Button
-            variant="ghost"
-            type="button"
-            onClick={() => setShowSettings(true)}
-            className="chat-action-settings p-2 border-base hover:bg-gray-100 dark:hover:bg-gray-800"
-            aria-label="Group Settings"
-          >
-            <DotsThreeVerticalIcon
-              aria-hidden="true"
-              className="chat-action-icon w-5 h-5"
-            />
-          </Button>
-        </div>
-      </header>}
+          <div className="chat-actions flex items-center gap-2">
+            {/* Call controls only shown when idle — active call is handled by ActiveCallBar in the layout */}
+            {callState === 'idle' && (
+              <CallButton
+                client={client}
+                groupId={groupId as GroupId}
+                currentUserId={currentUser?.userId}
+                onStartCall={handleStartCall}
+                memberCount={memberCount}
+                targetUserId={targetUserId}
+                calling={isCalling}
+                activeSession={null}
+              />
+            )}
+            <Button
+              variant="ghost"
+              type="button"
+              onClick={() => setShowSettings(true)}
+              className="chat-action-settings p-2 border-base hover:bg-gray-100 dark:hover:bg-gray-800"
+              aria-label="Group Settings"
+            >
+              <DotsThreeVerticalIcon
+                aria-hidden="true"
+                className="chat-action-icon w-5 h-5"
+              />
+            </Button>
+          </div>
+        </header>
+      )}
       <section className="chat-surface flex-1 w-full min-h-0 overflow-hidden">
         <div className="chat-container min-h-0 h-full flex flex-col">
           {connectionStatus === 'reconnecting' && (
