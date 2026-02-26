@@ -192,7 +192,12 @@ export function CallButton({
         </div>
         <button
           type="button"
-          onClick={() => activeSession.hangup()}
+          onClick={() => {
+            new Audio('/sfx/call-end.mp3').play().catch((err) => {
+              console.error('[call] failed to play call-end sfx', err);
+            });
+            activeSession.hangup();
+          }}
           className="px-3 py-2 border-base bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 flex items-center justify-center gap-2 transition-all duration-300 ease-in-out"
           aria-label="Hang up"
           title={t('endCall')}
