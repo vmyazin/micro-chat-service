@@ -42,41 +42,41 @@ export function SecurityPageContent({
   const mode = initialMode;
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-blue-600 selection:text-white pb-20">
+    <main className="security-page min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-blue-600 selection:text-white pb-20">
       {/* Navigation */}
       <SiteHeader />
 
       {/* Hero */}
-      <header className="pt-40 pb-24 px-6 text-center max-w-4xl mx-auto">
+      <header className="security-hero pt-40 pb-24 px-6 text-center max-w-4xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-100 border border-slate-200 mb-8"
+          className="security-badge inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-100 border border-slate-200 mb-8"
         >
-          <span className="text-xs font-bold text-slate-600 uppercase tracking-widest">
+          <span className="security-badge-text text-xs font-bold text-slate-600 uppercase tracking-widest">
             Zero Trust • End-to-End
           </span>
         </motion.div>
 
         <h1
-          className="text-5xl md:text-7xl mb-8 font-semibold italic text-slate-900 leading-tight"
+          className="security-title text-5xl md:text-7xl mb-8 font-semibold italic text-slate-900 leading-tight"
           style={{ fontFamily: 'var(--font-bodoni)' }}
         >
           Your Privacy. Our Promise.
         </h1>
-        <p className="text-xl text-slate-500 font-light leading-relaxed max-w-2xl mx-auto">
+        <p className="security-subtitle text-xl text-slate-500 font-light leading-relaxed max-w-2xl mx-auto">
           Understanding our security model, from simple principles to
           implementation details that protect your conversations.
         </p>
       </header>
 
       {/* Mode Switcher */}
-      <div className="flex justify-center mb-20 px-6">
+      <nav className="security-switcher flex justify-center mb-20 px-6">
         <SegmentedControl segments={SEGMENTS} value={mode} />
-      </div>
+      </nav>
 
       {/* Content Container */}
-      <div className="max-w-7xl mx-auto px-6">
+      <section className="security-content max-w-7xl mx-auto px-6">
         <AnimatePresence mode="wait">
           {mode === 'layman' ? (
             <LaymanContent key="layman" />
@@ -84,9 +84,9 @@ export function SecurityPageContent({
             <NerdContent key="nerd" />
           )}
         </AnimatePresence>
-      </div>
+      </section>
       <SiteFooter />
-    </div>
+    </main>
   );
 }
 
@@ -101,10 +101,10 @@ function LaymanContent() {
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.3 }}
-      className="space-y-24"
+      className="layman-content space-y-24"
     >
       {/* Concept 1: We Can't Read Your Messages */}
-      <section className="grid lg:grid-cols-2 gap-16 items-center">
+      <section className="layman-section grid lg:grid-cols-2 gap-16 items-center">
         <div>
           <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-6">
             <EyeIcon className="w-6 h-6" />
@@ -131,7 +131,7 @@ function LaymanContent() {
       </section>
 
       {/* Concept 2: Even We Get Hacked */}
-      <section className="grid lg:grid-cols-2 gap-16 items-center">
+      <section className="layman-section grid lg:grid-cols-2 gap-16 items-center">
         <div className="lg:order-2">
           <div className="w-12 h-12 bg-red-100 text-red-600 rounded-xl flex items-center justify-center mb-6">
             <WarningIcon className="w-6 h-6" />
@@ -159,7 +159,7 @@ function LaymanContent() {
       </section>
 
       {/* Concept 3: No Metadata Collection */}
-      <section className="grid lg:grid-cols-2 gap-16 items-center">
+      <section className="layman-section grid lg:grid-cols-2 gap-16 items-center">
         <div>
           <div className="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center mb-6">
             <DatabaseIcon className="w-6 h-6" />
@@ -199,14 +199,14 @@ function NerdContent() {
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.3 }}
-      className="space-y-32"
+      className="nerd-content space-y-32"
     >
       {/* Security Principles */}
-      <div className="grid md:grid-cols-3 gap-6">
-        <div className="bg-slate-900 text-white p-8 rounded-2xl shadow-xl">
-          <div className="text-blue-400 font-mono text-sm mb-2">Encryption</div>
-          <div className="text-3xl font-bold mb-2">End-to-End</div>
-          <div className="text-slate-400 text-sm">Zero Server Access</div>
+      <section className="nerd-principles grid md:grid-cols-3 gap-6">
+        <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-lg">
+          <div className="text-blue-600 font-mono text-sm mb-2">Encryption</div>
+          <div className="text-3xl font-bold mb-2 text-slate-900">End-to-End</div>
+          <div className="text-slate-500 text-sm">Zero Server Access</div>
         </div>
         <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-lg">
           <div className="text-blue-600 font-mono text-sm mb-2">Keys</div>
@@ -222,10 +222,10 @@ function NerdContent() {
           </div>
           <div className="text-slate-500 text-sm">AES-256-GCM</div>
         </div>
-      </div>
+      </section>
 
       {/* Threat Model */}
-      <section className="grid lg:grid-cols-2 gap-16">
+      <section className="nerd-threat-model grid lg:grid-cols-2 gap-16">
         <div>
           <div className="flex items-center gap-3 mb-6">
             <ShieldIcon className="w-6 h-6 text-blue-600" />
@@ -288,7 +288,7 @@ function NerdContent() {
       </section>
 
       {/* Data Retention */}
-      <section>
+      <section className="nerd-retention">
         <div className="max-w-3xl mx-auto text-center mb-16">
           <h2
             className="text-3xl md:text-5xl mb-6 font-bold text-slate-900"
@@ -368,7 +368,7 @@ function NerdContent() {
       </section>
 
       {/* Auditing */}
-      <section className="bg-gradient-to-br from-blue-50 to-slate-50 rounded-3xl p-12 border border-blue-100">
+      <section className="nerd-auditing bg-gradient-to-br from-blue-50 to-slate-50 rounded-3xl p-12 border border-blue-100">
         <div className="max-w-3xl mx-auto text-center">
           <ShieldIcon className="w-12 h-12 text-blue-600 mx-auto mb-6" />
           <h2
