@@ -224,7 +224,7 @@ idle → ringing-in  → ended                         (incoming, rejected/misse
 
 ## Use Framer Animations In Calls
 
-**Status:** not implemented.
+**Status:** Completed (Feb 26, 2026)
 
 ### UX Improvements
 - **Incoming Call:** Animate the call modal bounding into view from the top of the screen to the center using spring physics. Add a continuous, soft pulsing glow effect behind the "Accept" button.
