@@ -22,7 +22,7 @@ export function SiteHeader() {
             href="/protocol" 
             className={cn(
               "hover:text-blue-600 transition-colors cursor-pointer",
-              pathname === "/protocol" && "text-blue-600"
+              pathname.startsWith("/protocol") && "text-blue-600"
             )}
           >
             Protocol
@@ -31,7 +31,7 @@ export function SiteHeader() {
             href="/security"
             className={cn(
               "hover:text-blue-600 transition-colors cursor-pointer",
-              pathname === "/security" && "text-blue-600"
+              pathname.startsWith("/security") && "text-blue-600"
             )}
           >
             Security
