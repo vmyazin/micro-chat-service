@@ -2,7 +2,7 @@
 
 import { MicrophoneIcon, MicrophoneSlashIcon, PhoneIcon, PhoneXIcon } from '@phosphor-icons/react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { CallSession, CallState, GroupId, MicroChatClient, UserId } from '@microchat/client';
 import { Button } from './Button';
 
@@ -16,6 +16,24 @@ interface CallButtonProps {
   calling?: boolean;
   activeSession?: CallSession | null;
 }
+
+const stopAndFadeAudio = (audio: HTMLAudioElement | null) => {
+  if (!audio) return;
+  const fadeStep = 0.2;
+  const fadeInterval = 10;
+  
+  const fadeOut = setInterval(() => {
+    if (audio.volume > fadeStep) {
+      audio.volume -= fadeStep;
+    } else {
+      clearInterval(fadeOut);
+      audio.pause();
+      audio.currentTime = 0;
+      // Reset volume for future plays if needed
+      audio.volume = 1;
+    }
+  }, fadeInterval);
+};
 
 export function CallButton({
   client,
@@ -38,6 +56,31 @@ export function CallButton({
   const [callState, setCallState] = useState<CallState>('idle');
   const [duration, setDuration] = useState(0);
   const [isExpanded, setIsExpanded] = useState(false);
+
+  const DIAL_TONE_INTERVAL_MS = 4500;
+  const currentToneAudio = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    if (!activeSession) return;
+    if (activeSession.direction !== 'outgoing') return;
+    // Only play tone before the call is answered
+    if (callState === 'active' || callState === 'idle' || callState === 'ended') return;
+
+    const playTone = () => {
+      currentToneAudio.current = new Audio('/sfx/connecting-tone.mp3');
+      currentToneAudio.current.play().catch((err) => {
+        console.error('[call] failed to play connecting tone sfx', err);
+      });
+    };
+
+    playTone();
+    const interval = setInterval(playTone, DIAL_TONE_INTERVAL_MS);
+
+    return () => {
+      clearInterval(interval);
+      stopAndFadeAudio(currentToneAudio.current);
+    };
+  }, [activeSession, callState]);
 
   useEffect(() => {
     if (!activeSession) {
@@ -193,6 +236,7 @@ export function CallButton({
         <button
           type="button"
           onClick={() => {
+            stopAndFadeAudio(currentToneAudio.current);
             new Audio('/sfx/call-end.mp3').play().catch((err) => {
               console.error('[call] failed to play call-end sfx', err);
             });
