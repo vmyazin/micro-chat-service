@@ -17,7 +17,7 @@ RP_NAME = "MicroChat"
 RP_ORIGIN = "https://microchat.smoxu.com"
 CLOUDFLARE_CALLS_APP_ID = "..."
 CLOUDFLARE_CALLS_TOKEN = "..."
-ICE_FALLBACK_SERVERS = "[]"
+## ICE_FALLBACK_SERVERS is set via `wrangler secret` for production
 
 [[d1_databases]]
 binding = "DB"

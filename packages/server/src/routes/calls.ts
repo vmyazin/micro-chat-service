@@ -27,7 +27,11 @@ interface CloudflareIceResponse {
 
 const TURN_TTL_SECONDS = 3600;
 const STUN_FALLBACK: IceServer = {
-  urls: ['stun:stun.l.google.com:19302'],
+  urls: [
+    'stun:stun.cloudflare.com:3478',
+    'stun:stun.nextcloud.com:443',
+    'stun:stun.l.google.com:19302',
+  ],
 };
 
 function parseFallbackServers(raw?: string): IceServer[] {

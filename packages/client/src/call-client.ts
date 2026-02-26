@@ -62,8 +62,9 @@ function generateCallId(): CallId {
 }
 
 const DEFAULT_ICE_SERVERS: RTCIceServer[] = [
+  { urls: 'stun:stun.cloudflare.com:3478' },
+  { urls: 'stun:stun.nextcloud.com:443' },
   { urls: 'stun:stun.l.google.com:19302' },
-  { urls: 'stun:stun1.l.google.com:19302' },
 ];
 
 interface OutgoingSignalOptions {
