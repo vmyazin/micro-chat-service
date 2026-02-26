@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Bodoni_Moda, Geist, Geist_Mono, Jost } from 'next/font/google';
 import { getLocale } from 'next-intl/server';
 import './globals.css';
+import { getDirection } from '@/i18n/config';
 import { QueryProvider } from '@/providers/query-provider';
 
 const geistSans = Geist({
@@ -76,9 +77,10 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const locale = await getLocale();
+  const dir = getDirection(locale);
 
   return (
-    <html lang={locale}>
+    <html lang={locale} dir={dir}>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${bodoniModa.variable} ${jost.variable} antialiased`}
       >

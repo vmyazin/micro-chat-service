@@ -1,0 +1,96 @@
+{
+  "ChatLayout": {
+    "homePage": "صفحه اصلی",
+    "signOut": "خروج",
+    "signingOut": "در حال خروج..."
+  },
+  "GroupChat": {
+    "groupChat": "چت گروهی",
+    "liveCall": "تماس زنده",
+    "connectingCall": "در حال اتصال",
+    "with": "با",
+    "memberOnline": "عضو آنلاین",
+    "membersOnline": "عضو آنلاین",
+    "online": "آنلاین",
+    "offline": "آفلاین",
+    "reconnecting": "در حال اتصال مجدد...",
+    "failedToSend": "ارسال پیام ناموفق بود",
+    "dismiss": "بستن",
+    "noMessages": "هنوز پیامی نیست. گفتگو را شروع کنید!",
+    "selectGroup": "یک گروه را برای مشاهده پیام‌ها انتخاب کنید",
+    "joining": "در حال پیوستن به گروه...",
+    "retry": "تلاش مجدد",
+    "today": "امروز",
+    "yesterday": "دیروز",
+    "anonymous": "ناشناس",
+    "deletePrompt": "این پیام حذف شود؟",
+    "deleting": "در حال حذف...",
+    "delete": "حذف",
+    "cancel": "لغو",
+    "highlight": "برجسته کردن",
+    "unhighlight": "حذف برجستگی",
+    "deleteFailed": "حذف پیام ناموفق بود"
+  },
+  "GroupList": {
+    "newGroup": "گروه جدید",
+    "retry": "تلاش مجدد",
+    "noGroups": "هنوز گروهی نیست. اولین گروه را بسازید!",
+    "member": "عضو",
+    "members": "عضو"
+  },
+  "GroupSettings": {
+    "title": "تنظیمات گروه",
+    "members": "اعضا",
+    "online": "آنلاین",
+    "offline": "آفلاین",
+    "owner": "مالک",
+    "inviteMember": "دعوت عضو",
+    "copied": "کپی شد!",
+    "copy": "کپی",
+    "linkCopied": "لینک کپی شد!",
+    "leaveGroup": "ترک گروه",
+    "leaveConfirm": "آیا مطمئن هستید که می‌خواهید این گروه را ترک کنید؟",
+    "cancel": "لغو",
+    "leave": "ترک",
+    "deleteGroup": "حذف گروه",
+    "deleteConfirm": "آیا مطمئن هستید؟ گروه و تمام پیام‌ها برای همیشه حذف خواهند شد.",
+    "delete": "حذف",
+    "failedCreateInvite": "ایجاد دعوت‌نامه ناموفق بود",
+    "failedLeaveGroup": "ترک گروه ناموفق بود",
+    "failedDeleteGroup": "حذف گروه ناموفق بود"
+  },
+  "NewGroupDialog": {
+    "title": "ایجاد گروه جدید",
+    "groupNameLabel": "نام گروه",
+    "groupNamePlaceholder": "نام گروه را وارد کنید...",
+    "cancel": "لغو",
+    "createAndCopy": "ایجاد و کپی لینک",
+    "enterGroupName": "لطفاً نام گروه را وارد کنید",
+    "failedCreateGroup": "ایجاد گروه ناموفق بود"
+  },
+  "MessageInput": {
+    "previewImage": "پیش‌نمایش تصویر",
+    "send": "ارسال",
+    "placeholder": "پیام خود را بنویسید..."
+  },
+  "CallButton": {
+    "live": "زنده",
+    "connecting": "در حال اتصال...",
+    "unmuteMicrophone": "فعال کردن میکروفون",
+    "muteMicrophone": "غیرفعال کردن میکروفون",
+    "muted": "بی‌صدا",
+    "mute": "بی‌صدا",
+    "endCall": "پایان تماس",
+    "end": "پایان",
+    "call": "تماس"
+  },
+  "IncomingCall": {
+    "unknown": "ناشناس",
+    "incomingCall": "تماس ورودی...",
+    "decline": "رد",
+    "accept": "پاسخ"
+  },
+  "ImageMessage": {
+    "failedToLoad": "بارگذاری تصویر ناموفق بود"
+  }
+}
