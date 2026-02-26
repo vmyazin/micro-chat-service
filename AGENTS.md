@@ -52,6 +52,11 @@ Note: `server` is not imported by any other package (it's the runtime). All othe
 | `KeyStore` interface | `packages/crypto/src/key-store.ts` |
 | Sealed Sender token utils | `packages/crypto/src/sealed-sender.ts` |
 | Client-side token pool | `packages/client/src/sender-token-store.ts` |
+| i18n locale config & RTL direction | `apps/web/i18n/config.ts` |
+| i18n server request handler | `apps/web/i18n/request.ts` |
+| Translation messages (per locale) | `apps/web/messages/{locale}.json` |
+| Zustand UI stores | `apps/web/stores/` |
+| React Query hooks | `apps/web/hooks/` |
 
 ## Runtime Architecture
 
@@ -66,13 +71,13 @@ Note: `server` is not imported by any other package (it's the runtime). All othe
 ## Conventions & Gotchas
 
 - **D1 migrations live in `packages/server/src/db/migrations/`** — run wrangler commands from `packages/server` directory
-- **Icons:** use the Phosphor set only; import from `@phosphor-icons/react` with the `*Icon` suffix
+- **Icons:** use the Phosphor set only; import from `@phosphor-icons/react` with the `*Icon` suffix (SSR-compatible path)
+- **UI primitives:** use Radix UI (`@radix-ui/react-dialog`, `@radix-ui/react-popover`, `@radix-ui/react-context-menu`) for accessible overlays and menus — do not roll custom modals
 - **Rate limiting is per-isolate** — not globally consistent across Workers instances
 - **`MessageClient` sends plaintext without an injected `GroupCipher`** — development mode fallback
 - **Group names are currently unencrypted** — stored as `encrypted_name` but sent as plaintext
 - **Next.js rewrites `/api/*` to Workers** — no CORS config needed; the web app only talks to its own origin
 - **Use `db.batch([...])` for atomic multi-table operations** — e.g., cascading delete on group removal
-- **`packages/server` runs on Cloudflare Workers** — target environment is `wrangler dev` / `wrangler deploy`, not Node.js
 
 ### API and Business Logic Testing Guidelines
 
@@ -115,7 +120,21 @@ When creating HTML elements, follow these guidelines:
 ## Linting
 
 - Always run linting first with `pnpm lint` before proceeding to build
+- Auto-fix lint and formatting issues with `pnpm biome check --write .`
 - Never run a build automatically — instead, suggest "Run `pnpm build` to build the project."
+
+## Internationalization (i18n)
+
+The web app uses **next-intl** for multi-language support. Locale is stored in a `NEXT_LOCALE` cookie, set via the `setUserLocale` server action.
+
+### Rules
+
+1. **Never hardcode user-facing strings** in components — always use `useTranslations('Namespace')`
+2. **All locales are defined in `apps/web/i18n/config.ts`** — this is the single source of truth for supported languages, labels, and text direction (LTR/RTL)
+3. **Translation files live in `apps/web/messages/{locale}.json`** — when adding a string, update **every** locale file
+4. **RTL support:** each locale declares its `dir` (`'ltr'` or `'rtl'`). The root layout sets `<html dir={dir}>` dynamically. When adding RTL locales, avoid hardcoded `left`/`right` CSS — prefer logical properties (`start`/`end`) or let flexbox direction inherit from `dir`
+5. **Adding a new language:** add an entry to `locales` in `i18n/config.ts`, create `messages/{code}.json` with all keys — the language switcher and request handler pick it up automatically
+6. **Namespace convention:** one namespace per component or feature area (e.g., `ChatLayout`, `GroupChat`, `GroupSettings`). Keep namespaces flat — no nesting beyond one level
 
 ## State Management (Zustand & React Query)
 
