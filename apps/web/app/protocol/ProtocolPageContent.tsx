@@ -35,7 +35,11 @@ const SEGMENTS = [
   },
 ];
 
-export function ProtocolPageContent({ initialMode = 'layman' }: { initialMode?: Mode }) {
+export function ProtocolPageContent({
+  initialMode = 'layman',
+}: {
+  initialMode?: Mode;
+}) {
   const mode = initialMode;
 
   return (

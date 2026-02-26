@@ -811,6 +811,7 @@ function MessageBubble({
                   : undefined,
                 opacity: opacityStyle,
               }}
+              role="presentation"
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}
             >
@@ -845,32 +846,37 @@ function MessageBubble({
                   {formatTime(message.createdAt)}
                 </span>
 
-                {timeLeft > 0 && (() => {
-                  const countdownColor = isOwn ? 'text-blue-200/70' : 'text-(--text-muted)';
-                  // Format countdown with translations
-                  const totalSec = Math.ceil(timeLeft / 1000);
-                  const h = Math.floor(totalSec / 3600);
-                  const m = Math.floor((totalSec % 3600) / 60);
-                  const s = totalSec % 60;
-                  let countdownText = `${s}${t('countdownSecond')}`;
-                  if (m > 0) countdownText = `${m}${t('countdownMinute')} ${s}${t('countdownSecond')}`;
-                  if (h > 0) countdownText = `${h}${t('countdownHour')} ${m}${t('countdownMinute')}`;
+                {timeLeft > 0 &&
+                  (() => {
+                    const countdownColor = isOwn
+                      ? 'text-blue-200/70'
+                      : 'text-(--text-muted)';
+                    // Format countdown with translations
+                    const totalSec = Math.ceil(timeLeft / 1000);
+                    const h = Math.floor(totalSec / 3600);
+                    const m = Math.floor((totalSec % 3600) / 60);
+                    const s = totalSec % 60;
+                    let countdownText = `${s}${t('countdownSecond')}`;
+                    if (m > 0)
+                      countdownText = `${m}${t('countdownMinute')} ${s}${t('countdownSecond')}`;
+                    if (h > 0)
+                      countdownText = `${h}${t('countdownHour')} ${m}${t('countdownMinute')}`;
 
-                  return (
-                    <motion.div
-                      animate={{
-                        maxWidth: isHovered ? '200px' : '0px',
-                        opacity: isHovered ? 1 : 0,
-                      }}
-                      transition={{ duration: 0.15 }}
-                      className={`overflow-hidden flex items-center gap-1 text-[11px] leading-none ${countdownColor}`}
-                    >
-                      <span>•</span>
-                      <ClockIcon className="w-2.5 h-2.5 shrink-0" />
-                      <span>{countdownText}</span>
-                    </motion.div>
-                  );
-                })()}
+                    return (
+                      <motion.div
+                        animate={{
+                          maxWidth: isHovered ? '200px' : '0px',
+                          opacity: isHovered ? 1 : 0,
+                        }}
+                        transition={{ duration: 0.15 }}
+                        className={`overflow-hidden flex items-center gap-1 text-[11px] leading-none ${countdownColor}`}
+                      >
+                        <span>•</span>
+                        <ClockIcon className="w-2.5 h-2.5 shrink-0" />
+                        <span>{countdownText}</span>
+                      </motion.div>
+                    );
+                  })()}
               </div>
 
               {/* Delete confirmation */}

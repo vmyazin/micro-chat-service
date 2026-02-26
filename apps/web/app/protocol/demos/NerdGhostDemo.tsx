@@ -124,17 +124,17 @@ export function NerdGhostDemo() {
   ];
 
   // Derived flags
-  const clientActive  = phase >= 1 && phase <= 3;
-  const serverActive  = phase === 5 || phase === 6;
-  const groupActive   = phase === 7;
+  const clientActive = phase >= 1 && phase <= 3;
+  const serverActive = phase === 5 || phase === 6;
+  const groupActive = phase === 7;
   const showTokenChip = phase >= 2 && phase <= 3;
   const showNullBadge = phase >= 6;
-  const msgVisible    = phase >= 3;
-  const msgLeft       = phase <= 3 ? '15%' : phase <= 6 ? '50%' : '85%';
+  const msgVisible = phase >= 3;
+  const msgLeft = phase <= 3 ? '15%' : phase <= 6 ? '50%' : '85%';
 
   // Annotation shown for these phases; 6 and 7 share key "6" so it doesn't re-enter
-  const hasAnnotation   = [1, 2, 3, 5, 6, 7].includes(phase);
-  const annotationKey   = phase >= 6 ? 6 : phase;
+  const hasAnnotation = [1, 2, 3, 5, 6, 7].includes(phase);
+  const annotationKey = phase >= 6 ? 6 : phase;
 
   return (
     <div className="relative w-full h-full select-none overflow-hidden bg-gradient-to-b from-purple-50/60 to-white/80">
@@ -163,7 +163,10 @@ export function NerdGhostDemo() {
       </div>
 
       {/* Code annotation zone — floats above the node row */}
-      <div className="absolute inset-x-0 z-20 flex justify-center" style={{ top: '18%' }}>
+      <div
+        className="absolute inset-x-0 z-20 flex justify-center"
+        style={{ top: '18%' }}
+      >
         <AnimatePresence mode="wait">
           {hasAnnotation && (
             <motion.div
@@ -181,7 +184,10 @@ export function NerdGhostDemo() {
       </div>
 
       {/* Dotted travel path */}
-      <div className="absolute top-1/2 -translate-y-3" style={{ left: '15%', right: '15%' }}>
+      <div
+        className="absolute top-1/2 -translate-y-3"
+        style={{ left: '15%', right: '15%' }}
+      >
         <div className="w-full border-t-2 border-dashed border-purple-200" />
       </div>
 
@@ -197,12 +203,14 @@ export function NerdGhostDemo() {
             className="w-14 h-14 rounded-full flex items-center justify-center border-2"
             animate={{
               backgroundColor: clientActive ? '#ede9fe' : '#f5f3ff',
-              borderColor:     clientActive ? '#a78bfa' : '#ddd6fe',
+              borderColor: clientActive ? '#a78bfa' : '#ddd6fe',
               scale: phase === 1 ? [1, 1.1, 1] : 1,
             }}
             transition={{ duration: 0.4 }}
           >
-            <UsersIcon className={`w-7 h-7 ${clientActive ? 'text-purple-600' : 'text-purple-300'}`} />
+            <UsersIcon
+              className={`w-7 h-7 ${clientActive ? 'text-purple-600' : 'text-purple-300'}`}
+            />
           </motion.div>
 
           {/* Token chip badge — appears after token is received */}
@@ -242,7 +250,9 @@ export function NerdGhostDemo() {
             }}
             transition={{ duration: 0.9 }}
           >
-            <HardDrivesIcon className={`w-7 h-7 ${serverActive ? 'text-purple-400' : 'text-slate-400'}`} />
+            <HardDrivesIcon
+              className={`w-7 h-7 ${serverActive ? 'text-purple-400' : 'text-slate-400'}`}
+            />
           </motion.div>
 
           {/* ø badge when null identity confirmed */}
@@ -286,12 +296,14 @@ export function NerdGhostDemo() {
           className="w-14 h-14 rounded-full flex items-center justify-center border-2"
           animate={{
             backgroundColor: groupActive ? '#dcfce7' : '#f0fdf4',
-            borderColor:     groupActive ? '#86efac' : '#bbf7d0',
+            borderColor: groupActive ? '#86efac' : '#bbf7d0',
             scale: groupActive ? [1, 1.1, 1] : 1,
           }}
           transition={{ duration: 0.45 }}
         >
-          <UsersIcon className={`w-7 h-7 ${groupActive ? 'text-green-600' : 'text-green-300'}`} />
+          <UsersIcon
+            className={`w-7 h-7 ${groupActive ? 'text-green-600' : 'text-green-300'}`}
+          />
         </motion.div>
         <span className="text-xs font-bold text-slate-400">Group</span>
         <div className="h-4">

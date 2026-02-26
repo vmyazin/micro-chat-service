@@ -1,6 +1,12 @@
 'use client';
 
-import { GhostIcon, HardDrivesIcon, KeyIcon, LockIcon, UsersIcon } from '@phosphor-icons/react';
+import {
+  GhostIcon,
+  HardDrivesIcon,
+  KeyIcon,
+  LockIcon,
+  UsersIcon,
+} from '@phosphor-icons/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 
@@ -64,7 +70,10 @@ export function LaymanGhostDemo() {
       </div>
 
       {/* Dotted travel path */}
-      <div className="absolute top-1/2 -translate-y-3" style={{ left: '15%', right: '15%' }}>
+      <div
+        className="absolute top-1/2 -translate-y-3"
+        style={{ left: '15%', right: '15%' }}
+      >
         <div className="w-full border-t-2 border-dashed border-purple-100" />
       </div>
 

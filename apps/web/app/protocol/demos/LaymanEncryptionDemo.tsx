@@ -1,6 +1,11 @@
 'use client';
 
-import { HardDrivesIcon, KeyIcon, LockIcon, UsersIcon } from '@phosphor-icons/react';
+import {
+  HardDrivesIcon,
+  KeyIcon,
+  LockIcon,
+  UsersIcon,
+} from '@phosphor-icons/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 
@@ -32,29 +37,33 @@ export function LaymanEncryptionDemo() {
   }, []);
 
   const LABELS = [
-    'Writing a message…',   // 0
-    'Sealing the box…',     // 1
-    'In transit…',          // 2
+    'Writing a message…', // 0
+    'Sealing the box…', // 1
+    'In transit…', // 2
     "Server can't read it", // 3
-    'Forwarding…',          // 4
-    'Opening the box…',     // 5
-    'Message delivered!',   // 6
-    'Friend is replying…',  // 7
-    'Sealing the box…',     // 8
-    'In transit…',          // 9
+    'Forwarding…', // 4
+    'Opening the box…', // 5
+    'Message delivered!', // 6
+    'Friend is replying…', // 7
+    'Sealing the box…', // 8
+    'In transit…', // 9
     "Server can't read it", // 10
-    'Forwarding…',          // 11
-    'Opening the reply…',   // 12
-    'Reply received!',      // 13
+    'Forwarding…', // 11
+    'Opening the reply…', // 12
+    'Reply received!', // 13
   ];
 
   // Message x-position: forward travels left→center→right, reverse goes right→center→left
   const msgLeft =
-    phase <= 1   ? '15%'
-    : phase <= 3 ? '50%'
-    : phase <= 8 ? '85%'
-    : phase <= 10 ? '50%'
-    : '15%';
+    phase <= 1
+      ? '15%'
+      : phase <= 3
+        ? '50%'
+        : phase <= 8
+          ? '85%'
+          : phase <= 10
+            ? '50%'
+            : '15%';
 
   const isSealed = (phase >= 1 && phase <= 5) || (phase >= 8 && phase <= 12);
   const serverBlocked = phase === 3 || phase === 10;
@@ -62,7 +71,7 @@ export function LaymanEncryptionDemo() {
 
   // Key pulse: which side is locking/unlocking this phase
   const aliceKeyActive = phase === 1 || phase === 12;
-  const bobKeyActive   = phase === 5 || phase === 8;
+  const bobKeyActive = phase === 5 || phase === 8;
 
   return (
     <div className="relative w-full h-full select-none overflow-hidden bg-gradient-to-b from-slate-50/50 to-white">
@@ -89,7 +98,10 @@ export function LaymanEncryptionDemo() {
       </div>
 
       {/* Dotted travel path */}
-      <div className="absolute top-1/2 -translate-y-3" style={{ left: '15%', right: '15%' }}>
+      <div
+        className="absolute top-1/2 -translate-y-3"
+        style={{ left: '15%', right: '15%' }}
+      >
         <div className="w-full border-t-2 border-dashed border-slate-200" />
       </div>
 
@@ -103,7 +115,7 @@ export function LaymanEncryptionDemo() {
             className="w-14 h-14 rounded-full flex items-center justify-center border-2"
             animate={{
               backgroundColor: phase === 13 ? '#dcfce7' : '#dbeafe',
-              borderColor:     phase === 13 ? '#86efac' : '#bfdbfe',
+              borderColor: phase === 13 ? '#86efac' : '#bfdbfe',
               scale: aliceKeyActive ? [1, 1.12, 1] : 1,
             }}
             transition={{ duration: 0.45 }}
@@ -113,8 +125,12 @@ export function LaymanEncryptionDemo() {
           <motion.div
             className="absolute -bottom-1 -right-1 w-6 h-6 bg-amber-400 rounded-full flex items-center justify-center border-2 border-white shadow-md"
             animate={{
-              scale:  aliceKeyActive ? [1, 1.6, 1] : 1,
-              rotate: aliceKeyActive ? (phase === 1 ? [0, -35, 0] : [0, 35, 0]) : 0,
+              scale: aliceKeyActive ? [1, 1.6, 1] : 1,
+              rotate: aliceKeyActive
+                ? phase === 1
+                  ? [0, -35, 0]
+                  : [0, 35, 0]
+                : 0,
             }}
             transition={{ duration: 0.5 }}
           >
@@ -199,8 +215,9 @@ export function LaymanEncryptionDemo() {
           <motion.div
             className="w-14 h-14 rounded-full flex items-center justify-center border-2"
             animate={{
-              backgroundColor: phase === 6 || phase === 7 ? '#dcfce7' : '#f0fdf4',
-              borderColor:     phase === 6 || phase === 7 ? '#86efac' : '#bbf7d0',
+              backgroundColor:
+                phase === 6 || phase === 7 ? '#dcfce7' : '#f0fdf4',
+              borderColor: phase === 6 || phase === 7 ? '#86efac' : '#bbf7d0',
               scale: bobKeyActive ? [1, 1.12, 1] : 1,
             }}
             transition={{ duration: 0.45 }}
@@ -210,8 +227,12 @@ export function LaymanEncryptionDemo() {
           <motion.div
             className="absolute -bottom-1 -right-1 w-6 h-6 bg-amber-400 rounded-full flex items-center justify-center border-2 border-white shadow-md"
             animate={{
-              scale:  bobKeyActive ? [1, 1.6, 1] : 1,
-              rotate: bobKeyActive ? (phase === 5 ? [0, 35, 0] : [0, -35, 0]) : 0,
+              scale: bobKeyActive ? [1, 1.6, 1] : 1,
+              rotate: bobKeyActive
+                ? phase === 5
+                  ? [0, 35, 0]
+                  : [0, -35, 0]
+                : 0,
             }}
             transition={{ duration: 0.5 }}
           >
@@ -267,9 +288,15 @@ export function LaymanEncryptionDemo() {
                   : 'bg-white border-blue-300'
               }`}
             >
-              <div className={`w-full h-0.5 rounded-full ${isReply ? 'bg-green-300' : 'bg-blue-300'}`} />
-              <div className={`w-full h-0.5 rounded-full ${isReply ? 'bg-green-200' : 'bg-blue-200'}`} />
-              <div className={`w-3/4 h-0.5 rounded-full ${isReply ? 'bg-green-100' : 'bg-blue-100'}`} />
+              <div
+                className={`w-full h-0.5 rounded-full ${isReply ? 'bg-green-300' : 'bg-blue-300'}`}
+              />
+              <div
+                className={`w-full h-0.5 rounded-full ${isReply ? 'bg-green-200' : 'bg-blue-200'}`}
+              />
+              <div
+                className={`w-3/4 h-0.5 rounded-full ${isReply ? 'bg-green-100' : 'bg-blue-100'}`}
+              />
             </motion.div>
           )}
         </AnimatePresence>

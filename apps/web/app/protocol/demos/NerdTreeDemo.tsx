@@ -1,6 +1,11 @@
 'use client';
 
-import { ArrowClockwiseIcon, KeyIcon, LockIcon, UsersIcon } from '@phosphor-icons/react';
+import {
+  ArrowClockwiseIcon,
+  KeyIcon,
+  LockIcon,
+  UsersIcon,
+} from '@phosphor-icons/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 
@@ -28,8 +33,7 @@ export function NerdTreeDemo() {
         t += d;
       });
       // Advance epoch just before phase 4 renders
-      const epochAt =
-        DURATIONS.slice(0, 3).reduce((a, b) => a + b, 0) - 50;
+      const epochAt = DURATIONS.slice(0, 3).reduce((a, b) => a + b, 0) - 50;
       ids.push(setTimeout(() => setEpoch((e) => e + 1), epochAt));
       ids.push(setTimeout(cycle, t));
     };
@@ -55,12 +59,12 @@ export function NerdTreeDemo() {
   const Y = { root: 115, mid: 270, leaf: 410 };
 
   // Derived phase flags
-  const u4Active    = phase >= 1 && phase <= 3;
-  const edgeU4toB   = phase >= 2 && phase <= 4;
+  const u4Active = phase >= 1 && phase <= 3;
+  const edgeU4toB = phase >= 2 && phase <= 4;
   const edgeBtoRoot = phase >= 3 && phase <= 4;
-  const rootNew     = phase >= 4 && phase <= 6;
-  const spreading   = phase >= 5 && phase <= 6;
-  const showBadge   = phase === 6;
+  const rootNew = phase >= 4 && phase <= 6;
+  const spreading = phase >= 5 && phase <= 6;
+  const showBadge = phase === 6;
 
   // Base tree edges (path strings matching SVG coords)
   const BASE_EDGES = [
@@ -76,10 +80,10 @@ export function NerdTreeDemo() {
   const SPREAD_EDGES = [
     { d: `M ${X.root} ${Y.root} L ${X.A} ${Y.mid}`, delay: 0 },
     { d: `M ${X.root} ${Y.root} L ${X.B} ${Y.mid}`, delay: 0.1 },
-    { d: `M ${X.A} ${Y.mid} L ${X.U1} ${Y.leaf}`,   delay: 0.3 },
-    { d: `M ${X.A} ${Y.mid} L ${X.U2} ${Y.leaf}`,   delay: 0.4 },
-    { d: `M ${X.B} ${Y.mid} L ${X.U3} ${Y.leaf}`,   delay: 0.3 },
-    { d: `M ${X.B} ${Y.mid} L ${X.U4} ${Y.leaf}`,   delay: 0.4 },
+    { d: `M ${X.A} ${Y.mid} L ${X.U1} ${Y.leaf}`, delay: 0.3 },
+    { d: `M ${X.A} ${Y.mid} L ${X.U2} ${Y.leaf}`, delay: 0.4 },
+    { d: `M ${X.B} ${Y.mid} L ${X.U3} ${Y.leaf}`, delay: 0.3 },
+    { d: `M ${X.B} ${Y.mid} L ${X.U4} ${Y.leaf}`, delay: 0.4 },
   ];
 
   return (
@@ -126,9 +130,9 @@ export function NerdTreeDemo() {
         </defs>
 
         {/* Base edges — draw in on mount */}
-        {BASE_EDGES.map((d, i) => (
+        {BASE_EDGES.map((d) => (
           <motion.path
-            key={i}
+            key={d}
             d={d}
             stroke="#334155"
             strokeWidth={2}
@@ -174,15 +178,18 @@ export function NerdTreeDemo() {
             opacity: edgeBtoRoot ? 0.9 : 0,
           }}
           transition={{
-            pathLength: { duration: edgeBtoRoot ? 0.7 : 0.02, ease: 'easeInOut' },
+            pathLength: {
+              duration: edgeBtoRoot ? 0.7 : 0.02,
+              ease: 'easeInOut',
+            },
             opacity: { duration: 0.25 },
           }}
         />
 
         {/* Propagation edges — Root → all leaves (green, phase 5+) */}
-        {SPREAD_EDGES.map((e, i) => (
+        {SPREAD_EDGES.map((e) => (
           <motion.path
-            key={`sp-${i}`}
+            key={e.d}
             d={e.d}
             stroke="#22c55e"
             strokeWidth={2.5}
@@ -219,7 +226,11 @@ export function NerdTreeDemo() {
               cy: Y.mid,
               opacity: [0, 1, 1, 0],
             }}
-            transition={{ duration: 0.8, times: [0, 0.08, 0.88, 1], ease: 'easeInOut' }}
+            transition={{
+              duration: 0.8,
+              times: [0, 0.08, 0.88, 1],
+              ease: 'easeInOut',
+            }}
           />
         )}
 
@@ -235,7 +246,11 @@ export function NerdTreeDemo() {
               cy: Y.root,
               opacity: [0, 1, 1, 0],
             }}
-            transition={{ duration: 0.8, times: [0, 0.08, 0.88, 1], ease: 'easeInOut' }}
+            transition={{
+              duration: 0.8,
+              times: [0, 0.08, 0.88, 1],
+              ease: 'easeInOut',
+            }}
           />
         )}
       </svg>
@@ -258,7 +273,9 @@ export function NerdTreeDemo() {
           }}
           transition={{ duration: 0.4 }}
         >
-          <LockIcon className={`w-5 h-5 ${rootNew ? 'text-green-400' : 'text-slate-400'}`} />
+          <LockIcon
+            className={`w-5 h-5 ${rootNew ? 'text-green-400' : 'text-slate-400'}`}
+          />
           <AnimatePresence mode="wait">
             <motion.span
               key={epoch}
@@ -289,7 +306,9 @@ export function NerdTreeDemo() {
           }}
           transition={{ duration: 0.3, delay: spreading ? 0.25 : 0 }}
         >
-          <KeyIcon className={`w-4 h-4 ${spreading ? 'text-green-400' : 'text-slate-600'}`} />
+          <KeyIcon
+            className={`w-4 h-4 ${spreading ? 'text-green-400' : 'text-slate-600'}`}
+          />
         </motion.div>
         <span className="text-[9px] font-mono text-slate-600 mt-1">A</span>
       </div>
@@ -362,7 +381,9 @@ export function NerdTreeDemo() {
               className={`w-5 h-5 ${spreading ? 'text-green-400' : 'text-slate-500'}`}
             />
           </motion.div>
-          <span className="text-[9px] font-mono text-slate-600 mt-1">{label}</span>
+          <span className="text-[9px] font-mono text-slate-600 mt-1">
+            {label}
+          </span>
         </div>
       ))}
 
@@ -374,7 +395,11 @@ export function NerdTreeDemo() {
         <motion.div
           className="w-10 h-10 rounded-full flex items-center justify-center border-2"
           animate={{
-            backgroundColor: u4Active ? '#1e1b4b' : spreading ? '#052e16' : '#1e293b',
+            backgroundColor: u4Active
+              ? '#1e1b4b'
+              : spreading
+                ? '#052e16'
+                : '#1e293b',
             borderColor: u4Active
               ? '#3b82f6'
               : spreading

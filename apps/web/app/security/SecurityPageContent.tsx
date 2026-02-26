@@ -33,7 +33,11 @@ const SEGMENTS = [
   },
 ];
 
-export function SecurityPageContent({ initialMode = 'layman' }: { initialMode?: Mode }) {
+export function SecurityPageContent({
+  initialMode = 'layman',
+}: {
+  initialMode?: Mode;
+}) {
   const mode = initialMode;
 
   return (

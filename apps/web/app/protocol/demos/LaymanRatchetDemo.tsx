@@ -170,9 +170,7 @@ export function LaymanRatchetDemo() {
             >
               <motion.div
                 animate={{
-                  rotate: isOverheat
-                    ? [-15, 15, -15, 15, 0]
-                    : [0, 8, -8, 8, 0],
+                  rotate: isOverheat ? [-15, 15, -15, 15, 0] : [0, 8, -8, 8, 0],
                 }}
                 transition={{
                   duration: isOverheat ? 0.15 : 3,
@@ -295,11 +293,9 @@ export function LaymanRatchetDemo() {
         <AnimatePresence>
           {Array.from({ length: historyCount }).map((_, i) => {
             const globalIdx = startIdx + i;
-            const isCurrent =
-              globalIdx === keyIndex && phase <= 2;
+            const isCurrent = globalIdx === keyIndex && phase <= 2;
             const isDestroyed =
-              globalIdx < keyIndex ||
-              (globalIdx === keyIndex && phase >= 3);
+              globalIdx < keyIndex || (globalIdx === keyIndex && phase >= 3);
             return (
               <motion.div
                 key={globalIdx}
