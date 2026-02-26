@@ -66,7 +66,8 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
   // Check if current user is the group owner
   const { data: currentUser } = useCurrentUser();
   const isOwner = members.some((m) => m.isOwner && m.userId === currentUser?.userId);
-  const onlineCount = members.filter((m) => onlineUsers?.has(m.userId)).length;
+  const isSelfOnline = (userId: string) => userId === currentUser?.userId;
+  const onlineCount = members.filter((m) => isSelfOnline(m.userId) || onlineUsers?.has(m.userId)).length;
 
   async function handleInvite() {
     setLocalError(null);
@@ -200,7 +201,7 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
                     ) : (
                       <ul className="space-y-1">
                         {members.map((member) => {
-                          const isOnline = onlineUsers?.has(member.userId);
+                          const isOnline = isSelfOnline(member.userId) || onlineUsers?.has(member.userId);
                           return (
                             <li
                               key={member.userId}
