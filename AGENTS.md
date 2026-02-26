@@ -6,12 +6,10 @@ Use **pnpm** for all package management.
 
 ## Commands
 
-- **Build:** `pnpm build`
-- **Test:** `pnpm test`
-- **Typecheck:** `pnpm typecheck`
-- **Development:** `pnpm dev`
 - **D1 Migrations (local):** `cd packages/server && pnpm wrangler d1 migrations apply microchat-db --local`
 - **D1 Migrations (remote):** `cd packages/server && pnpm wrangler d1 migrations apply microchat-db --remote`
+
+Do not run `pnpm dev` - assume that it is already running.
 
 ## Structure
 
