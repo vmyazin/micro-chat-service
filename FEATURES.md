@@ -287,3 +287,7 @@ New WebSocket event variants:
 - Message editing receipts
 - Delivery/read timestamps visible to the user (just the check marks)
 
+## Call Button
+
+- Show as disabled if more than one user in chat
+- Show tooltip on hover with reason why it's disabled
