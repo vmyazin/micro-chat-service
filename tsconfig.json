@@ -34,6 +34,9 @@
     "apps",
     "packages/**/dist",
     "packages/**/dist/**",
-    "packages/server/src/test-worker.ts"
+    "packages/server/src/test-worker.ts",
+    "packages/**/*.test.ts",
+    "packages/**/*.test.tsx",
+    "packages/**/__tests__/**"
   ]
 }
