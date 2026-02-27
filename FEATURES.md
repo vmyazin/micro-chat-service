@@ -443,31 +443,31 @@ When a member's device is compromised, a Key Update from any member generates ne
 
 Security page claims "0 days post-delivery" retention. Actual schema uses `deleted_at` (time-based). Delivery receipts with timestamps are stored indefinitely in `delivery_receipts`.
 
-## Marketing Copy Accuracy: Audit & Compliance Claims
+## Third-Party Security Audit
 
-**Status:** placeholder copy — not implemented or obtained.
+**Status:** not obtained. Target: Trail of Bits audit before v1.0.
 
-Security page states Trail of Bits audit, SOC 2 Type II, GDPR, and CCPA compliance. No evidence exists in the codebase. Must be removed or fulfilled before launch.
+Security page references a Trail of Bits audit, SOC 2 Type II, GDPR, and CCPA compliance. These are aspirational targets to fulfill prior to launch, not current state.
 
-## Marketing Copy Accuracy: Authentication Description
+## Update Security Page: Authentication Description
 
-**Status:** incorrect. Security page describes bcrypt-hashed credentials; actual auth is WebAuthn (FIDO2) via `@simplewebauthn/server`.
+**Status:** not done. Security page describes bcrypt-hashed credentials; actual auth is WebAuthn (FIDO2) via `@simplewebauthn/server`. Copy needs to reflect the real auth mechanism.
 
-## Marketing Copy Accuracy: MLS Badge
+## Full MLS Protocol Conformance
 
-**Status:** overstated. Homepage badge reads "Built on MLS Protocol / RFC 9420." Implementation is a custom TreeKEM approach, not a conformant MLS stack.
+**Status:** not implemented. Homepage badge reads "Built on MLS Protocol / RFC 9420." Current implementation is a custom TreeKEM approach. Achieving conformance is the long-term goal; copy should be updated to reflect the current TreeKEM foundation until full MLS is implemented.
 
-## Marketing Copy Accuracy: HPKE on Protocol Page
+## HPKE Implementation
 
-**Status:** misleading. Protocol page lists HPKE as a core primitive alongside MLS. HPKE is not implemented; only symmetric AES-GCM is used.
+**Status:** not implemented. Protocol page lists HPKE as a core primitive. Currently only symmetric AES-GCM is used. HPKE is on the roadmap as a dependency for full MLS conformance.
 
-## Marketing Copy Accuracy: Metadata Collection Claims
+## Minimize Server-Side Metadata
 
-**Status:** overstated. Security page claims no contact graphs or timestamps are logged. Server stores plaintext `sender_id`, `created_at`, and `delivery_receipts(user_id, delivered_at)`, enabling full communication graphs.
+**Status:** not implemented. Security page aspires to zero contact graph or timestamp logging. Currently the server stores plaintext `sender_id`, `created_at`, and `delivery_receipts(user_id, delivered_at)`. The goal is to minimize or encrypt this metadata so the claim holds.
 
-## Marketing Copy Accuracy: Sealed Sender on Calls
+## Sealed Sender on Calls (Full Coverage)
 
-**Status:** partial. Sealed sender for call signaling degrades to plaintext `fromUserId` when `callCipher` is absent, which is the case until TreeKEM UI integration is complete.
+**Status:** partial. Sealed sender for call signaling degrades to plaintext `fromUserId` when `callCipher` is absent, which is the case until TreeKEM UI integration is complete. Full coverage is the target once TreeKEM is wired into the chat flow.
 
 ## "How It Works" Button
 
