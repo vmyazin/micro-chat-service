@@ -71,6 +71,8 @@
     "rotateKeysFailed": "چرخش کلیدها ناموفق بود",
     "initializeEncryption": "راه‌اندازی رمزنگاری",
     "initializeEncryptionDescription": "این گروه بدون رمزنگاری ایجاد شده است. در حال حاضر، پیام‌ها از سرورهای ما عبور می‌کنند. آن‌ها را رمزنگاری کنید تا فقط اعضای گروه بتوانند بخوانند.",
+    "initializeEncryptionWait": "راه‌اندازی رمزنگاری توسط یکی از اعضای موجود ارسال می‌شود. تا رسیدن به‌روزرسانی درخت صبر کنید.",
+    "initializeEncryptionOwnerOnly": "فقط یکی از اعضای فعلی می‌تواند رمزنگاری این گروه را راه‌اندازی کند.",
     "rotateKeysHelpToggle": "چرا؟"
   },
   "InviteQRDialog": {
