@@ -141,11 +141,11 @@ beforeEach(() => {
 
   latestMockPC = createMockPC();
 
-  vi.stubGlobal('RTCPeerConnection', () => latestMockPC.pc);
-  vi.stubGlobal('RTCIceCandidate', (init: RTCIceCandidateInit) => init);
+  vi.stubGlobal('RTCPeerConnection', function () { return latestMockPC.pc; });
+  vi.stubGlobal('RTCIceCandidate', function (init: RTCIceCandidateInit) { return init; });
   vi.stubGlobal(
     'RTCSessionDescription',
-    (init: RTCSessionDescriptionInit) => init,
+    function (init: RTCSessionDescriptionInit) { return init; },
   );
 
   // Mock getUserMedia — no navigator.mediaDevices in Node
