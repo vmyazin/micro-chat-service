@@ -129,6 +129,8 @@ export type WebSocketEvent =
       groupId: GroupId;
       userId: UserId;
       displayName: string;
+      /** Base64-encoded ECDH public key + credential for TreeKEM AddMember */
+      keyPackage?: { publicKey: string; credential: string };
     }
   | { type: 'memberLeft'; groupId: GroupId; userId: UserId }
   | {

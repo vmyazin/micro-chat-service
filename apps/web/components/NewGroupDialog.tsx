@@ -20,9 +20,12 @@ export default function NewGroupDialog({ open, onClose, onGroupCreated }: NewGro
   const t = useTranslations('NewGroupDialog');
   const [groupName, setGroupName] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
-  
+  const [isInitializingTree, setIsInitializingTree] = useState(false);
+
   const createGroup = useCreateGroup();
   const { initGroupTree } = useTreeKEM();
+
+  const isPending = createGroup.isPending || isInitializingTree;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -52,8 +55,17 @@ export default function NewGroupDialog({ open, onClose, onGroupCreated }: NewGro
 
       const result = await createPromise;
 
-      // Initialize TreeKEM ratchet tree for the new group
-      initGroupTree(result.groupId).catch(console.error);
+      // Initialize TreeKEM ratchet tree for the new group.
+      // Must be awaited so the key is ready before the user lands on the chat page.
+      setIsInitializingTree(true);
+      try {
+        await initGroupTree(result.groupId);
+      } catch (err) {
+        console.error('[NewGroupDialog] Tree init failed:', err);
+        // Non-fatal — user will see an error on first send attempt.
+      } finally {
+        setIsInitializingTree(false);
+      }
 
       setGroupName('');
       onGroupCreated?.(result.groupId);
@@ -75,7 +87,7 @@ export default function NewGroupDialog({ open, onClose, onGroupCreated }: NewGro
   }
 
   function handleClose() {
-    if (!createGroup.isPending) {
+    if (!isPending) {
       setGroupName('');
       setLocalError(null);
       onClose();
@@ -104,9 +116,10 @@ export default function NewGroupDialog({ open, onClose, onGroupCreated }: NewGro
                 value={groupName}
                 onChange={(e) => setGroupName(e.target.value)}
                 placeholder={t('groupNamePlaceholder')}
-                disabled={createGroup.isPending}
+                disabled={isPending}
                 className="w-full p-3 border-base bg-[var(--background)] focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
                 autoFocus
+                data-testid="group-name-input"
               />
             </div>
 
@@ -121,16 +134,17 @@ export default function NewGroupDialog({ open, onClose, onGroupCreated }: NewGro
                 type="button"
                 variant="outline"
                 onClick={handleClose}
-                disabled={createGroup.isPending}
+                disabled={isPending}
               >
                 {t('cancel')}
               </Button>
               <Button
                 type="submit"
                 variant="colorful"
-                disabled={createGroup.isPending || !groupName.trim()}
+                disabled={isPending || !groupName.trim()}
+                data-testid="create-group-submit"
               >
-                {createGroup.isPending && <LoadingSpinner />}
+                {isPending && <LoadingSpinner />}
                 {t('createAndCopy')}
               </Button>
             </div>

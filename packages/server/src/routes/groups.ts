@@ -148,6 +148,14 @@ groupsRouter.post('/api/groups/:id/join', requireAuth, async (c) => {
   const db = new Database(c.env.DB);
   const now = new Date().toISOString();
 
+  let keyPackage: { publicKey: string; credential: string } | undefined;
+  try {
+    const body = await c.req.json<{ keyPackage?: { publicKey: string; credential: string } }>();
+    keyPackage = body?.keyPackage;
+  } catch {
+    // No body or invalid JSON — keyPackage remains undefined
+  }
+
   const membership = await db.query<{ id: string }>(
     'SELECT id FROM group_members WHERE group_id = ? AND user_id = ?',
     [groupId, user.id],
@@ -176,6 +184,13 @@ groupsRouter.post('/api/groups/:id/join', requireAuth, async (c) => {
     // Ignore concurrent insert errors
   }
 
+  // Count members after insert to determine leaf index (0-based position in ratchet tree)
+  const memberCountRows = await db.query<{ count: number }>(
+    'SELECT COUNT(*) as count FROM group_members WHERE group_id = ?',
+    [groupId],
+  );
+  const leafIndex = (memberCountRows[0]?.count ?? 1) - 1;
+
   // Broadcast memberJoined to group
   const hubId = c.env.CHAT_HUB.idFromName('main');
   const hub = c.env.CHAT_HUB.get(hubId);
@@ -184,13 +199,14 @@ groupsRouter.post('/api/groups/:id/join', requireAuth, async (c) => {
     groupId,
     userId: user.id,
     displayName: user.displayName,
+    keyPackage,
   };
   await hub.fetch('https://hub/broadcast', {
     method: 'POST',
     body: JSON.stringify(event),
   });
 
-  return c.json({ success: true });
+  return c.json({ success: true, leafIndex });
 });
 
 groupsRouter.post('/api/groups/:id/invites', requireAuth, async (c) => {
@@ -229,6 +245,14 @@ groupsRouter.post('/api/invites/:code/accept', requireAuth, async (c) => {
   const user = c.get('user');
   const db = new Database(c.env.DB);
   const now = new Date().toISOString();
+
+  let keyPackage: { publicKey: string; credential: string } | undefined;
+  try {
+    const body = await c.req.json<{ keyPackage?: { publicKey: string; credential: string } }>();
+    keyPackage = body?.keyPackage;
+  } catch {
+    // No body or invalid JSON — keyPackage remains undefined
+  }
 
   const invites = await db.query<{
     id: string;
@@ -297,6 +321,7 @@ groupsRouter.post('/api/invites/:code/accept', requireAuth, async (c) => {
     groupId: group.id,
     userId: user.id,
     displayName: user.displayName,
+    keyPackage,
   };
   await hub.fetch('https://hub/broadcast', {
     method: 'POST',
@@ -484,9 +509,11 @@ groupsRouter.get('/api/groups/:id/tree-state', requireAuth, async (c) => {
     group_id: GroupId;
     epoch: number;
     tree_data: string;
+    commit_data: string | null;
+    welcome_data: string | null;
     updated_at: string;
   }>(
-    'SELECT group_id, epoch, tree_data, updated_at FROM group_tree_state WHERE group_id = ?',
+    'SELECT group_id, epoch, tree_data, commit_data, welcome_data, updated_at FROM group_tree_state WHERE group_id = ?',
     [groupId],
   );
 
@@ -499,6 +526,8 @@ groupsRouter.get('/api/groups/:id/tree-state', requireAuth, async (c) => {
     groupId: state.group_id,
     epoch: state.epoch,
     treeData: state.tree_data,
+    commit: state.commit_data,
+    welcome: state.welcome_data,
     updatedAt: state.updated_at,
   });
 });
@@ -528,6 +557,16 @@ groupsRouter.post('/api/groups/:id/tree-update', requireAuth, async (c) => {
     return c.json({ error: 'epoch and commit are required' }, 400);
   }
 
+  // Optimistic locking: reject if another member already advanced the epoch
+  const groupRows = await db.query<{ epoch: number }>(
+    'SELECT epoch FROM groups WHERE id = ?',
+    [groupId],
+  );
+  const currentEpoch = groupRows[0]?.epoch ?? 0;
+  if (currentEpoch !== body.epoch - 1) {
+    return c.json({ error: 'epoch_conflict', currentEpoch }, 409);
+  }
+
   // Extract treeData from the commit for storage
   let treeData: string;
   try {
@@ -539,17 +578,20 @@ groupsRouter.post('/api/groups/:id/tree-update', requireAuth, async (c) => {
 
   const now = new Date().toISOString();
 
-  // Increment epoch on the group and upsert tree state
+  // Increment epoch on the group and upsert tree state (including commit+welcome for late joiners)
   await db.batch([
     {
       sql: 'UPDATE groups SET epoch = ? WHERE id = ?',
       params: [body.epoch, groupId],
     },
     {
-      sql: `INSERT INTO group_tree_state (group_id, epoch, tree_data, updated_at)
-            VALUES (?, ?, ?, ?)
-            ON CONFLICT(group_id) DO UPDATE SET epoch = ?, tree_data = ?, updated_at = ?`,
-      params: [groupId, body.epoch, treeData, now, body.epoch, treeData, now],
+      sql: `INSERT INTO group_tree_state (group_id, epoch, tree_data, commit_data, welcome_data, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT(group_id) DO UPDATE SET epoch = ?, tree_data = ?, commit_data = ?, welcome_data = ?, updated_at = ?`,
+      params: [
+        groupId, body.epoch, treeData, body.commit, body.welcome ?? null, now,
+        body.epoch, treeData, body.commit, body.welcome ?? null, now,
+      ],
     },
   ]);
 

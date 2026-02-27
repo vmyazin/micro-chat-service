@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/Button';
 import { useAcceptInvite } from '@/hooks/useAcceptInvite';
 import { useTreeKEM } from '@/hooks/useTreeKEM';
+import type { GroupId } from '@microchat/client';
 
 type InviteState = 'loading' | 'error' | 'success';
 
@@ -16,7 +17,7 @@ export default function InvitePage() {
   const [error, setError] = useState<string | null>(null);
 
   const acceptInvite = useAcceptInvite();
-  const { joinGroupTree } = useTreeKEM();
+  const { getIdentityKey, joinGroupTree } = useTreeKEM();
   const hasAttemptedRef = useRef(false);
 
   useEffect(() => {
@@ -24,13 +25,27 @@ export default function InvitePage() {
     if (!code || hasAttemptedRef.current) return;
     hasAttemptedRef.current = true;
 
-    acceptInvite
-      .mutateAsync(code)
-      .then((result) => {
-        // Bootstrap TreeKEM tree for the joined group (fire-and-forget)
-        joinGroupTree(result.groupId, result.leafIndex ?? 0).catch(
-          console.error,
+    getIdentityKey()
+      .then(async (keyPair) => {
+        const pubRaw = new Uint8Array(
+          await crypto.subtle.exportKey('raw', keyPair.publicKey),
         );
+        const b64 = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes));
+        const publicKeyB64 = b64(pubRaw);
+        const result = await acceptInvite.mutateAsync({
+          code,
+          keyPackage: { publicKey: publicKeyB64, credential: publicKeyB64 },
+        });
+        return result;
+      })
+      .then(async (result) => {
+        // Bootstrap tree immediately — don't rely solely on WebSocket treeUpdate
+        // which may arrive before we're subscribed
+        try {
+          await joinGroupTree(result.groupId as GroupId);
+        } catch {
+          // Tree may not be ready yet; useWebSocket will retry on treeUpdate
+        }
         setState('success');
         router.replace(`/chat/${result.groupId}`);
       })
@@ -40,7 +55,7 @@ export default function InvitePage() {
           err instanceof Error ? err.message : 'Failed to accept invite',
         );
       });
-  }, [params.code, router, acceptInvite.mutateAsync, joinGroupTree]);
+  }, [params.code, router, acceptInvite.mutateAsync, getIdentityKey, joinGroupTree]);
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">

@@ -36,6 +36,8 @@ export interface GroupTreeStateTable {
   group_id: GroupId;
   epoch: number;
   tree_data: string;
+  commit_data: string | null;
+  welcome_data: string | null;
   updated_at: string;
 }
 

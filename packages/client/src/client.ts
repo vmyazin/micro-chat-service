@@ -15,6 +15,7 @@ import {
   type GroupListItem,
   type GroupMembersResult,
   type InviteResult,
+  type JoinGroupResult,
 } from './group-client';
 import {
   MessageClient,
@@ -127,16 +128,22 @@ export class MicroChatClient {
     return this.groupClient.createInvite(groupId);
   }
 
-  acceptInvite(code: string): Promise<AcceptInviteResult> {
-    return this.groupClient.acceptInvite(code);
+  acceptInvite(
+    code: string,
+    keyPackage?: { publicKey: string; credential: string },
+  ): Promise<AcceptInviteResult> {
+    return this.groupClient.acceptInvite(code, keyPackage);
   }
 
   removeMember(groupId: GroupId, userId: UserId): Promise<void> {
     return this.groupClient.removeMember(groupId, userId);
   }
 
-  joinGroup(groupId: GroupId): Promise<void> {
-    return this.groupClient.joinGroup(groupId);
+  joinGroup(
+    groupId: GroupId,
+    keyPackage?: { publicKey: string; credential: string },
+  ): Promise<JoinGroupResult> {
+    return this.groupClient.joinGroup(groupId, keyPackage);
   }
 
   getMembers(groupId: GroupId): Promise<GroupMembersResult> {
@@ -215,7 +222,7 @@ export class MicroChatClient {
   // TreeKEM methods
   async getTreeState(
     groupId: GroupId,
-  ): Promise<{ epoch: number; treeData: string } | null> {
+  ): Promise<{ epoch: number; treeData: string; commit?: string; welcome?: string } | null> {
     const response = await fetch(
       `${this.baseUrl}/api/groups/${groupId}/tree-state`,
       { method: 'GET', credentials: 'include' },
@@ -242,7 +249,13 @@ export class MicroChatClient {
       },
     );
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json() as { error?: string; currentEpoch?: number };
+      if (response.status === 409) {
+        const err = new Error(error.error || 'epoch_conflict') as Error & { status: number; currentEpoch?: number };
+        err.status = 409;
+        err.currentEpoch = error.currentEpoch;
+        throw err;
+      }
       throw new Error(error.error || 'Failed to post tree update');
     }
   }

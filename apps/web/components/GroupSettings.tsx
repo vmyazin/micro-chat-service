@@ -124,6 +124,9 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
     setRotateStatus('pending');
     try {
       if (!treekemManager.hasTree(groupId)) {
+        if (!isOwner) {
+          throw new Error(t('initializeEncryptionOwnerOnly'));
+        }
         // Tree not yet initialized — set it up first (owner initializes epoch 1)
         await initGroupTree(groupId);
       } else {
@@ -282,6 +285,7 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
                       onClick={handleInvite}
                       disabled={actionLoading}
                       className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-(--accent) hover:bg-(--accent)/8 transition-colors disabled:opacity-50"
+                      data-testid="invite-btn"
                     >
                       {createInvite.isPending ? (
                         <LoadingSpinner />
@@ -310,6 +314,7 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
                                 value={inviteLink}
                                 className="flex-1 px-2.5 py-1.5 text-xs bg-(--surface-elevated) border border-(--border-color) rounded-md font-mono truncate text-(--text-primary)"
                                 onClick={(e) => (e.target as HTMLInputElement).select()}
+                                data-testid="invite-code"
                               />
                               <Button
                                 variant="primary"
@@ -363,7 +368,7 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
                       <button
                         type="button"
                         onClick={handleRotateKeys}
-                        disabled={actionLoading}
+                        disabled={actionLoading || (!treeInitialized && !isOwner)}
                         className="flex-1 flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-(--text-primary) hover:bg-(--surface-muted) transition-colors disabled:opacity-50"
                       >
                         {rotateStatus === 'pending' ? (
@@ -402,7 +407,11 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
                           transition={{ duration: 0.18 }}
                           className="overflow-hidden px-3 text-xs text-(--text-muted) leading-relaxed"
                         >
-                          {treeInitialized ? t('rotateKeysDescription') : t('initializeEncryptionDescription')}
+                          {treeInitialized
+                            ? t('rotateKeysDescription')
+                            : isOwner
+                              ? t('initializeEncryptionDescription')
+                              : t('initializeEncryptionWait')}
                         </motion.p>
                       )}
                     </AnimatePresence>

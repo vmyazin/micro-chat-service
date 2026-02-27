@@ -35,6 +35,7 @@ import { useMessages } from '@/hooks/useMessages';
 import { useSendMessage } from '@/hooks/useSendMessage';
 import { useSfx } from '@/hooks/useSfx';
 import { useWebSocket } from '@/hooks/useWebSocket';
+import { useTreeKEM } from '@/hooks/useTreeKEM';
 import { useCallStore } from '@/stores/call-store';
 import { useChatClientStore } from '@/stores/chat-client-store';
 import { useChatStore } from '@/stores/chat-store';
@@ -59,6 +60,9 @@ export default function ConversationPage() {
   } = useMessages(groupId as GroupId);
   const { data: members = [] } = useMembers(groupId as GroupId);
   const { data: currentUser } = useCurrentUser();
+
+  const { joinGroupTree } = useTreeKEM();
+  const [retryingKeys, setRetryingKeys] = useState(false);
 
   // Mutations
   const joinGroup = useJoinGroup();
@@ -359,7 +363,16 @@ export default function ConversationPage() {
 
   async function handleSendMessage(content: string) {
     if (!groupId) return;
+    // Bootstrap tree on demand if not ready yet (e.g. welcome arrived after page load)
+    if (!treekemManager.hasTree(groupId as GroupId)) {
+      await joinGroupTree(groupId as GroupId);
+    }
     const epoch = treekemManager.getEpoch(groupId as GroupId);
+    // epoch 0 means the tree isn't initialized (initGroup always starts at 1).
+    // Sending with epoch 0 would throw a GroupCipherError — surface a clear message instead.
+    if (epoch === 0) {
+      throw new Error('Encryption keys not ready yet. Please wait a moment and try again.');
+    }
     await sendMessage.mutateAsync({ content, epoch });
   }
 
@@ -496,7 +509,10 @@ export default function ConversationPage() {
   const visibleMessages = messages.filter((m) => {
     if (m.deleted) return false;
     const ageMs = nowMs - new Date(m.createdAt).getTime();
-    return ageMs < TTL_MS;
+    if (ageMs >= TTL_MS) return false;
+    // Hide messages that failed to decrypt (still raw ciphertext)
+    if (m.nonce && m.epoch !== undefined && looksLikeCiphertext(m.encryptedContent)) return false;
+    return true;
   });
 
   return (
@@ -556,6 +572,7 @@ export default function ConversationPage() {
               onClick={() => setShowSettings(true)}
               className="chat-action-settings p-2 border-base hover:bg-gray-100 dark:hover:bg-gray-800"
               aria-label="Group Settings"
+              data-testid="group-settings-btn"
             >
               <DotsThreeVerticalIcon
                 aria-hidden="true"
@@ -582,9 +599,23 @@ export default function ConversationPage() {
                     variant="outline"
                     size="sm"
                     type="button"
-                    onClick={() => { sendMessage.reset(); setShowSettings(true); }}
+                    disabled={retryingKeys}
+                    onClick={async () => {
+                      setRetryingKeys(true);
+                      try {
+                        await joinGroupTree(groupId as GroupId);
+                        sendMessage.reset();
+                      } catch {
+                        // Still not ready — fall back to settings
+                        setShowSettings(true);
+                        sendMessage.reset();
+                      } finally {
+                        setRetryingKeys(false);
+                      }
+                    }}
                     className="ml-3 border-red-700 dark:border-red-400"
                   >
+                    {retryingKeys ? <SpinnerGapIcon className="inline animate-spin w-3.5 h-3.5 mr-1" /> : null}
                     {t('initializeEncryption')}
                   </Button>
                 </>
@@ -986,6 +1017,19 @@ function avatarColor(name: string): string {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
   }
   return palette[Math.abs(hash) % palette.length];
+}
+
+/** Detect raw base64 ciphertext that was never decrypted (no spaces, all base64 chars). */
+function looksLikeCiphertext(content: string): boolean {
+  if (content.length < 20) return false;
+  // Successfully decrypted content is either JSON (MessagePayload) or readable text with spaces
+  try {
+    const parsed = JSON.parse(content);
+    if (parsed && typeof parsed === 'object') return false; // Valid JSON payload
+  } catch {
+    // Not JSON — check if it's base64 gibberish vs readable text
+  }
+  return /^[A-Za-z0-9+/=]+$/.test(content);
 }
 
 function decodeContent(encryptedContent: string): MessagePayload | string {

@@ -17,7 +17,28 @@ export function useMessages(groupId: GroupId | null | undefined) {
     queryFn: async () => {
       if (!groupId) return [];
       const c = client ?? getClient();
-      return c.getMessages(groupId);
+      const messages = await c.getMessages(groupId);
+
+      // Decrypt messages that have nonce + epoch
+      const { messageCipher } = useChatClientStore.getState();
+      return Promise.all(
+        messages.map(async (msg) => {
+          if (msg.nonce && msg.epoch !== undefined) {
+            try {
+              const decrypted = await messageCipher.decrypt(groupId, {
+                ciphertext: msg.encryptedContent,
+                nonce: msg.nonce,
+                epoch: msg.epoch,
+              });
+              return { ...msg, encryptedContent: decrypted };
+            } catch {
+              // Key not available — leave as ciphertext
+              return msg;
+            }
+          }
+          return msg;
+        }),
+      );
     },
     enabled: !!groupId,
     retry: 1,

@@ -20,7 +20,12 @@ import {
   serializeTree,
   serializeUpdatePath,
 } from './treekem-serialization';
-import type { ECKeyPair, KeyPackage, LeafIndex } from './treekem-types';
+import type {
+  ECKeyPair,
+  KeyPackage,
+  LeafIndex,
+  UpdatePath,
+} from './treekem-types';
 
 export class MLSGroupError extends Error {
   constructor(message: string) {
@@ -92,6 +97,10 @@ export class MLSGroup {
 
     // Derive group key for epoch 1
     const groupSecret = await treekem.deriveGroupSecret();
+    debugTreeKEM(
+      'create',
+      `group=${groupId} epoch=${newEpoch} secret=${shortDigest(groupSecret)}`,
+    );
     await cipher.deriveGroupKey(groupId, newEpoch, groupSecret);
 
     const commit: Commit = {
@@ -114,6 +123,43 @@ export class MLSGroup {
     );
 
     return { group, commit };
+  }
+
+  /**
+   * Restore group state from persisted tree data (no Welcome needed).
+   *
+   * Used when the in-memory MLSGroup is lost (e.g. hot reload) but the epoch
+   * key is already stored in the KeyStore (IndexedDB). This avoids calling
+   * deriveGroupKey again — the key was already derived during the original
+   * commit and is still accessible via the cipher's KeyStore.
+   *
+   * @param transcriptHash - transcript hash after the last commit (from commit.transcriptHash).
+   *   Pass empty string only as a last resort; an incorrect hash will cause
+   *   processCommit to fail on the next commit.
+   */
+  static async fromTreeData(
+    groupId: GroupId,
+    treeData: string,
+    epoch: number,
+    transcriptHash: string,
+    myLeafIndex: LeafIndex,
+    myKeyPair: ECKeyPair,
+    cipher: GroupCipher,
+  ): Promise<MLSGroup> {
+    const tree = await deserializeTree(treeData);
+
+    // Inject our private key at our leaf position
+    const nodeIndex = myLeafIndex * 2;
+    const leafNode = tree.nodes[nodeIndex];
+    if (leafNode && leafNode.type === 'leaf') {
+      leafNode.keyPair = myKeyPair;
+    }
+
+    const treekem = new TreeKEM(tree, myLeafIndex);
+
+    // Do NOT call cipher.deriveGroupKey — the key was already derived and
+    // stored in the KeyStore during the original create/joinFromWelcome/commit.
+    return new MLSGroup(treekem, groupId, epoch, transcriptHash, myLeafIndex, cipher);
   }
 
   /**
@@ -143,6 +189,10 @@ export class MLSGroup {
     // Derive group key
     const groupSecret = await treekem.deriveGroupSecret();
     const groupId = welcome.groupId as GroupId;
+    debugTreeKEM(
+      'joinFromWelcome',
+      `group=${groupId} epoch=${welcome.epoch} secret=${shortDigest(groupSecret)}`,
+    );
     await cipher.deriveGroupKey(groupId, welcome.epoch, groupSecret);
 
     return new MLSGroup(
@@ -182,6 +232,7 @@ export class MLSGroup {
   }> {
     const newEpoch = this.epoch + 1;
     let addedLeafIndex: LeafIndex | undefined;
+    let updatePath: UpdatePath | null = null;
 
     // Apply proposals in order
     for (const proposal of proposals) {
@@ -190,37 +241,32 @@ export class MLSGroup {
           const keyPackage = await this.deserializeKeyPackage(
             proposal.keyPackage,
           );
-          const { newLeafIndex } = await this.treekem.addMember(keyPackage);
+          const result = await this.treekem.addMember(keyPackage);
+          updatePath = result.updatePath;
+          const { newLeafIndex } = result;
           addedLeafIndex = newLeafIndex;
           break;
         }
         case 'remove':
           this.treekem.removeMember(proposal.removedLeafIndex);
           // After removal, committer must do an update to refresh path
-          await this.treekem.update();
+          updatePath = await this.treekem.update();
           break;
         case 'update':
-          await this.treekem.update();
+          updatePath = await this.treekem.update();
           break;
       }
     }
 
-    // If there were no proposals that triggered an update, do one now
-    // (addMember already calls update internally)
-    const hasUpdateOrRemove = proposals.some(
-      (p) => p.type === 'update' || p.type === 'remove',
-    );
-    const hasAdd = proposals.some((p) => p.type === 'add');
-    if (!hasUpdateOrRemove && !hasAdd) {
-      await this.treekem.update();
+    // Commits must carry exactly one final UpdatePath for the resulting tree state.
+    // addMember() already performs update internally; other proposal types capture
+    // their own update above.
+    if (!updatePath) {
+      updatePath = await this.treekem.update();
     }
 
     // Serialize the final state
-    const serializedUpdatePath = await serializeUpdatePath(
-      // Re-do the update to get the final UpdatePath
-      // (the last update() call above produced the correct tree state)
-      await this.treekem.update(),
-    );
+    const serializedUpdatePath = await serializeUpdatePath(updatePath);
     const treeData = await serializeTree(this.treekem.getTree());
 
     // Advance transcript hash
@@ -231,6 +277,10 @@ export class MLSGroup {
 
     // Derive group key for new epoch
     const groupSecret = await this.treekem.deriveGroupSecret();
+    debugTreeKEM(
+      'commit',
+      `group=${this.groupId} epoch=${newEpoch} secret=${shortDigest(groupSecret)}`,
+    );
     await this.cipher.deriveGroupKey(this.groupId, newEpoch, groupSecret);
 
     const commit: Commit = {
@@ -249,6 +299,7 @@ export class MLSGroup {
 
     // Build Welcome if there was an AddProposal
     let welcome: Welcome | undefined;
+    const hasAdd = proposals.some((p) => p.type === 'add');
     if (hasAdd && addedLeafIndex !== undefined) {
       const treeHash = await computeTreeHash(treeData);
       const groupContext: GroupContext = {
@@ -320,6 +371,10 @@ export class MLSGroup {
 
     // Derive group key for new epoch
     const groupSecret = await this.treekem.deriveGroupSecret();
+    debugTreeKEM(
+      'processCommit',
+      `group=${this.groupId} epoch=${commit.newEpoch} secret=${shortDigest(groupSecret)}`,
+    );
     await this.cipher.deriveGroupKey(
       this.groupId,
       commit.newEpoch,
@@ -459,4 +514,26 @@ function base64ToUint8(base64: string): Uint8Array {
     bytes[i] = binary.charCodeAt(i);
   }
   return bytes;
+}
+
+const TREEKEM_DEBUG_FLAG = '__MICROCHAT_DEBUG_TREEKEM__';
+
+function isTreeKEMDebugEnabled(): boolean {
+  return (
+    typeof globalThis !== 'undefined' &&
+    Boolean((globalThis as Record<string, unknown>)[TREEKEM_DEBUG_FLAG])
+  );
+}
+
+function debugTreeKEM(scope: string, message: string): void {
+  if (!isTreeKEMDebugEnabled()) return;
+  console.debug(`[TreeKEM][MLSGroup:${scope}] ${message}`);
+}
+
+function shortDigest(secret: Uint8Array): string {
+  let hash = 0;
+  for (const byte of secret) {
+    hash = (hash * 31 + byte) >>> 0;
+  }
+  return hash.toString(16).padStart(8, '0');
 }

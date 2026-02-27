@@ -433,9 +433,17 @@ When a member's device is compromised, a Key Update from any member generates ne
 
 ## TreeKEM UI Integration
 
-**Status:** not implemented. Crypto and server wiring done; chat flow not connected.
+**Status:** Completed (Feb 27, 2026) ✅
 
-`useCreateGroup`, `useWebSocket`, `useAcceptInvite`, and `useSendMessage` must call TreeKEM lifecycle methods. Until wired, messages use epoch 0 / hardcoded keys.
+All chat flow hooks are wired to TreeKEM lifecycle methods:
+
+- `NewGroupDialog` calls `initGroupTree()` after group creation
+- `useWebSocket` calls `handleTreeUpdate()` on `treeUpdate` events
+- `invite/[code]/page` calls `joinGroupTree()` with `leafIndex` after `acceptInvite`
+- `useJoinGroup` calls `joinGroupTree()` with `leafIndex` after direct-URL auto-join
+- Chat page `handleSendMessage` reads `treekemManager.getEpoch(groupId)` and passes it as `epoch` to `sendMessage`
+
+The `/api/groups/:id/join` endpoint now returns `leafIndex` (consistent with `/api/invites/:code/accept`) so the direct-join path has the correct leaf position for tree bootstrapping.
 
 ## Message Deletion on Delivery
 

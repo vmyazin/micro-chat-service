@@ -2,7 +2,7 @@
 
 import type { GroupId } from '@microchat/client';
 import { MicroChatClient, TreeKEMManager, type MicroChatClientOptions } from '@microchat/client';
-import { GroupCipher, MemoryKeyStore } from '@microchat/crypto';
+import { GroupCipher, IndexedDBKeyStore, MemoryKeyStore } from '@microchat/crypto';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
@@ -22,7 +22,8 @@ const callCipher = new GroupCipher(callKeyStore);
 const initializedCallGroups = new Set<string>();
 
 // Message encryption setup - singleton instances
-const messageKeyStore = new MemoryKeyStore();
+// IndexedDBKeyStore persists keys across page refreshes; falls back to MemoryKeyStore in SSR
+const messageKeyStore = typeof indexedDB !== 'undefined' ? new IndexedDBKeyStore() : new MemoryKeyStore();
 const messageCipher = new GroupCipher(messageKeyStore);
 const treekemManager = new TreeKEMManager(messageCipher);
 

@@ -5,9 +5,11 @@ import { rateLimitApi, rateLimitAuth } from './middleware/rate-limit';
 import { type AuthEnv, authRouter } from './routes/auth';
 import { type CallsEnv, callsRouter } from './routes/calls';
 import { type GroupsEnv, groupsRouter } from './routes/groups';
+import { testRouter } from './routes/test';
 
 export interface AppEnv extends AuthEnv, GroupsEnv, CallsEnv {
   CHAT_HUB: DurableObjectNamespace;
+  ENABLE_TEST_ENDPOINTS?: string;
 }
 
 const app = new Hono<{ Bindings: AppEnv }>();
@@ -78,5 +80,6 @@ app.get('/ws', async (c) => {
 app.route('', authRouter);
 app.route('', groupsRouter);
 app.route('', callsRouter);
+app.route('', testRouter);
 
 export { app };

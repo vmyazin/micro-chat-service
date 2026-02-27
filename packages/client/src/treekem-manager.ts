@@ -56,6 +56,50 @@ export class TreeKEMManager {
   }
 
   /**
+   * Restore in-memory tree state from persisted treeData.
+   *
+   * Use this when the MLSGroup was lost (e.g. hot reload, React Strict Mode
+   * double-mount) but the epoch key is already in IndexedDB. Parses
+   * `commitJson` to extract the correct transcriptHash so future commits can
+   * be verified and processed normally.
+   *
+   * @param myLeafIndex - leaf index of the current user in the tree (0 for the group creator).
+   * @param commitJson  - the stored Commit JSON string from the server's tree-state response.
+   *   Used to recover the transcriptHash. Pass undefined only for legacy data
+   *   that has no stored commit; in that case transcript hash will be empty and
+   *   processCommit will fail on the first incoming commit.
+   */
+  async restoreFromTreeData(
+    groupId: GroupId,
+    treeData: string,
+    epoch: number,
+    myLeafIndex: LeafIndex,
+    myKeyPair: ECKeyPair,
+    commitJson?: string,
+  ): Promise<void> {
+    let transcriptHash = '';
+    if (commitJson) {
+      try {
+        const parsed = JSON.parse(commitJson) as { transcriptHash?: string };
+        transcriptHash = parsed.transcriptHash ?? '';
+      } catch {
+        // Malformed commit JSON — leave transcriptHash as empty string
+      }
+    }
+
+    const group = await MLSGroup.fromTreeData(
+      groupId,
+      treeData,
+      epoch,
+      transcriptHash,
+      myLeafIndex,
+      myKeyPair,
+      this.cipher,
+    );
+    this.groups.set(groupId, group);
+  }
+
+  /**
    * Join an existing group using a Welcome message.
    */
   async joinFromWelcome(
@@ -275,6 +319,13 @@ export class TreeKEMManager {
    */
   getTree(groupId: GroupId) {
     return this.groups.get(groupId)?.getTreeKEM().getTree();
+  }
+
+  /**
+   * Remove a group from local state (used to force re-join after epoch conflict).
+   */
+  deleteGroup(groupId: GroupId): void {
+    this.groups.delete(groupId);
   }
 }
 

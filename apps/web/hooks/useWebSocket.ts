@@ -17,12 +17,53 @@ export function useWebSocket(activeGroupId?: GroupId | null) {
   const getClient = useChatClientStore((state) => state.getClient);
   const queryClient = useQueryClient();
   const { data: groups } = useGroups();
-  const { handleTreeUpdate } = useTreeKEM();
+  const { handleTreeUpdate, addMemberToTree, treekemManager, joinGroupTree } = useTreeKEM();
 
   const setConnectionStatus = useChatStore((state) => state.setConnectionStatus);
 
-  // Track the primary active group
+  // Track the primary active group (for subscription management)
   const activeGroupRef = useRef<GroupId | null>(null);
+  // Track the currently viewed group (for invalidation guard)
+  const activeGroupIdRef = useRef<GroupId | null>(activeGroupId ?? null);
+  const treeUpdateChainRef = useRef<Map<GroupId, Promise<void>>>(new Map());
+  const addMemberInFlightRef = useRef<Set<string>>(new Set());
+
+  // Keep ref current so the finally() closure sees the latest value
+  useEffect(() => {
+    activeGroupIdRef.current = activeGroupId ?? null;
+  }, [activeGroupId]);
+
+  const enqueueTreeUpdate = useCallback(
+    (event: Extract<WebSocketEvent, { type: 'treeUpdate' }>) => {
+      const chainMap = treeUpdateChainRef.current;
+      const prev = chainMap.get(event.groupId) ?? Promise.resolve();
+
+      const next = prev
+        .catch(() => {
+          // Keep queue processing even after failures.
+        })
+        .then(async () => {
+          await handleTreeUpdate(event);
+        });
+
+      chainMap.set(event.groupId, next);
+      next
+        .catch(console.error)
+        .finally(() => {
+          // Only invalidate when this is the LAST queued update (coalesces burst)
+          // and only for the group being actively viewed.
+          if (chainMap.get(event.groupId) === next) {
+            chainMap.delete(event.groupId);
+            if (event.groupId === activeGroupIdRef.current) {
+              queryClient.invalidateQueries({
+                queryKey: messagesQueryKey(event.groupId),
+              });
+            }
+          }
+        });
+    },
+    [handleTreeUpdate, queryClient],
+  );
 
   // Memoize the event handler with stable dependencies
   const handleEvent = useCallback(async (event: WebSocketEvent) => {
@@ -44,13 +85,22 @@ export function useWebSocket(activeGroupId?: GroupId | null) {
         let content = event.encryptedContent;
         if (event.nonce && event.epoch !== undefined) {
           const { messageCipher } = useChatClientStore.getState();
+          const hasKey = treekemManager.hasTree(event.groupId);
+          const currentEpoch = treekemManager.getEpoch(event.groupId);
+          console.debug(
+            `[WS] message groupId=${event.groupId} msgEpoch=${event.epoch} treeEpoch=${currentEpoch} hasTree=${hasKey} sender=${event.senderId}`,
+          );
           try {
             content = await messageCipher.decrypt(event.groupId, {
               ciphertext: event.encryptedContent,
               nonce: event.nonce,
               epoch: event.epoch,
             });
-          } catch {
+          } catch (err) {
+            console.warn(
+              `[WS] decrypt FAILED groupId=${event.groupId} epoch=${event.epoch}`,
+              err instanceof Error ? err.message : err,
+            );
             // Key not available — leave as ciphertext
           }
         }
@@ -117,12 +167,30 @@ export function useWebSocket(activeGroupId?: GroupId | null) {
         queryClient.invalidateQueries({
           queryKey: invalidateGroups(),
         });
+        // If an existing member (we have a tree) sees a new joiner with a key package,
+        // run addMember to generate a Welcome so they can derive the correct epoch key.
+        if (
+          event.type === 'memberJoined' &&
+          event.keyPackage &&
+          treekemManager.hasTree(event.groupId)
+        ) {
+          const dedupeKey = `${event.groupId}:${event.userId}`;
+          if (!addMemberInFlightRef.current.has(dedupeKey)) {
+            addMemberInFlightRef.current.add(dedupeKey);
+            addMemberToTree(event.groupId, event.keyPackage)
+              .catch(console.error)
+              .finally(() => {
+                addMemberInFlightRef.current.delete(dedupeKey);
+              });
+          }
+        }
         break;
       }
 
-      case 'treeUpdate':
-        handleTreeUpdate(event).catch(console.error);
+      case 'treeUpdate': {
+        enqueueTreeUpdate(event);
         break;
+      }
 
       // Call events are handled by CallClient internally - don't process here
       case 'callOffer':
@@ -145,7 +213,9 @@ export function useWebSocket(activeGroupId?: GroupId | null) {
   }, [
     queryClient,
     setConnectionStatus,
-    handleTreeUpdate,
+    enqueueTreeUpdate,
+    addMemberToTree,
+    treekemManager,
   ]);
 
   useEffect(() => {
@@ -167,12 +237,20 @@ export function useWebSocket(activeGroupId?: GroupId | null) {
       activeGroupRef.current = activeGroupId;
     }
 
+    // Bootstrap tree for active group if missing (handles case where
+    // treeUpdate WebSocket was broadcast before we subscribed)
+    if (activeGroupId && !treekemManager.hasTree(activeGroupId)) {
+      joinGroupTree(activeGroupId).catch((err) => {
+        console.debug('[WS] tree bootstrap fallback failed, will retry on treeUpdate', err);
+      });
+    }
+
     const unsubscribe = client?.onEvent(handleEvent) ?? getClient().onEvent(handleEvent);
 
     return () => {
       unsubscribe();
     };
-  }, [client, getClient, activeGroupId, groups, handleEvent]);
+  }, [client, getClient, activeGroupId, groups, handleEvent, treekemManager, joinGroupTree]);
 
   return {
     client: client ?? getClient(),

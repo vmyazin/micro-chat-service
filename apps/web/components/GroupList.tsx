@@ -34,6 +34,7 @@ export default function GroupList({ onNewGroup, selectedGroupId }: GroupListProp
       <Button variant="outline"
         onClick={onNewGroup}
         className="w-full mb-4 flex items-center justify-center ga"
+        data-testid="new-group-btn"
       >
         <PlusIcon className="w-5 h-5" />
         {t('newGroup')}

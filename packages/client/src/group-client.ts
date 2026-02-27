@@ -25,6 +25,11 @@ export interface AcceptInviteResult {
   leafIndex?: number;
 }
 
+export interface JoinGroupResult {
+  success: boolean;
+  leafIndex: number;
+}
+
 export interface GroupMember {
   userId: UserId;
   displayName: string;
@@ -87,10 +92,15 @@ export class GroupClient {
     return response.json();
   }
 
-  async acceptInvite(code: string): Promise<AcceptInviteResult> {
+  async acceptInvite(
+    code: string,
+    keyPackage?: { publicKey: string; credential: string },
+  ): Promise<AcceptInviteResult> {
     const response = await fetch(`${this.baseUrl}/api/invites/${code}/accept`, {
       method: 'POST',
       credentials: 'include',
+      headers: keyPackage ? { 'Content-Type': 'application/json' } : undefined,
+      body: keyPackage ? JSON.stringify({ keyPackage }) : undefined,
     });
 
     if (!response.ok) {
@@ -133,16 +143,23 @@ export class GroupClient {
     return response.json();
   }
 
-  async joinGroup(groupId: GroupId): Promise<void> {
+  async joinGroup(
+    groupId: GroupId,
+    keyPackage?: { publicKey: string; credential: string },
+  ): Promise<JoinGroupResult> {
     const response = await fetch(`${this.baseUrl}/api/groups/${groupId}/join`, {
       method: 'POST',
       credentials: 'include',
+      headers: keyPackage ? { 'Content-Type': 'application/json' } : undefined,
+      body: keyPackage ? JSON.stringify({ keyPackage }) : undefined,
     });
 
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error || 'Failed to join group');
     }
+
+    return response.json();
   }
 
   async leaveGroup(groupId: GroupId): Promise<void> {

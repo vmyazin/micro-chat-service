@@ -41,6 +41,7 @@ export {
   type GroupMember,
   type GroupMembersResult,
   type InviteResult,
+  type JoinGroupResult,
 } from './group-client';
 export {
   MessageClient,

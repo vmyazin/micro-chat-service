@@ -81,6 +81,10 @@ export class GroupCipher {
     const rawKey = new Uint8Array(
       await crypto.subtle.exportKey('raw', derivedKey),
     );
+    debugGroupCipher(
+      'deriveGroupKey',
+      `group=${groupId} epoch=${epoch} shared=${shortDigest(sharedSecret)} key=${shortDigest(rawKey)}`,
+    );
     await this.keyStore.storeKey(groupId, epoch, rawKey);
     return rawKey;
   }
@@ -134,10 +138,18 @@ export class GroupCipher {
   ): Promise<string> {
     const stored = await this.keyStore.getKey(groupId, encrypted.epoch);
     if (!stored) {
+      debugGroupCipher(
+        'decrypt',
+        `group=${groupId} epoch=${encrypted.epoch} key=missing`,
+      );
       throw new GroupCipherError(
         `No key found for group ${groupId} epoch ${encrypted.epoch}`,
       );
     }
+    debugGroupCipher(
+      'decrypt',
+      `group=${groupId} epoch=${encrypted.epoch} key=${shortDigest(stored.key)}`,
+    );
 
     const key = await crypto.subtle.importKey(
       'raw',
@@ -204,4 +216,26 @@ export function base64ToUint8Array(base64: string): Uint8Array {
     bytes[i] = binary.charCodeAt(i);
   }
   return bytes;
+}
+
+const TREEKEM_DEBUG_FLAG = '__MICROCHAT_DEBUG_TREEKEM__';
+
+function isTreeKEMDebugEnabled(): boolean {
+  return (
+    typeof globalThis !== 'undefined' &&
+    Boolean((globalThis as Record<string, unknown>)[TREEKEM_DEBUG_FLAG])
+  );
+}
+
+function debugGroupCipher(scope: string, message: string): void {
+  if (!isTreeKEMDebugEnabled()) return;
+  console.debug(`[TreeKEM][GroupCipher:${scope}] ${message}`);
+}
+
+function shortDigest(bytes: Uint8Array): string {
+  let hash = 0;
+  for (const byte of bytes) {
+    hash = (hash * 31 + byte) >>> 0;
+  }
+  return hash.toString(16).padStart(8, '0');
 }

@@ -375,6 +375,119 @@ describe('TreeKEMManager', () => {
     });
   });
 
+  describe('production-realistic serialization', () => {
+    /**
+     * Simulates the exact production flow where keys are serialized
+     * through base64 (HTTP keyPackage) and PKCS8 (localStorage identity).
+     * This catches bugs that the direct-CryptoKey tests miss.
+     */
+    it('encrypt/decrypt works with base64 key round-trip (production path)', async () => {
+      // Creator
+      const creator = await makeKeyPackage();
+      await manager.initGroup(
+        GROUP_ID,
+        creator.keyPair,
+        creator.keyPackage.credential,
+        [],
+      );
+
+      // Joiner generates identity key (like getOrCreateIdentityKey)
+      const joinerOriginal = await generateECDHKeyPair();
+
+      // === Simulate localStorage persistence (PKCS8 round-trip) ===
+      const joinerPubRaw = new Uint8Array(
+        await crypto.subtle.exportKey('raw', joinerOriginal.publicKey),
+      );
+      const joinerPrivPkcs8 = new Uint8Array(
+        await crypto.subtle.exportKey('pkcs8', joinerOriginal.privateKey),
+      );
+
+      // === Simulate keyPackage sent over HTTP (base64 of raw public key) ===
+      const b64 = (bytes: Uint8Array) => {
+        let binary = '';
+        for (let i = 0; i < bytes.length; i++) {
+          binary += String.fromCharCode(bytes[i]);
+        }
+        return btoa(binary);
+      };
+      const base64ToUint8 = (base64: string) => {
+        const binary = atob(base64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+        return bytes;
+      };
+
+      const publicKeyB64 = b64(joinerPubRaw);
+
+      // === Creator imports the keyPackage public key (like addMemberToTree) ===
+      const importedPubKey = await crypto.subtle.importKey(
+        'raw',
+        base64ToUint8(publicKeyB64).buffer as ArrayBuffer,
+        { name: 'ECDH', namedCurve: 'P-256' },
+        true,
+        [],
+      );
+      const credential = base64ToUint8(publicKeyB64);
+
+      // Creator adds member using the imported public key
+      const addResult = await manager.addMember(GROUP_ID, {
+        publicKey: importedPubKey,
+        credential,
+      });
+      expect(addResult.welcome).toBeDefined();
+
+      // === Simulate welcome going through HTTP + WebSocket (JSON round-trip) ===
+      const welcomeOverWire = JSON.parse(JSON.stringify(addResult.welcome));
+
+      // === Joiner re-loads identity key from localStorage (PKCS8 re-import) ===
+      const reloadedPubKey = await crypto.subtle.importKey(
+        'raw',
+        joinerPubRaw.buffer as ArrayBuffer,
+        { name: 'ECDH', namedCurve: 'P-256' },
+        true,
+        [],
+      );
+      const reloadedPrivKey = await crypto.subtle.importKey(
+        'pkcs8',
+        joinerPrivPkcs8.buffer as ArrayBuffer,
+        { name: 'ECDH', namedCurve: 'P-256' },
+        true,
+        ['deriveBits'],
+      );
+      const reloadedKeyPair = {
+        publicKey: reloadedPubKey,
+        privateKey: reloadedPrivKey,
+      };
+
+      // === Joiner joins from welcome with re-loaded identity key ===
+      const joinerKeyStore = new MemoryKeyStore();
+      const joinerCipher = new GroupCipher(joinerKeyStore);
+      const joinerManager = new TreeKEMManager(joinerCipher);
+
+      await joinerManager.joinFromWelcome(
+        GROUP_ID,
+        welcomeOverWire as string,
+        reloadedKeyPair,
+      );
+
+      // Both at same epoch
+      const epoch = manager.getEpoch(GROUP_ID);
+      expect(joinerManager.getEpoch(GROUP_ID)).toBe(epoch);
+
+      // Creator encrypts, joiner decrypts
+      const enc1 = await cipher.encrypt(GROUP_ID, epoch, 'hello from creator');
+      const dec1 = await joinerCipher.decrypt(GROUP_ID, enc1);
+      expect(dec1).toBe('hello from creator');
+
+      // Joiner encrypts, creator decrypts
+      const enc2 = await joinerCipher.encrypt(GROUP_ID, epoch, 'hello from joiner');
+      const dec2 = await cipher.decrypt(GROUP_ID, enc2);
+      expect(dec2).toBe('hello from joiner');
+    });
+  });
+
   describe('processCommit', () => {
     it('throws for unknown groups', async () => {
       await expect(
