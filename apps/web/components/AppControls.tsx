@@ -18,7 +18,7 @@ export function AppControls() {
       <button
         type="button"
         onClick={toggle}
-        aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+        aria-label="Toggle theme"
         className="flex items-center justify-center w-8 h-8 rounded-full text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-(--surface-elevated) transition-colors"
       >
         {mounted ? (

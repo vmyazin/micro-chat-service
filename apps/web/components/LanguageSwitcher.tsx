@@ -2,7 +2,7 @@
 
 import * as Popover from '@radix-ui/react-popover';
 import { useLocale } from 'next-intl';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { GlobeIcon, CheckIcon } from '@phosphor-icons/react';
 import { Button } from '@/components/Button';
 import { setUserLocale } from '@/app/actions/locale';
@@ -12,6 +12,11 @@ export function LanguageSwitcher() {
   const locale = useLocale();
   const [isPending, setIsPending] = useState(false);
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const selectLocale = async (newLocale: string) => {
     if (newLocale === locale) {
@@ -24,6 +29,20 @@ export function LanguageSwitcher() {
     // Refresh to apply new messages
     window.location.reload();
   };
+
+  if (!mounted) {
+    return (
+      <Button
+        variant="ghost"
+        size="sm"
+        disabled
+        className="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 p-2 h-auto"
+        aria-label="Select language"
+      >
+        <GlobeIcon weight="regular" className="w-[18px] h-[18px]" />
+      </Button>
+    );
+  }
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
