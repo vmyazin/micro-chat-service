@@ -40,7 +40,7 @@ export function SiteHeader() {
         
         <div className="flex items-center gap-4">
           <Link href="/chat" className="hidden md:block bg-foreground text-white px-6 py-2.5 rounded-full text-sm font-semibold hover:bg-blue-600 transition-all duration-300 cursor-pointer shadow-lg shadow-black/5 active:scale-95">
-            Create Private Group
+            Chat Securely Now
           </Link>
           <Button variant="ghost" className="md:hidden">
              <ListIcon className="w-6 h-6 text-slate-900" />

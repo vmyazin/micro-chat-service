@@ -102,7 +102,7 @@ export function ChangelogList({ updates }: { updates: ChangelogCategory[] }) {
             href="/chat"
             className="inline-block bg-blue-600 text-white px-8 py-3 rounded-full font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 active:scale-95"
           >
-            Create Private Group
+            Chat Securely Now
           </Link>
         </div>
       </div>
