@@ -432,10 +432,12 @@ export default function ConversationPage() {
     if (!groupId) return;
 
     try {
+      const epoch = treekemManager.getEpoch(groupId as GroupId);
       const result = await client.sendVoiceMessage(
         groupId as GroupId,
         audioBlob,
         duration,
+        epoch,
       );
 
       const arrayBuffer = await audioBlob.arrayBuffer();
@@ -458,11 +460,13 @@ export default function ConversationPage() {
     if (!groupId) return;
 
     try {
+      const epoch = treekemManager.getEpoch(groupId as GroupId);
       const result = await client.sendImageMessage(
         groupId as GroupId,
         blob,
         width,
         height,
+        epoch,
       );
 
       console.log('Image message sent:', result);
