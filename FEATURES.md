@@ -472,3 +472,11 @@ Security page states Trail of Bits audit, SOC 2 Type II, GDPR, and CCPA complian
 ## "How It Works" Button
 
 **Status:** not implemented. Homepage CTA button has no `href`, `onClick`, or scroll target — it does nothing.
+
+## Call Events In Chat UI
+
+**Status:** not implemented. Call events aren't logged in the chat UI.
+
+- Display missed calls in the chat UI
+- Display accept/reject in the chat UI
+- Display call duration in the completed call record
