@@ -2,6 +2,18 @@
   icon: shield
   color: blue
   items:
+    - date: Feb 27, 2026
+      title: Stronger Per-Message Encryption
+      description: >
+        Every single message you send is now protected with its own unique
+        encryption key. Even if one key were ever exposed, your other messages
+        would remain completely safe.
+    - date: Feb 27, 2026
+      title: Clearer Encryption Setup
+      description: >
+        If your encryption keys ever need to be configured, you'll now see a
+        clear explanation of what's happening and a one-tap option to fix it —
+        no confusion, no dead ends.
     - date: Feb 21, 2026
       title: Live Voice Calls
       description: >
@@ -57,6 +69,24 @@
   icon: sparkles
   color: green
   items:
+    - date: Feb 26, 2026
+      title: QR Code Group Invites
+      description: >
+        Share your group with a scannable QR code. Open Group Settings and
+        tap the QR icon to display it on screen, copy it, or save it as an
+        image — whatever's easiest for you.
+    - date: Feb 26, 2026
+      title: Message Deletion Countdown
+      description: >
+        Hover over any message to see a live timer showing exactly how long
+        until it's deleted from our servers. A small reminder that we keep
+        nothing longer than necessary.
+    - date: Feb 26, 2026
+      title: Call Sound Effects
+      description: >
+        You'll now hear a connecting tone while waiting for someone to pick
+        up, and a subtle sound when the call ends — so you always know where
+        things stand without staring at the screen.
     - date: Feb 26, 2026
       title: Dark Mode & Themes
       description: >
