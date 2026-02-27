@@ -430,3 +430,45 @@ When a member's device is compromised, a Key Update from any member generates ne
 - `TreeKEMManager.removeMember()` blanks compromised leaf and rotates keys
 - Server relays `treeUpdate` events to all group members
 - Missing: UI button/trigger for manual key rotation, automatic periodic rotation
+
+## TreeKEM UI Integration
+
+**Status:** not implemented. Crypto and server wiring done; chat flow not connected.
+
+`useCreateGroup`, `useWebSocket`, `useAcceptInvite`, and `useSendMessage` must call TreeKEM lifecycle methods. Until wired, messages use epoch 0 / hardcoded keys.
+
+## Message Deletion on Delivery
+
+**Status:** not implemented. Messages are soft-deleted on a timer, not removed after delivery.
+
+Security page claims "0 days post-delivery" retention. Actual schema uses `deleted_at` (time-based). Delivery receipts with timestamps are stored indefinitely in `delivery_receipts`.
+
+## Marketing Copy Accuracy: Audit & Compliance Claims
+
+**Status:** placeholder copy — not implemented or obtained.
+
+Security page states Trail of Bits audit, SOC 2 Type II, GDPR, and CCPA compliance. No evidence exists in the codebase. Must be removed or fulfilled before launch.
+
+## Marketing Copy Accuracy: Authentication Description
+
+**Status:** incorrect. Security page describes bcrypt-hashed credentials; actual auth is WebAuthn (FIDO2) via `@simplewebauthn/server`.
+
+## Marketing Copy Accuracy: MLS Badge
+
+**Status:** overstated. Homepage badge reads "Built on MLS Protocol / RFC 9420." Implementation is a custom TreeKEM approach, not a conformant MLS stack.
+
+## Marketing Copy Accuracy: HPKE on Protocol Page
+
+**Status:** misleading. Protocol page lists HPKE as a core primitive alongside MLS. HPKE is not implemented; only symmetric AES-GCM is used.
+
+## Marketing Copy Accuracy: Metadata Collection Claims
+
+**Status:** overstated. Security page claims no contact graphs or timestamps are logged. Server stores plaintext `sender_id`, `created_at`, and `delivery_receipts(user_id, delivered_at)`, enabling full communication graphs.
+
+## Marketing Copy Accuracy: Sealed Sender on Calls
+
+**Status:** partial. Sealed sender for call signaling degrades to plaintext `fromUserId` when `callCipher` is absent, which is the case until TreeKEM UI integration is complete.
+
+## "How It Works" Button
+
+**Status:** not implemented. Homepage CTA button has no `href`, `onClick`, or scroll target — it does nothing.
