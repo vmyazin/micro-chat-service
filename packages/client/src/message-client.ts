@@ -20,6 +20,7 @@ export interface MessageListItem {
   senderName: string | null;
   encryptedContent: string;
   nonce?: string;
+  epoch?: number;
   createdAt: string;
   deleted: boolean;
   sealedSender?: string;
@@ -31,7 +32,7 @@ interface ServerMessage {
   senderName: string | null;
   encryptedPayload: string;
   nonce: string;
-  epoch?: number;
+  epoch: number;
   createdAt: string;
   deleted: boolean;
   sealedSender?: string;
@@ -82,18 +83,37 @@ export class MessageClient {
 
     const data = (await response.json()) as { messages: ServerMessage[] };
 
-    // Map server response to client format
-    return data.messages.map((msg) => ({
-      id: msg.id,
-      groupId,
-      senderId: msg.senderId,
-      senderName: msg.senderName,
-      encryptedContent: msg.encryptedPayload,
-      nonce: msg.nonce,
-      createdAt: msg.createdAt,
-      deleted: msg.deleted,
-      sealedSender: msg.sealedSender,
-    }));
+    // Map server response to client format, attempting decryption for each message
+    return Promise.all(
+      data.messages.map(async (msg) => {
+        const item: MessageListItem = {
+          id: msg.id,
+          groupId,
+          senderId: msg.senderId,
+          senderName: msg.senderName,
+          encryptedContent: msg.encryptedPayload,
+          nonce: msg.nonce,
+          epoch: msg.epoch,
+          createdAt: msg.createdAt,
+          deleted: msg.deleted,
+          sealedSender: msg.sealedSender,
+        };
+
+        if (this.cipher && msg.nonce && msg.epoch !== undefined) {
+          try {
+            item.encryptedContent = await this.cipher.decrypt(groupId, {
+              ciphertext: msg.encryptedPayload,
+              nonce: msg.nonce,
+              epoch: msg.epoch,
+            });
+          } catch {
+            // Key not available yet (tree not initialized) — leave as ciphertext
+          }
+        }
+
+        return item;
+      }),
+    );
   }
 
   async sendMessage(

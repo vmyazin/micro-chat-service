@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCreateGroup } from '@/hooks/useCreateGroup';
+import { useTreeKEM } from '@/hooks/useTreeKEM';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Button } from './Button';
 
@@ -21,6 +22,7 @@ export default function NewGroupDialog({ open, onClose, onGroupCreated }: NewGro
   const [localError, setLocalError] = useState<string | null>(null);
   
   const createGroup = useCreateGroup();
+  const { initGroupTree } = useTreeKEM();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -49,6 +51,9 @@ export default function NewGroupDialog({ open, onClose, onGroupCreated }: NewGro
       }
 
       const result = await createPromise;
+
+      // Initialize TreeKEM ratchet tree for the new group
+      initGroupTree(result.groupId).catch(console.error);
 
       setGroupName('');
       onGroupCreated?.(result.groupId);

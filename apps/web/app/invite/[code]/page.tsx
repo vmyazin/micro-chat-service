@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/Button';
 import { useAcceptInvite } from '@/hooks/useAcceptInvite';
+import { useTreeKEM } from '@/hooks/useTreeKEM';
 
 type InviteState = 'loading' | 'error' | 'success';
 
@@ -15,6 +16,7 @@ export default function InvitePage() {
   const [error, setError] = useState<string | null>(null);
 
   const acceptInvite = useAcceptInvite();
+  const { joinGroupTree } = useTreeKEM();
   const hasAttemptedRef = useRef(false);
 
   useEffect(() => {
@@ -25,6 +27,10 @@ export default function InvitePage() {
     acceptInvite
       .mutateAsync(code)
       .then((result) => {
+        // Bootstrap TreeKEM tree for the joined group (fire-and-forget)
+        joinGroupTree(result.groupId, result.leafIndex ?? 0).catch(
+          console.error,
+        );
         setState('success');
         router.replace(`/chat/${result.groupId}`);
       })
@@ -34,7 +40,7 @@ export default function InvitePage() {
           err instanceof Error ? err.message : 'Failed to accept invite',
         );
       });
-  }, [params.code, router, acceptInvite.mutateAsync]);
+  }, [params.code, router, acceptInvite.mutateAsync, joinGroupTree]);
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">

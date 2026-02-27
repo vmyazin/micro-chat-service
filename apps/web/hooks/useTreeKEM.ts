@@ -155,21 +155,24 @@ export function useTreeKEM() {
 
   /**
    * Handle an incoming treeUpdate WebSocket event.
-   * Deserializes the Commit and processes it via MLSGroup.
+   * - Existing member: processes the Commit to advance epoch.
+   * - New joiner: if a Welcome is included, bootstraps the tree via joinFromWelcome.
    */
   const handleTreeUpdate = useCallback(
     async (event: WebSocketEvent) => {
       if (event.type !== 'treeUpdate') return;
 
-      if (!treekemManager.hasTree(event.groupId)) {
-        // We don't have tree state for this group yet — might be a new joiner
-        // If there's a welcome, we could use it to bootstrap
-        return;
+      if (treekemManager.hasTree(event.groupId)) {
+        // Skip if we're already at this epoch — means we were the committer
+        if (treekemManager.getEpoch(event.groupId) >= event.epoch) return;
+        await treekemManager.processCommit(event.groupId, event.commit);
+      } else if (event.welcome) {
+        // New joiner receiving welcome via broadcast — bootstrap tree
+        const keyPair = await getIdentityKey();
+        await treekemManager.joinFromWelcome(event.groupId, event.welcome, keyPair);
       }
-
-      await treekemManager.processCommit(event.groupId, event.commit);
     },
-    [treekemManager],
+    [treekemManager, getIdentityKey],
   );
 
   return {

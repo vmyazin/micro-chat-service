@@ -61,7 +61,15 @@
     "delete": "Delete",
     "failedCreateInvite": "Failed to create invite",
     "failedLeaveGroup": "Failed to leave group",
-    "failedDeleteGroup": "Failed to delete group"
+    "failedDeleteGroup": "Failed to delete group",
+    "security": "Security",
+    "rotateKeys": "Rotate Encryption Keys",
+    "rotateKeysDone": "Keys Rotated!",
+    "rotateKeysDescription": "Lost a device or think your account was compromised? Rotating keys locks out any old sessions from reading future messages.",
+    "rotateKeysFailed": "Failed to rotate keys",
+    "initializeEncryption": "Initialize Encryption",
+    "initializeEncryptionDescription": "This group was created without encryption. Right now, messages pass through our servers. Encrypt them so only group members can read them.",
+    "rotateKeysHelpToggle": "why?"
   },
   "InviteQRDialog": {
     "title": "Invite via QR Code",

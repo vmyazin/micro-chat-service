@@ -282,6 +282,13 @@ groupsRouter.post('/api/invites/:code/accept', requireAuth, async (c) => {
 
   const group = groups[0];
 
+  // Count members after insert to determine leaf index (0-based position in ratchet tree)
+  const memberCountRows = await db.query<{ count: number }>(
+    'SELECT COUNT(*) as count FROM group_members WHERE group_id = ?',
+    [invite.group_id],
+  );
+  const leafIndex = (memberCountRows[0]?.count ?? 1) - 1;
+
   // Broadcast memberJoined to group
   const hubId = c.env.CHAT_HUB.idFromName('main');
   const hub = c.env.CHAT_HUB.get(hubId);
@@ -300,6 +307,7 @@ groupsRouter.post('/api/invites/:code/accept', requireAuth, async (c) => {
     groupId: group.id,
     encryptedName: group.encrypted_name,
     ownerId: group.owner_id,
+    leafIndex,
   });
 });
 
@@ -684,7 +692,7 @@ groupsRouter.get('/api/groups/:id/messages', requireAuth, async (c) => {
   const after = c.req.query('after');
 
   let query = `
-    SELECT m.id, m.sender_id, m.encrypted_payload, m.nonce, m.created_at, m.deleted_at,
+    SELECT m.id, m.sender_id, m.encrypted_payload, m.nonce, m.epoch, m.created_at, m.deleted_at,
            m.sealed_sender, u.display_name as sender_name
     FROM messages m
     LEFT JOIN users u ON u.id = m.sender_id
@@ -708,6 +716,7 @@ groupsRouter.get('/api/groups/:id/messages', requireAuth, async (c) => {
     sender_id: UserId | null;
     encrypted_payload: string;
     nonce: string;
+    epoch: number;
     created_at: string;
     deleted_at: string | null;
     sealed_sender: string | null;
@@ -721,6 +730,7 @@ groupsRouter.get('/api/groups/:id/messages', requireAuth, async (c) => {
       senderName: m.sender_name,
       encryptedPayload: m.encrypted_payload,
       nonce: m.nonce,
+      epoch: m.epoch,
       createdAt: m.created_at,
       deleted: m.deleted_at !== null,
       sealedSender: m.sealed_sender,
@@ -740,6 +750,7 @@ groupsRouter.post(
     const body = await c.req.json<{
       encryptedPayload: string;
       nonce: string;
+      epoch?: number;
       senderToken?: string;
       sealedSender?: string;
     }>();
@@ -809,13 +820,14 @@ groupsRouter.post(
     const now = new Date().toISOString();
 
     await db.execute(
-      'INSERT INTO messages (id, group_id, sender_id, encrypted_payload, nonce, created_at, sealed_sender) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO messages (id, group_id, sender_id, encrypted_payload, nonce, epoch, created_at, sealed_sender) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       [
         messageId,
         groupId,
         senderId,
         body.encryptedPayload,
         body.nonce,
+        body.epoch ?? 0,
         now,
         body.sealedSender ?? null,
       ],
@@ -837,6 +849,8 @@ groupsRouter.post(
       senderId,
       senderName,
       encryptedContent: body.encryptedPayload,
+      nonce: body.nonce,
+      epoch: body.epoch ?? 0,
       timestamp: now,
       sealedSender: body.sealedSender,
     };

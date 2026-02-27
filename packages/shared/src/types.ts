@@ -112,6 +112,8 @@ export type WebSocketEvent =
       senderId: UserId | null;
       senderName: string | null;
       encryptedContent: string;
+      nonce?: string;
+      epoch?: number;
       timestamp: string;
       /** Encrypted sender identity for Sealed Sender messages */
       sealedSender?: string;

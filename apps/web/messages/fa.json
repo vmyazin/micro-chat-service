@@ -61,7 +61,15 @@
     "delete": "حذف",
     "failedCreateInvite": "ایجاد دعوت‌نامه ناموفق بود",
     "failedLeaveGroup": "ترک گروه ناموفق بود",
-    "failedDeleteGroup": "حذف گروه ناموفق بود"
+    "failedDeleteGroup": "حذف گروه ناموفق بود",
+    "security": "امنیت",
+    "rotateKeys": "چرخش کلیدهای رمزنگاری",
+    "rotateKeysDone": "کلیدها چرخانده شدند!",
+    "rotateKeysDescription": "دستگاهی گم کرده‌اید یا فکر می‌کنید حسابتان در معرض خطر است؟ چرخش کلیدها دسترسی نشست‌های قدیمی به پیام‌های جدید را قطع می‌کند.",
+    "rotateKeysFailed": "چرخش کلیدها ناموفق بود",
+    "initializeEncryption": "راه‌اندازی رمزنگاری",
+    "initializeEncryptionDescription": "این گروه بدون رمزنگاری ایجاد شده است. در حال حاضر، پیام‌ها از سرورهای ما عبور می‌کنند. آن‌ها را رمزنگاری کنید تا فقط اعضای گروه بتوانند بخوانند.",
+    "rotateKeysHelpToggle": "چرا؟"
   },
   "InviteQRDialog": {
     "title": "دعوت از طریق کد QR",

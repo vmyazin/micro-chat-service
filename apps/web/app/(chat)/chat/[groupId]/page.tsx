@@ -46,6 +46,7 @@ export default function ConversationPage() {
 
   const { getClient } = useChatClientStore();
   const client = getClient();
+  const treekemManager = useChatClientStore((state) => state.treekemManager);
   const _playSfx = useSfx();
 
   // Server state with React Query
@@ -357,7 +358,8 @@ export default function ConversationPage() {
 
   async function handleSendMessage(content: string) {
     if (!groupId) return;
-    await sendMessage.mutateAsync({ content });
+    const epoch = treekemManager.getEpoch(groupId as GroupId);
+    await sendMessage.mutateAsync({ content, epoch });
   }
 
   async function handleSendVoiceMessage(audioBlob: Blob, duration: number) {

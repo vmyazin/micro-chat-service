@@ -10,12 +10,14 @@ import type { GroupId, MessageListItem, WebSocketEvent, UserId } from '@microcha
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useCallback } from 'react';
 import { useGroups } from '@/hooks/useGroups';
+import { useTreeKEM } from '@/hooks/useTreeKEM';
 
 export function useWebSocket(activeGroupId?: GroupId | null) {
   const client = useChatClientStore((state) => state.client);
   const getClient = useChatClientStore((state) => state.getClient);
   const queryClient = useQueryClient();
   const { data: groups } = useGroups();
+  const { handleTreeUpdate } = useTreeKEM();
 
   const setConnectionStatus = useChatStore((state) => state.setConnectionStatus);
 
@@ -23,7 +25,7 @@ export function useWebSocket(activeGroupId?: GroupId | null) {
   const activeGroupRef = useRef<GroupId | null>(null);
 
   // Memoize the event handler with stable dependencies
-  const handleEvent = useCallback((event: WebSocketEvent) => {
+  const handleEvent = useCallback(async (event: WebSocketEvent) => {
     switch (event.type) {
       case 'connected':
         setConnectionStatus('connected');
@@ -38,13 +40,30 @@ export function useWebSocket(activeGroupId?: GroupId | null) {
         break;
 
       case 'message': {
+        // Attempt decryption before caching
+        let content = event.encryptedContent;
+        if (event.nonce && event.epoch !== undefined) {
+          const { messageCipher } = useChatClientStore.getState();
+          try {
+            content = await messageCipher.decrypt(event.groupId, {
+              ciphertext: event.encryptedContent,
+              nonce: event.nonce,
+              epoch: event.epoch,
+            });
+          } catch {
+            // Key not available — leave as ciphertext
+          }
+        }
+
         // Add new message to the cache immediately
         const newMessage: MessageListItem = {
           id: event.messageId,
           groupId: event.groupId,
           senderId: event.senderId,
           senderName: event.senderName,
-          encryptedContent: event.encryptedContent,
+          encryptedContent: content,
+          nonce: event.nonce,
+          epoch: event.epoch,
           createdAt: event.timestamp,
           deleted: false,
           sealedSender: event.sealedSender,
@@ -101,8 +120,8 @@ export function useWebSocket(activeGroupId?: GroupId | null) {
         break;
       }
 
-      // TreeKEM updates are handled by useTreeKEM - don't process here
       case 'treeUpdate':
+        handleTreeUpdate(event).catch(console.error);
         break;
 
       // Call events are handled by CallClient internally - don't process here
@@ -126,6 +145,7 @@ export function useWebSocket(activeGroupId?: GroupId | null) {
   }, [
     queryClient,
     setConnectionStatus,
+    handleTreeUpdate,
   ]);
 
   useEffect(() => {

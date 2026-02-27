@@ -1,6 +1,6 @@
 'use client';
 
-import { SpinnerGapIcon, XIcon, CopyIcon, CheckIcon, UserPlusIcon, SignOutIcon, TrashIcon, UsersIcon, CrownIcon, QrCodeIcon } from '@phosphor-icons/react';
+import { SpinnerGapIcon, XIcon, CopyIcon, CheckIcon, UserPlusIcon, SignOutIcon, TrashIcon, UsersIcon, CrownIcon, QrCodeIcon, ArrowsClockwiseIcon, ShieldCheckIcon } from '@phosphor-icons/react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useLocale, useTranslations } from 'next-intl';
@@ -15,6 +15,8 @@ import type { GroupId } from '@microchat/client';
 import { Button } from '@/components/Button';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { usePresenceStore } from '@/stores/presence-store';
+import { useChatClientStore } from '@/stores/chat-client-store';
+import { useTreeKEM } from '@/hooks/useTreeKEM';
 import InviteQRDialog from '@/components/InviteQRDialog';
 
 interface GroupSettingsProps {
@@ -39,6 +41,11 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
   const leaveGroup = useLeaveGroup();
   const deleteGroup = useDeleteGroup();
 
+  const getClient = useChatClientStore((state) => state.getClient);
+  const treekemManager = useChatClientStore((state) => state.treekemManager);
+  const { initGroupTree } = useTreeKEM();
+  const treeInitialized = treekemManager.hasTree(groupId);
+
   // Local UI state
   const [inviteLink, setInviteLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -46,6 +53,8 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showQRDialog, setShowQRDialog] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [rotateStatus, setRotateStatus] = useState<'idle' | 'pending' | 'done'>('idle');
+  const [showRotateHelp, setShowRotateHelp] = useState(false);
 
   // Reset state when dialog opens
   useEffect(() => {
@@ -59,7 +68,7 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
   }, [open]);
 
   // Check if any mutation is pending
-  const actionLoading = createInvite.isPending || leaveGroup.isPending || deleteGroup.isPending;
+  const actionLoading = createInvite.isPending || leaveGroup.isPending || deleteGroup.isPending || rotateStatus === 'pending';
 
   // Combine errors
   const error = localError || membersError?.message || createInvite.error?.message ||
@@ -107,6 +116,27 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
       router.push('/chat');
     } catch (err) {
       setLocalError(err instanceof Error ? err.message : t('failedLeaveGroup'));
+    }
+  }
+
+  async function handleRotateKeys() {
+    setLocalError(null);
+    setRotateStatus('pending');
+    try {
+      if (!treekemManager.hasTree(groupId)) {
+        // Tree not yet initialized — set it up first (owner initializes epoch 1)
+        await initGroupTree(groupId);
+      } else {
+        // Tree exists — perform a PCS key rotation
+        const update = await treekemManager.update(groupId);
+        const client = getClient();
+        await client.postTreeUpdate(groupId, update);
+      }
+      setRotateStatus('done');
+      setTimeout(() => setRotateStatus('idle'), 2000);
+    } catch (err) {
+      setRotateStatus('idle');
+      setLocalError(err instanceof Error ? err.message : t('rotateKeysFailed'));
     }
   }
 
@@ -246,13 +276,6 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
                         })}
                       </ul>
                     )}
-                  </div>
-
-                  {/* Divider */}
-                  <div className="mx-5 my-2 border-t border-(--border-color)" />
-
-                  {/* Actions section */}
-                  <div className="px-5 py-3 space-y-2">
                     {/* Invite button */}
                     <button
                       type="button"
@@ -324,6 +347,67 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
                       )}
                     </AnimatePresence>
                   </div>
+
+                  {/* Divider */}
+                  <div className="mx-5 my-2 border-t border-(--border-color)" />
+
+                  {/* Security section */}
+                  <div className="px-5 py-3 space-y-2">
+                    <div className="flex items-center gap-2 mb-1">
+                      <ShieldCheckIcon className="w-4 h-4 text-(--text-muted)" />
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-(--text-muted)">
+                        {t('security')}
+                      </h3>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={handleRotateKeys}
+                        disabled={actionLoading}
+                        className="flex-1 flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-(--text-primary) hover:bg-(--surface-muted) transition-colors disabled:opacity-50"
+                      >
+                        {rotateStatus === 'pending' ? (
+                          <LoadingSpinner />
+                        ) : rotateStatus === 'done' ? (
+                          <CheckIcon className="w-4.5 h-4.5 text-green-500" />
+                        ) : (
+                          <ArrowsClockwiseIcon className="w-4.5 h-4.5" />
+                        )}
+                        <span className={rotateStatus === 'done' ? 'text-green-600 dark:text-green-400' : ''}>
+                          {rotateStatus === 'done'
+                            ? t('rotateKeysDone')
+                            : treeInitialized
+                              ? t('rotateKeys')
+                              : t('initializeEncryption')}
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowRotateHelp((v) => !v)}
+                        className={`shrink-0 px-2 py-1 rounded-full text-xs font-medium transition-colors ${
+                          showRotateHelp
+                            ? 'bg-(--accent) text-white'
+                            : 'text-(--text-muted) hover:text-(--accent)'
+                        }`}
+                      >
+                        {t('rotateKeysHelpToggle')}
+                      </button>
+                    </div>
+                    <AnimatePresence>
+                      {showRotateHelp && (
+                        <motion.p
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.18 }}
+                          className="overflow-hidden px-3 text-xs text-(--text-muted) leading-relaxed"
+                        >
+                          {treeInitialized ? t('rotateKeysDescription') : t('initializeEncryptionDescription')}
+                        </motion.p>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
                 </div>
 
                 {/* Footer — danger zone actions pinned to bottom */}

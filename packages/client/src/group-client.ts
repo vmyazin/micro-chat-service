@@ -22,6 +22,7 @@ export interface AcceptInviteResult {
   groupId: GroupId;
   encryptedName: string;
   ownerId: UserId;
+  leafIndex?: number;
 }
 
 export interface GroupMember {
