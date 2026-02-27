@@ -25,14 +25,14 @@ async function getOrCreateIdentityKey(): Promise<ECKeyPair> {
     };
     const publicKey = await crypto.subtle.importKey(
       'raw',
-      base64ToUint8(parsed.publicKey),
+      base64ToUint8(parsed.publicKey) as any,
       importParams,
       true,
       [],
     );
     const privateKey = await crypto.subtle.importKey(
       'pkcs8',
-      base64ToUint8(parsed.privateKey),
+      base64ToUint8(parsed.privateKey) as any,
       importParams,
       true,
       ['deriveBits'],

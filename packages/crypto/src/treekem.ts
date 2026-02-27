@@ -138,7 +138,7 @@ export class TreeKEM {
     const encryptedPathSecrets: EncryptedPathSecret[][] = [[]]; // no encryptions at leaf level
 
     // Derive path secrets bottom-up
-    let currentSecret = leafSecret;
+    let currentSecret: Uint8Array = leafSecret as any;
     for (let i = 0; i < dp.length; i++) {
       const pathNode = dp[i];
       const copathNode = cp[i];

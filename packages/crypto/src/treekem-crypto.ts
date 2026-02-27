@@ -44,7 +44,7 @@ export async function derivePathSecret(
   input: Uint8Array,
   info: string,
 ): Promise<Uint8Array> {
-  const baseKey = await crypto.subtle.importKey('raw', input, 'HKDF', false, [
+  const baseKey = await crypto.subtle.importKey('raw', input as any, 'HKDF', false, [
     'deriveBits',
   ]);
   const encoder = new TextEncoder();
@@ -81,9 +81,9 @@ export async function encryptPathSecret(
   const nonce = crypto.getRandomValues(new Uint8Array(IV_LENGTH));
 
   const ciphertext = await crypto.subtle.encrypt(
-    { name: 'AES-GCM', iv: nonce },
+    { name: 'AES-GCM', iv: nonce as any },
     aesKey,
-    pathSecret,
+    pathSecret as any,
   );
 
   return {
@@ -114,9 +114,9 @@ export async function decryptPathSecret(
 
   try {
     const plaintext = await crypto.subtle.decrypt(
-      { name: 'AES-GCM', iv: encrypted.nonce },
+      { name: 'AES-GCM', iv: encrypted.nonce as any },
       aesKey,
-      encrypted.ciphertext,
+      encrypted.ciphertext as any,
     );
     return new Uint8Array(plaintext);
   } catch {
@@ -147,7 +147,7 @@ export async function exportPublicKey(key: CryptoKey): Promise<Uint8Array> {
 async function deriveAESKey(sharedSecret: Uint8Array): Promise<CryptoKey> {
   const baseKey = await crypto.subtle.importKey(
     'raw',
-    sharedSecret,
+    sharedSecret as any,
     'HKDF',
     false,
     ['deriveKey'],

@@ -52,6 +52,7 @@ export interface MicroChatClientOptions {
 }
 
 export class MicroChatClient {
+  private baseUrl: string;
   private authClient: AuthClient;
   private groupClient: GroupClient;
   private messageClient: MessageClient;
@@ -61,6 +62,7 @@ export class MicroChatClient {
   readonly treekemManager?: TreeKEMManager;
 
   constructor(options: MicroChatClientOptions) {
+    this.baseUrl = options.baseUrl;
     this.authClient = new AuthClient(options.baseUrl);
     this.groupClient = new GroupClient(options.baseUrl);
     this.senderTokenStore = options.enableSealedSender
@@ -215,7 +217,7 @@ export class MicroChatClient {
     groupId: GroupId,
   ): Promise<{ epoch: number; treeData: string } | null> {
     const response = await fetch(
-      `${this.authClient.baseUrl}/api/groups/${groupId}/tree-state`,
+      `${this.baseUrl}/api/groups/${groupId}/tree-state`,
       { method: 'GET', credentials: 'include' },
     );
     if (response.status === 404) return null;
@@ -231,7 +233,7 @@ export class MicroChatClient {
     update: { epoch: number; commit: string; welcome?: string },
   ): Promise<void> {
     const response = await fetch(
-      `${this.authClient.baseUrl}/api/groups/${groupId}/tree-update`,
+      `${this.baseUrl}/api/groups/${groupId}/tree-update`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
