@@ -149,11 +149,12 @@ function LaymanContent() {
             messages from last year?
           </p>
           <p className="text-lg text-slate-600 leading-relaxed font-light">
-            No. MicroChat changes the locks on the box{' '}
-            <strong>with every single message</strong>. Once you open a message,
-            the key used to lock it is shredded. Even if a thief steals your
-            keys today, they can never unlock the boxes from yesterday. This is
-            called "Forward Secrecy".
+            No. MicroChat changes the locks on the box whenever the group{' '}
+            <strong>rotates its keys</strong> — when someone joins, leaves, or
+            manually rotates. Once a lock is replaced, its old key is shredded.
+            Even if a thief steals your keys today, they can never unlock the
+            boxes from before the last rotation. This is called{' '}
+            "Forward Secrecy".
           </p>
         </div>
         <div className="h-80 bg-white rounded-3xl border border-gray-100 shadow-xl flex items-center justify-center overflow-hidden lg:order-1">
@@ -161,7 +162,7 @@ function LaymanContent() {
         </div>
       </section>
 
-      {/* Concept 3: The GhostIcon Courier */}
+      {/* Concept 3: The Ghost Courier */}
       <section className="grid lg:grid-cols-2 gap-16 items-center">
         <div>
           <div className="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center mb-6">
@@ -171,7 +172,7 @@ function LaymanContent() {
             className="text-3xl md:text-4xl mb-6 font-bold text-slate-900"
             style={{ fontFamily: 'var(--font-bodoni)' }}
           >
-            The GhostIcon Courier
+            The Ghost Courier
           </h2>
           <p className="text-lg text-slate-600 leading-relaxed mb-6 font-light">
             Normally, the stranger carrying your box (our server) knows exactly
@@ -216,8 +217,8 @@ function NerdContent() {
           <div className="text-slate-400 text-sm">RFC 9420 Standard</div>
         </div>
         <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-lg relative overflow-hidden">
-          <div className="absolute top-4 right-4 bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-1 rounded tracking-widest uppercase">
-            In Progress
+          <div className="absolute top-4 right-4 bg-green-100 text-green-700 text-[10px] font-bold px-2 py-1 rounded tracking-widest uppercase">
+            Live
           </div>
           <div className="text-blue-600 font-mono text-sm mb-2">Topology</div>
           <div className="text-3xl font-bold mb-2 text-slate-900">TreeKEM</div>
@@ -248,9 +249,6 @@ function NerdContent() {
           >
             TreeKEM & Continuous Group Key Agreement
           </h2>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-amber-100 text-amber-700 text-xs font-bold uppercase tracking-wider mb-6">
-            Currently In Development
-          </div>
           <div className="prose prose-slate text-slate-600 font-light prose-lg">
             <p className="mb-4">
               MicroChat implements{' '}
@@ -310,8 +308,9 @@ function NerdContent() {
           </h2>
           <p className="text-lg text-slate-500 font-light">
             The state of the group advances in discrete <strong>Epochs</strong>.
-            Each operation (add, remove, update, message) transitions the group
-            to Epoch N+1.
+            Each <strong>Commit</strong> (add, remove, or key update) transitions
+            the group to Epoch N+1. Application messages do not advance the
+            epoch.
           </p>
         </div>
 
