@@ -15,10 +15,8 @@ pnpm wrangler login
 pnpm wrangler d1 create microchat-db
 # Update database_id in wrangler.toml with the returned ID
 
-# Apply migrations
-pnpm wrangler d1 execute microchat-db --remote --file=./src/db/migrations/001_initial.sql
-pnpm wrangler d1 execute microchat-db --remote --file=./src/db/migrations/002_delivery_receipts.sql
-pnpm wrangler d1 execute microchat-db --remote --file=./src/db/migrations/003_challenges.sql
+# Apply all pending migrations
+pnpm wrangler d1 migrations apply microchat-db --remote --env production
 
 # Deploy
 pnpm wrangler deploy --env production
@@ -98,6 +96,7 @@ sudo certbot renew --dry-run  # verify auto-renewal
 
 ```bash
 cd packages/server
+pnpm wrangler d1 migrations apply microchat-db --remote --env production
 pnpm wrangler deploy --env production
 ```
 
