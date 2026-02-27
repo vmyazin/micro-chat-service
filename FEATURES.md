@@ -351,14 +351,24 @@ New WebSocket event variants:
 
 ## TreeKEM (Ratchet Tree)
 
-**Status:** not implemented. Described on `/protocol/for-engineers`.
+**Status:** Completed (Feb 26, 2026) — crypto layer implemented, not yet wired into server/client.
 
 Group members arranged in a left-balanced binary tree where leaf nodes are members, intermediate nodes hold derived key pairs, and the root key is the shared group secret. Achieves O(log N) encryption cost per group operation instead of O(N) pairwise encryption.
 
-- Leaf nodes represent individual members with their own key pairs
-- Path secrets: each member knows all private keys on their direct path to root
-- Key updates encrypt new path secrets up the tree (logarithmic cost)
-- Currently using flat per-epoch symmetric keys instead
+- Left-balanced binary tree with ECDH P-256 key pairs at each node
+- Path secret derivation via HKDF-SHA-256 from leaf to root
+- Path secret encryption to sibling nodes using ephemeral ECDH + AES-GCM
+- Operations: createGroup, update (PCS), addMember, removeMember
+- Root secret integrates directly with existing GroupCipher.deriveGroupKey()
+- 88 tests across math, crypto primitives, tree operations, and GroupCipher integration
+
+### Files
+
+- `packages/crypto/src/treekem.ts` — main TreeKEM class
+- `packages/crypto/src/treekem-math.ts` — left-balanced binary tree index arithmetic
+- `packages/crypto/src/treekem-crypto.ts` — ECDH, HKDF, path secret encrypt/decrypt
+- `packages/crypto/src/treekem-types.ts` — RatchetTree, UpdatePath, KeyPackage types
+- `packages/crypto/src/treekem-errors.ts` — TreeKEMError, TreeKEMDecryptionError
 
 ## MLS Protocol (RFC 9420)
 
