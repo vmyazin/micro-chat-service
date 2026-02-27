@@ -537,19 +537,16 @@ export default function ConversationPage() {
             </div>
           </div>
           <div className="chat-actions flex items-center gap-2">
-            {/* Call controls only shown when idle — active call is handled by ActiveCallBar in the layout */}
-            {callState === 'idle' && (
-              <CallButton
-                client={client}
-                groupId={groupId as GroupId}
-                currentUserId={currentUser?.userId}
-                onStartCall={handleStartCall}
-                memberCount={memberCount}
-                targetUserId={targetUserId}
-                calling={isCalling}
-                activeSession={null}
-              />
-            )}
+            <CallButton
+              client={client}
+              groupId={groupId as GroupId}
+              currentUserId={currentUser?.userId}
+              onStartCall={handleStartCall}
+              memberCount={memberCount}
+              targetUserId={targetUserId}
+              calling={isCalling}
+              activeSession={null}
+            />
             <Button
               variant="ghost"
               type="button"
