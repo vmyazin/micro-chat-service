@@ -51,3 +51,7 @@ next-env.d.ts
 .dev.vars
 
 assets/
+# playwright
+playwright-report/
+test-results/
+
