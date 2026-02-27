@@ -809,6 +809,7 @@ function MessageBubble({
                 opacity: opacityStyle,
               }}
               role="presentation"
+              aria-hidden="true"
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}
             >

@@ -1,14 +1,12 @@
-import type { GroupId } from '@microchat/shared';
+import type { Commit, ECKeyPair, KeyPackage, Welcome } from '@microchat/crypto';
 import {
-  GroupCipher,
-  MemoryKeyStore,
-  generateECDHKeyPair,
   exportPublicKey,
-  deserializeTree,
-  deserializeUpdatePath,
+  GroupCipher,
+  generateECDHKeyPair,
+  MemoryKeyStore,
 } from '@microchat/crypto';
-import type { ECKeyPair, KeyPackage } from '@microchat/crypto';
-import { describe, expect, it, beforeEach } from 'vitest';
+import type { GroupId } from '@microchat/shared';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { TreeKEMManager } from './treekem-manager';
 
 const GROUP_ID = 'test-group' as GroupId;
@@ -51,7 +49,7 @@ describe('TreeKEMManager', () => {
       expect(manager.hasTree(GROUP_ID)).toBe(true);
     });
 
-    it('returns serialized updatePath and treeData as strings', async () => {
+    it('returns a serialized commit as a string', async () => {
       const kp = await makeKeyPackage();
       const update = await manager.initGroup(
         GROUP_ID,
@@ -60,12 +58,12 @@ describe('TreeKEMManager', () => {
         [],
       );
 
-      expect(typeof update.updatePath).toBe('string');
-      expect(typeof update.treeData).toBe('string');
-
-      // They should be valid JSON
-      expect(() => JSON.parse(update.updatePath)).not.toThrow();
-      expect(() => JSON.parse(update.treeData)).not.toThrow();
+      expect(typeof update.commit).toBe('string');
+      // It should be valid JSON containing a Commit
+      const commit = JSON.parse(update.commit) as Commit;
+      expect(commit.epoch).toBe(0);
+      expect(commit.newEpoch).toBe(1);
+      expect(commit.committer).toBe(0);
     });
 
     it('derives a group key in the cipher after init', async () => {
@@ -79,25 +77,7 @@ describe('TreeKEMManager', () => {
 
       const rawKey = await cipher.getRawKey(GROUP_ID, 1);
       expect(rawKey).not.toBeNull();
-      expect(rawKey!.length).toBe(32);
-    });
-
-    it('initializes with other members in the tree', async () => {
-      const creator = await makeKeyPackage();
-      const m1 = await makeKeyPackage();
-      const m2 = await makeKeyPackage();
-
-      const update = await manager.initGroup(
-        GROUP_ID,
-        creator.keyPair,
-        creator.keyPackage.credential,
-        [m1.keyPackage, m2.keyPackage],
-      );
-
-      expect(update.epoch).toBe(1);
-      const tree = manager.getTree(GROUP_ID);
-      expect(tree).toBeDefined();
-      expect(tree!.numLeaves).toBe(3);
+      expect(rawKey?.length).toBe(32);
     });
   });
 
@@ -150,47 +130,47 @@ describe('TreeKEMManager', () => {
     });
 
     it('throws for unknown groups', async () => {
-      await expect(
-        manager.update('unknown' as GroupId),
-      ).rejects.toThrow('No tree state');
+      await expect(manager.update('unknown' as GroupId)).rejects.toThrow(
+        'No MLS group state',
+      );
     });
   });
 
-  describe('two managers: init + processUpdate', () => {
-    it('second manager can process update and derive same key', async () => {
+  describe('two managers: commit-based sync', () => {
+    it('second manager can join via welcome and derive same key', async () => {
       const creator = await makeKeyPackage();
       const m1 = await makeKeyPackage();
 
       // Creator initializes
-      const initUpdate = await manager.initGroup(
+      await manager.initGroup(
         GROUP_ID,
         creator.keyPair,
         creator.keyPackage.credential,
-        [m1.keyPackage],
+        [],
       );
 
-      // Member 1 has their own manager
+      // Add member 1
+      const addResult = await manager.addMember(GROUP_ID, m1.keyPackage);
+
+      // Member 1 joins from Welcome
       const m1KeyStore = new MemoryKeyStore();
       const m1Cipher = new GroupCipher(m1KeyStore);
       const m1Manager = new TreeKEMManager(m1Cipher);
 
-      // Member 1 joins from serialized tree data
-      await m1Manager.joinGroup(GROUP_ID, initUpdate.treeData, 1, m1.keyPair);
-
-      // Member 1 processes the update
-      await m1Manager.processUpdate(
+      expect(addResult.welcome).toBeDefined();
+      await m1Manager.joinFromWelcome(
         GROUP_ID,
-        initUpdate.updatePath,
-        initUpdate.epoch,
+        addResult.welcome as string,
+        m1.keyPair,
       );
 
-      // Both should have epoch 1
-      expect(manager.getEpoch(GROUP_ID)).toBe(1);
-      expect(m1Manager.getEpoch(GROUP_ID)).toBe(1);
+      // Both should have the same epoch
+      expect(manager.getEpoch(GROUP_ID)).toBe(m1Manager.getEpoch(GROUP_ID));
 
       // Both should have derived the same key
-      const creatorKey = await cipher.getRawKey(GROUP_ID, 1);
-      const m1Key = await m1Cipher.getRawKey(GROUP_ID, 1);
+      const epoch = manager.getEpoch(GROUP_ID);
+      const creatorKey = await cipher.getRawKey(GROUP_ID, epoch);
+      const m1Key = await m1Cipher.getRawKey(GROUP_ID, epoch);
       expect(creatorKey).toEqual(m1Key);
     });
 
@@ -198,30 +178,74 @@ describe('TreeKEMManager', () => {
       const creator = await makeKeyPackage();
       const m1 = await makeKeyPackage();
 
-      const initUpdate = await manager.initGroup(
+      await manager.initGroup(
         GROUP_ID,
         creator.keyPair,
         creator.keyPackage.credential,
-        [m1.keyPackage],
+        [],
       );
+
+      const addResult = await manager.addMember(GROUP_ID, m1.keyPackage);
 
       const m1KeyStore = new MemoryKeyStore();
       const m1Cipher = new GroupCipher(m1KeyStore);
       const m1Manager = new TreeKEMManager(m1Cipher);
 
-      await m1Manager.joinGroup(GROUP_ID, initUpdate.treeData, 1, m1.keyPair);
-      await m1Manager.processUpdate(
+      await m1Manager.joinFromWelcome(
         GROUP_ID,
-        initUpdate.updatePath,
-        initUpdate.epoch,
+        addResult.welcome as string,
+        m1.keyPair,
       );
 
       // Creator encrypts
-      const encrypted = await cipher.encrypt(GROUP_ID, 1, 'hello from creator');
+      const epoch = manager.getEpoch(GROUP_ID);
+      const encrypted = await cipher.encrypt(
+        GROUP_ID,
+        epoch,
+        'hello from creator',
+      );
 
       // Member 1 decrypts
       const decrypted = await m1Cipher.decrypt(GROUP_ID, encrypted);
       expect(decrypted).toBe('hello from creator');
+    });
+
+    it('processCommit syncs epoch and key', async () => {
+      const creator = await makeKeyPackage();
+      const m1 = await makeKeyPackage();
+
+      await manager.initGroup(
+        GROUP_ID,
+        creator.keyPair,
+        creator.keyPackage.credential,
+        [],
+      );
+
+      // Add and join
+      const addResult = await manager.addMember(GROUP_ID, m1.keyPackage);
+      const m1KeyStore = new MemoryKeyStore();
+      const m1Cipher = new GroupCipher(m1KeyStore);
+      const m1Manager = new TreeKEMManager(m1Cipher);
+      await m1Manager.joinFromWelcome(
+        GROUP_ID,
+        addResult.welcome as string,
+        m1.keyPair,
+      );
+
+      // Creator does an update
+      const updateResult = await manager.update(GROUP_ID);
+
+      // Member 1 processes the commit
+      await m1Manager.processCommit(GROUP_ID, updateResult.commit);
+
+      // Both at same epoch
+      expect(manager.getEpoch(GROUP_ID)).toBe(m1Manager.getEpoch(GROUP_ID));
+
+      // Both can encrypt/decrypt
+      const epoch = manager.getEpoch(GROUP_ID);
+      const encrypted = await cipher.encrypt(GROUP_ID, epoch, 'synced!');
+      const decrypted = await m1Cipher.decrypt(GROUP_ID, encrypted);
+      expect(decrypted).toBe('synced!');
     });
   });
 
@@ -237,17 +261,14 @@ describe('TreeKEMManager', () => {
       );
 
       const newMember = await makeKeyPackage();
-      const addResult = await manager.addMember(
-        GROUP_ID,
-        newMember.keyPackage,
-      );
+      const addResult = await manager.addMember(GROUP_ID, newMember.keyPackage);
 
       expect(addResult.epoch).toBe(2);
       expect(addResult.newLeafIndex).toBeDefined();
       expect(manager.getEpoch(GROUP_ID)).toBe(2);
     });
 
-    it('new member can join and decrypt after addMember + processUpdate', async () => {
+    it('produces a Welcome message for the new member', async () => {
       const creator = await makeKeyPackage();
 
       await manager.initGroup(
@@ -258,26 +279,36 @@ describe('TreeKEMManager', () => {
       );
 
       const newMember = await makeKeyPackage();
-      const addResult = await manager.addMember(
+      const addResult = await manager.addMember(GROUP_ID, newMember.keyPackage);
+
+      expect(addResult.welcome).toBeDefined();
+      const welcome = JSON.parse(addResult.welcome as string) as Welcome;
+      expect(welcome.groupId).toBe(GROUP_ID);
+      expect(welcome.epoch).toBe(2);
+      expect(welcome.leafIndex).toBeGreaterThanOrEqual(0);
+    });
+
+    it('new member can join via Welcome and decrypt messages', async () => {
+      const creator = await makeKeyPackage();
+
+      await manager.initGroup(
         GROUP_ID,
-        newMember.keyPackage,
+        creator.keyPair,
+        creator.keyPackage.credential,
+        [],
       );
 
-      // New member sets up their manager
+      const newMember = await makeKeyPackage();
+      const addResult = await manager.addMember(GROUP_ID, newMember.keyPackage);
+
       const nmKeyStore = new MemoryKeyStore();
       const nmCipher = new GroupCipher(nmKeyStore);
       const nmManager = new TreeKEMManager(nmCipher);
 
-      await nmManager.joinGroup(
+      await nmManager.joinFromWelcome(
         GROUP_ID,
-        addResult.treeData,
-        addResult.newLeafIndex,
+        addResult.welcome as string,
         newMember.keyPair,
-      );
-      await nmManager.processUpdate(
-        GROUP_ID,
-        addResult.updatePath,
-        addResult.epoch,
       );
 
       // Creator encrypts at the new epoch
@@ -296,97 +327,81 @@ describe('TreeKEMManager', () => {
         GROUP_ID,
         creator.keyPair,
         creator.keyPackage.credential,
-        [m1.keyPackage],
+        [],
       );
 
+      // Add member first
+      await manager.addMember(GROUP_ID, m1.keyPackage);
+
       const removeResult = await manager.removeMember(GROUP_ID, 1);
-      expect(removeResult.epoch).toBe(2);
-      expect(manager.getEpoch(GROUP_ID)).toBe(2);
+      expect(removeResult.epoch).toBe(3);
+      expect(manager.getEpoch(GROUP_ID)).toBe(3);
     });
 
     it('removed member cannot decrypt new messages', async () => {
       const creator = await makeKeyPackage();
       const m1 = await makeKeyPackage();
 
-      const initUpdate = await manager.initGroup(
-        GROUP_ID,
-        creator.keyPair,
-        creator.keyPackage.credential,
-        [m1.keyPackage],
-      );
-
-      // Member 1 syncs at epoch 1
-      const m1KeyStore = new MemoryKeyStore();
-      const m1Cipher = new GroupCipher(m1KeyStore);
-      const m1Manager = new TreeKEMManager(m1Cipher);
-
-      await m1Manager.joinGroup(GROUP_ID, initUpdate.treeData, 1, m1.keyPair);
-      await m1Manager.processUpdate(
-        GROUP_ID,
-        initUpdate.updatePath,
-        initUpdate.epoch,
-      );
-
-      // Creator removes member 1 and advances epoch
-      await manager.removeMember(GROUP_ID, 1);
-
-      // Creator encrypts at epoch 2
-      const encrypted = await cipher.encrypt(GROUP_ID, 2, 'secret after removal');
-
-      // Member 1 doesn't have epoch 2 key — should fail
-      await expect(
-        m1Cipher.decrypt(GROUP_ID, encrypted),
-      ).rejects.toThrow();
-    });
-  });
-
-  describe('joinGroup', () => {
-    it('sets up tree state from serialized data', async () => {
-      const creator = await makeKeyPackage();
-      const m1 = await makeKeyPackage();
-
-      const initUpdate = await manager.initGroup(
-        GROUP_ID,
-        creator.keyPair,
-        creator.keyPackage.credential,
-        [m1.keyPackage],
-      );
-
-      const m1KeyStore = new MemoryKeyStore();
-      const m1Cipher = new GroupCipher(m1KeyStore);
-      const m1Manager = new TreeKEMManager(m1Cipher);
-
-      await m1Manager.joinGroup(GROUP_ID, initUpdate.treeData, 1, m1.keyPair);
-      expect(m1Manager.hasTree(GROUP_ID)).toBe(true);
-    });
-
-    it('does not overwrite existing tree', async () => {
-      const creator = await makeKeyPackage();
-
-      const initUpdate = await manager.initGroup(
+      await manager.initGroup(
         GROUP_ID,
         creator.keyPair,
         creator.keyPackage.credential,
         [],
       );
 
-      // Calling joinGroup on the same manager that already has the tree
-      // should still work (adds the tree under a different internal state)
-      const m1 = await makeKeyPackage();
+      // Add member 1 and let them join
+      const addResult = await manager.addMember(GROUP_ID, m1.keyPackage);
       const m1KeyStore = new MemoryKeyStore();
       const m1Cipher = new GroupCipher(m1KeyStore);
       const m1Manager = new TreeKEMManager(m1Cipher);
+      await m1Manager.joinFromWelcome(
+        GROUP_ID,
+        addResult.welcome as string,
+        m1.keyPair,
+      );
 
-      await m1Manager.joinGroup(GROUP_ID, initUpdate.treeData, 0, m1.keyPair);
-      expect(m1Manager.hasTree(GROUP_ID)).toBe(true);
+      // Creator removes member 1 and advances epoch
+      const removeResult = await manager.removeMember(GROUP_ID, 1);
+
+      // Creator encrypts at new epoch
+      const encrypted = await cipher.encrypt(
+        GROUP_ID,
+        removeResult.epoch,
+        'secret after removal',
+      );
+
+      // Member 1 doesn't have the new epoch key — should fail
+      await expect(m1Cipher.decrypt(GROUP_ID, encrypted)).rejects.toThrow();
     });
   });
 
-  describe('processUpdate', () => {
+  describe('processCommit', () => {
     it('throws for unknown groups', async () => {
       await expect(
-        manager.processUpdate('unknown' as GroupId, '{}', 1),
-      ).rejects.toThrow('No tree state');
+        manager.processCommit('unknown' as GroupId, '{}'),
+      ).rejects.toThrow('No MLS group state');
+    });
+  });
+
+  describe('getContext', () => {
+    it('returns context for an initialized group', async () => {
+      const kp = await makeKeyPackage();
+      await manager.initGroup(
+        GROUP_ID,
+        kp.keyPair,
+        kp.keyPackage.credential,
+        [],
+      );
+
+      const ctx = manager.getContext(GROUP_ID);
+      expect(ctx).toBeDefined();
+      expect(ctx?.groupId).toBe(GROUP_ID);
+      expect(ctx?.epoch).toBe(1);
+      expect(ctx?.transcriptHash).toHaveLength(64);
+    });
+
+    it('returns undefined for unknown groups', () => {
+      expect(manager.getContext('unknown' as GroupId)).toBeUndefined();
     });
   });
 
@@ -398,8 +413,18 @@ describe('TreeKEMManager', () => {
       const kpA = await makeKeyPackage();
       const kpB = await makeKeyPackage();
 
-      await manager.initGroup(groupA, kpA.keyPair, kpA.keyPackage.credential, []);
-      await manager.initGroup(groupB, kpB.keyPair, kpB.keyPackage.credential, []);
+      await manager.initGroup(
+        groupA,
+        kpA.keyPair,
+        kpA.keyPackage.credential,
+        [],
+      );
+      await manager.initGroup(
+        groupB,
+        kpB.keyPair,
+        kpB.keyPackage.credential,
+        [],
+      );
 
       expect(manager.getEpoch(groupA)).toBe(1);
       expect(manager.getEpoch(groupB)).toBe(1);

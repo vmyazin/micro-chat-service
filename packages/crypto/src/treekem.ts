@@ -1,11 +1,14 @@
 import {
-  TreeKEMError,
-  TreeKEMInvalidStateError,
-} from './treekem-errors';
+  decryptPathSecret,
+  derivePathSecret,
+  deriveRootSecret,
+  encryptPathSecret,
+  generateECDHKeyPair,
+} from './treekem-crypto';
+import { TreeKEMError, TreeKEMInvalidStateError } from './treekem-errors';
 import {
   copath,
   directPath,
-  isLeaf,
   leafToNode,
   left,
   parent as parentOf,
@@ -13,13 +16,6 @@ import {
   root,
   treeSize,
 } from './treekem-math';
-import {
-  decryptPathSecret,
-  derivePathSecret,
-  deriveRootSecret,
-  encryptPathSecret,
-  generateECDHKeyPair,
-} from './treekem-crypto';
 import type {
   ECKeyPair,
   EncryptedPathSecret,
@@ -113,7 +109,7 @@ export class TreeKEM {
   async update(): Promise<UpdatePath> {
     const myNode = leafToNode(this.myLeafIndex);
     const numLeaves = this.tree.numLeaves;
-    const rootNode = root(numLeaves);
+    const _rootNode = root(numLeaves);
 
     // Fresh leaf key pair
     const newLeafKeyPair = await generateECDHKeyPair();
@@ -122,7 +118,7 @@ export class TreeKEM {
 
     // Special case: single member (tree is just one leaf = root)
     if (numLeaves === 1) {
-      const leafSecret = crypto.getRandomValues(new Uint8Array(32));
+      const _leafSecret = crypto.getRandomValues(new Uint8Array(32));
       return {
         sender: this.myLeafIndex,
         pathPublicKeys: [newLeafKeyPair.publicKey],
@@ -237,19 +233,16 @@ export class TreeKEM {
     }
 
     if (decryptionLevel === -1) {
-      throw new TreeKEMError(
-        'Cannot find decryption point in UpdatePath',
-      );
+      throw new TreeKEMError('Cannot find decryption point in UpdatePath');
     }
 
     // Find the encrypted secret targeted at a node where we have a private key
-    const encryptedSecrets = updatePath.encryptedPathSecrets[decryptionLevel + 1];
+    const encryptedSecrets =
+      updatePath.encryptedPathSecrets[decryptionLevel + 1];
     const myPrivateKey = this.findMyPrivateKey(senderCP[decryptionLevel]);
 
     if (!myPrivateKey) {
-      throw new TreeKEMError(
-        'No private key available to decrypt path secret',
-      );
+      throw new TreeKEMError('No private key available to decrypt path secret');
     }
 
     // Find which encrypted secret targets a node we can decrypt
@@ -263,10 +256,7 @@ export class TreeKEM {
     }
 
     // Decrypt the path secret
-    let currentSecret = await decryptPathSecret(
-      myResolution,
-      myPrivateKey,
-    );
+    let currentSecret = await decryptPathSecret(myResolution, myPrivateKey);
 
     // Store the decrypted path secret at this level
     const pathNodeAtLevel = senderDP[decryptionLevel];
@@ -357,9 +347,7 @@ export class TreeKEM {
 
     const node = this.tree.nodes[targetNode] as LeafNode | null;
     if (!node) {
-      throw new TreeKEMInvalidStateError(
-        `No member at leaf ${targetLeaf}`,
-      );
+      throw new TreeKEMInvalidStateError(`No member at leaf ${targetLeaf}`);
     }
 
     // Blank the leaf
@@ -493,7 +481,7 @@ export class TreeKEM {
 
   /** Find the encrypted path secret targeting a node where we can decrypt. */
   private findMyTargetNode(
-    copathNode: NodeIndex,
+    _copathNode: NodeIndex,
     encryptedSecrets: EncryptedPathSecret[],
   ): EncryptedPathSecret | null {
     const myNode = leafToNode(this.myLeafIndex);

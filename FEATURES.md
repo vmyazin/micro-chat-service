@@ -1,5 +1,7 @@
 # Feature Capabilities
 
+Completed items to be marked with ✅.
+
 ## Audio Messages (Voice Notes)
 
 **Status:** Completed (implemented Feb 19, 2026)
@@ -351,7 +353,7 @@ New WebSocket event variants:
 
 ## TreeKEM (Ratchet Tree)
 
-**Status:** Completed (Feb 26, 2026) — crypto layer implemented, not yet wired into server/client.
+**Status:** Completed (Feb 26, 2026) — crypto layer, server/client wiring, and serialization implemented. UI integration pending.
 
 Group members arranged in a left-balanced binary tree where leaf nodes are members, intermediate nodes hold derived key pairs, and the root key is the shared group secret. Achieves O(log N) encryption cost per group operation instead of O(N) pairwise encryption.
 
@@ -360,7 +362,24 @@ Group members arranged in a left-balanced binary tree where leaf nodes are membe
 - Path secret encryption to sibling nodes using ephemeral ECDH + AES-GCM
 - Operations: createGroup, update (PCS), addMember, removeMember
 - Root secret integrates directly with existing GroupCipher.deriveGroupKey()
-- 88 tests across math, crypto primitives, tree operations, and GroupCipher integration
+- 142 tests across math, crypto primitives, tree operations, serialization, manager, and GroupCipher integration
+
+### Server/Client Wiring (Feb 26, 2026)
+
+- D1 migration: `epoch` column on `groups`, `group_tree_state` table for serialized tree snapshots
+- Server endpoints: `GET /api/groups/:id/tree-state`, `POST /api/groups/:id/tree-update`
+- WebSocket broadcasts: `memberJoined`, `memberLeft`, `treeUpdate` events
+- Serialization: `serializeTree/deserializeTree`, `serializeUpdatePath/deserializeUpdatePath` for CryptoKey-safe JSON
+- `TreeKEMManager`: client-side per-group orchestrator wrapping TreeKEM + GroupCipher
+- `MicroChatClient`: accepts `messageCipher` + `treekemManager`, replaces hardcoded epoch 0
+- `useTreeKEM` hook: React lifecycle for init/join/processUpdate (not yet called from UI components)
+
+### Remaining: UI Integration
+
+- `useCreateGroup` / `NewGroupDialog`: call `initGroupTree()` after group creation
+- `useWebSocket`: call `handleTreeUpdate()` on `treeUpdate` events
+- `useAcceptInvite` / join flows: call `joinGroupTree()` after joining
+- `useSendMessage`: pass `treekemManager.getEpoch(groupId)` as epoch
 
 ### Files
 
@@ -369,6 +388,10 @@ Group members arranged in a left-balanced binary tree where leaf nodes are membe
 - `packages/crypto/src/treekem-crypto.ts` — ECDH, HKDF, path secret encrypt/decrypt
 - `packages/crypto/src/treekem-types.ts` — RatchetTree, UpdatePath, KeyPackage types
 - `packages/crypto/src/treekem-errors.ts` — TreeKEMError, TreeKEMDecryptionError
+- `packages/crypto/src/treekem-serialization.ts` — serialize/deserialize trees and UpdatePaths
+- `packages/client/src/treekem-manager.ts` — per-group TreeKEM orchestration
+- `apps/web/hooks/useTreeKEM.ts` — React hook for TreeKEM lifecycle
+- `packages/server/src/db/migrations/006_treekem.sql` — epoch + tree state migration
 
 ## MLS Protocol (RFC 9420)
 
@@ -399,10 +422,11 @@ The protocol page describes one-way KDF chains where key material for Epoch N is
 
 ## Post-Compromise Security
 
-**Status:** not implemented. Described on protocol page and in `THREAT_MODEL.md`.
+**Status:** partial (Feb 26, 2026). TreeKEM `update()` and `removeMember()` provide PCS healing. UI trigger pending.
 
-When a member's device is compromised, a Key Update from any member generates new entropy that "heals" the tree, locking the attacker out of future messages. Requires TreeKEM to propagate new path secrets up the ratchet tree.
+When a member's device is compromised, a Key Update from any member generates new entropy that "heals" the tree, locking the attacker out of future messages. TreeKEM propagates new path secrets up the ratchet tree.
 
-- No key rotation mechanism on member compromise
-- No key update operation exists
-- Depends on TreeKEM and MLS epoch transitions
+- `TreeKEMManager.update()` performs PCS key rotation (fresh leaf key + path secret derivation)
+- `TreeKEMManager.removeMember()` blanks compromised leaf and rotates keys
+- Server relays `treeUpdate` events to all group members
+- Missing: UI button/trigger for manual key rotation, automatic periodic rotation

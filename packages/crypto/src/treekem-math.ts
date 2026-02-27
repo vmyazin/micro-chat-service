@@ -103,10 +103,7 @@ export function sibling(node: NodeIndex, numLeaves: number): NodeIndex {
  * Direct path from a node to the root (inclusive of the node, exclusive of root).
  * Returns node indices in bottom-up order.
  */
-export function directPath(
-  node: NodeIndex,
-  numLeaves: number,
-): NodeIndex[] {
+export function directPath(node: NodeIndex, numLeaves: number): NodeIndex[] {
   const rootNode = root(numLeaves);
   if (node === rootNode) return [];
 
@@ -127,10 +124,7 @@ export function directPath(
  * Copath: for each node on the direct path, return its sibling.
  * The copath determines who receives encrypted path secrets.
  */
-export function copath(
-  node: NodeIndex,
-  numLeaves: number,
-): NodeIndex[] {
+export function copath(node: NodeIndex, numLeaves: number): NodeIndex[] {
   const rootNode = root(numLeaves);
   if (node === rootNode) return [];
 

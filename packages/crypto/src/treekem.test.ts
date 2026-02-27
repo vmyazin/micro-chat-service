@@ -1,9 +1,9 @@
 import type { GroupId } from '@microchat/shared';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { GroupCipher } from './group-cipher';
 import { MemoryKeyStore } from './memory-key-store';
 import { TreeKEM } from './treekem';
-import { generateECDHKeyPair, exportPublicKey } from './treekem-crypto';
+import { exportPublicKey, generateECDHKeyPair } from './treekem-crypto';
 import type { ECKeyPair, KeyPackage, RatchetTree } from './treekem-types';
 
 /** Create a KeyPackage from a fresh ECDH key pair. */
@@ -182,12 +182,11 @@ describe('TreeKEM', () => {
       const creator = await makeKeyPackage();
       const member1 = await makeKeyPackage();
 
-      const { treekem: creatorTK, updatePath: up1 } =
-        await TreeKEM.createGroup(
-          creator.keyPair,
-          creator.keyPackage.credential,
-          [member1.keyPackage],
-        );
+      const { treekem: creatorTK, updatePath: up1 } = await TreeKEM.createGroup(
+        creator.keyPair,
+        creator.keyPackage.credential,
+        [member1.keyPackage],
+      );
 
       const member1TK = createRecipientTreeKEM(
         creatorTK.getTree(),
@@ -250,12 +249,11 @@ describe('TreeKEM', () => {
       const m1 = await makeKeyPackage();
 
       // Start with a 2-member group
-      const { treekem: creatorTK, updatePath: up1 } =
-        await TreeKEM.createGroup(
-          creator.keyPair,
-          creator.keyPackage.credential,
-          [m1.keyPackage],
-        );
+      const { treekem: creatorTK, updatePath: up1 } = await TreeKEM.createGroup(
+        creator.keyPair,
+        creator.keyPackage.credential,
+        [m1.keyPackage],
+      );
 
       const tk1 = createRecipientTreeKEM(creatorTK.getTree(), 1, m1.keyPair);
       await tk1.processUpdatePath(up1);
@@ -279,11 +277,7 @@ describe('TreeKEM', () => {
       await tk1Updated.processUpdatePath(up2);
 
       // New member processes the update
-      const tk2 = createRecipientTreeKEM(
-        creatorTK.getTree(),
-        2,
-        m2.keyPair,
-      );
+      const tk2 = createRecipientTreeKEM(creatorTK.getTree(), 2, m2.keyPair);
       await tk2.processUpdatePath(up2);
 
       const s0 = await creatorTK.deriveGroupSecret();
@@ -301,12 +295,11 @@ describe('TreeKEM', () => {
       const m1 = await makeKeyPackage();
       const m2 = await makeKeyPackage();
 
-      const { treekem: creatorTK, updatePath: up1 } =
-        await TreeKEM.createGroup(
-          creator.keyPair,
-          creator.keyPackage.credential,
-          [m1.keyPackage, m2.keyPackage],
-        );
+      const { treekem: creatorTK } = await TreeKEM.createGroup(
+        creator.keyPair,
+        creator.keyPackage.credential,
+        [m1.keyPackage, m2.keyPackage],
+      );
 
       // Remove member 1
       creatorTK.removeMember(1);
@@ -326,12 +319,11 @@ describe('TreeKEM', () => {
       const m1 = await makeKeyPackage();
       const m2 = await makeKeyPackage();
 
-      const { treekem: creatorTK, updatePath: up1 } =
-        await TreeKEM.createGroup(
-          creator.keyPair,
-          creator.keyPackage.credential,
-          [m1.keyPackage, m2.keyPackage],
-        );
+      const { treekem: creatorTK, updatePath: up1 } = await TreeKEM.createGroup(
+        creator.keyPair,
+        creator.keyPackage.credential,
+        [m1.keyPackage, m2.keyPackage],
+      );
 
       const tk2 = createRecipientTreeKEM(creatorTK.getTree(), 2, m2.keyPair);
       await tk2.processUpdatePath(up1);
@@ -463,12 +455,11 @@ describe('TreeKEM', () => {
       const creator = await makeKeyPackage();
       const m1 = await makeKeyPackage();
 
-      const { treekem: creatorTK, updatePath: up1 } =
-        await TreeKEM.createGroup(
-          creator.keyPair,
-          creator.keyPackage.credential,
-          [m1.keyPackage],
-        );
+      const { treekem: creatorTK } = await TreeKEM.createGroup(
+        creator.keyPair,
+        creator.keyPackage.credential,
+        [m1.keyPackage],
+      );
 
       // Epoch 1: encrypt a message
       const secret1 = await creatorTK.deriveGroupSecret();

@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { GroupCipher } from './group-cipher';
 import { MemoryKeyStore } from './memory-key-store';
 import { TreeKEM } from './treekem';
-import { generateECDHKeyPair, exportPublicKey } from './treekem-crypto';
+import { exportPublicKey, generateECDHKeyPair } from './treekem-crypto';
 import {
-  serializeTree,
   deserializeTree,
-  serializeUpdatePath,
   deserializeUpdatePath,
+  serializeTree,
+  serializeUpdatePath,
 } from './treekem-serialization';
 import type { ECKeyPair, KeyPackage, RatchetTree } from './treekem-types';
 
@@ -67,7 +67,7 @@ describe('treekem-serialization', () => {
           expect(rest).toBeNull();
         } else {
           expect(rest).not.toBeNull();
-          expect(rest!.type).toBe(orig.type);
+          expect(rest?.type).toBe(orig.type);
         }
       }
     });
@@ -87,12 +87,12 @@ describe('treekem-serialization', () => {
       const restored = await deserializeTree(json);
 
       // Compare the raw public key bytes at leaf 0
-      const origLeaf = original.nodes[0]!;
-      const restLeaf = restored.nodes[0]!;
+      const origLeaf = original.nodes[0];
+      const restLeaf = restored.nodes[0];
 
-      if (origLeaf.type === 'leaf' && restLeaf.type === 'leaf') {
-        const origRaw = await exportPublicKey(origLeaf.keyPair!.publicKey);
-        const restRaw = await exportPublicKey(restLeaf.keyPair!.publicKey);
+      if (origLeaf?.type === 'leaf' && restLeaf?.type === 'leaf') {
+        const origRaw = await exportPublicKey(origLeaf.keyPair?.publicKey);
+        const restRaw = await exportPublicKey(restLeaf.keyPair?.publicKey);
         expect(restRaw).toEqual(origRaw);
       }
     });
@@ -131,10 +131,10 @@ describe('treekem-serialization', () => {
       const json = await serializeTree(original);
       const restored = await deserializeTree(json);
 
-      const origLeaf = original.nodes[0]!;
-      const restLeaf = restored.nodes[0]!;
+      const origLeaf = original.nodes[0];
+      const restLeaf = restored.nodes[0];
 
-      if (origLeaf.type === 'leaf' && restLeaf.type === 'leaf') {
+      if (origLeaf?.type === 'leaf' && restLeaf?.type === 'leaf') {
         expect(restLeaf.credential).toEqual(origLeaf.credential);
       }
     });
@@ -201,7 +201,7 @@ describe('treekem-serialization', () => {
       const creator = await makeKeyPackage();
       const m1 = await makeKeyPackage();
 
-      const { treekem, updatePath } = await TreeKEM.createGroup(
+      const { updatePath } = await TreeKEM.createGroup(
         creator.keyPair,
         creator.keyPackage.credential,
         [m1.keyPackage],
@@ -267,7 +267,10 @@ describe('treekem-serialization', () => {
       const clonedNodes = tree.nodes.map((node) => {
         if (!node) return null;
         if (node.type === 'leaf') {
-          return { ...node, keyPair: node.keyPair ? { ...node.keyPair } : null };
+          return {
+            ...node,
+            keyPair: node.keyPair ? { ...node.keyPair } : null,
+          };
         }
         return {
           ...node,

@@ -7,7 +7,10 @@ import type {
 } from '@microchat/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CallClient } from '../call-client';
-import type { WebSocketClient, WebSocketEventHandler } from '../websocket-client';
+import type {
+  WebSocketClient,
+  WebSocketEventHandler,
+} from '../websocket-client';
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -18,7 +21,9 @@ function createMockPC() {
   let _connectionState: RTCPeerConnectionState = 'new';
   let _signalingState: RTCSignalingState = 'stable';
   let onconnectionstatechange: (() => void) | null = null;
-  let onicecandidate: ((e: { candidate: RTCIceCandidate | null }) => void) | null = null;
+  let onicecandidate:
+    | ((e: { candidate: RTCIceCandidate | null }) => void)
+    | null = null;
   let ontrack: ((e: unknown) => void) | null = null;
 
   const pc: Record<string, unknown> = {
@@ -34,7 +39,9 @@ function createMockPC() {
     get onconnectionstatechange() {
       return onconnectionstatechange;
     },
-    set onicecandidate(fn: ((e: { candidate: RTCIceCandidate | null }) => void) | null) {
+    set onicecandidate(fn:
+      | ((e: { candidate: RTCIceCandidate | null }) => void)
+      | null) {
       onicecandidate = fn;
     },
     get onicecandidate() {
@@ -48,8 +55,12 @@ function createMockPC() {
     },
     createDataChannel: vi.fn(),
     addTrack: vi.fn(),
-    createOffer: vi.fn().mockResolvedValue({ type: 'offer', sdp: 'mock-offer-sdp' }),
-    createAnswer: vi.fn().mockResolvedValue({ type: 'answer', sdp: 'mock-answer-sdp' }),
+    createOffer: vi
+      .fn()
+      .mockResolvedValue({ type: 'offer', sdp: 'mock-offer-sdp' }),
+    createAnswer: vi
+      .fn()
+      .mockResolvedValue({ type: 'answer', sdp: 'mock-answer-sdp' }),
     setLocalDescription: vi.fn().mockResolvedValue(undefined),
     setRemoteDescription: vi.fn(async (desc: RTCSessionDescriptionInit) => {
       _signalingState = 'stable';
@@ -130,29 +141,11 @@ beforeEach(() => {
 
   latestMockPC = createMockPC();
 
-  vi.stubGlobal(
-    'RTCPeerConnection',
-    class {
-      constructor() {
-        return latestMockPC.pc;
-      }
-    },
-  );
-  vi.stubGlobal(
-    'RTCIceCandidate',
-    class {
-      constructor(init: RTCIceCandidateInit) {
-        return init;
-      }
-    },
-  );
+  vi.stubGlobal('RTCPeerConnection', () => latestMockPC.pc);
+  vi.stubGlobal('RTCIceCandidate', (init: RTCIceCandidateInit) => init);
   vi.stubGlobal(
     'RTCSessionDescription',
-    class {
-      constructor(init: RTCSessionDescriptionInit) {
-        return init;
-      }
-    },
+    (init: RTCSessionDescriptionInit) => init,
   );
 
   // Mock getUserMedia — no navigator.mediaDevices in Node
@@ -198,7 +191,7 @@ describe('CallClient', () => {
       // Should have sent a callOffer
       const offer = sentEvents.find((e) => e.type === 'callOffer');
       expect(offer).toBeDefined();
-      expect(offer!.type).toBe('callOffer');
+      expect(offer?.type).toBe('callOffer');
 
       // Simulate callee answering
       latestMockPC.helpers.setSignalingForOffer();
@@ -244,7 +237,9 @@ describe('CallClient', () => {
       const { wsClient, receive } = createMockWsClient();
       const client = new CallClient(wsClient, { baseUrl: 'http://localhost' });
 
-      const incomingPromise = new Promise<Awaited<ReturnType<typeof client.startCall>>>((resolve) => {
+      const incomingPromise = new Promise<
+        Awaited<ReturnType<typeof client.startCall>>
+      >((resolve) => {
         client.onIncomingCall((session) => resolve(session));
       });
 
@@ -276,7 +271,9 @@ describe('CallClient', () => {
       const { wsClient, sentEvents, receive } = createMockWsClient();
       const client = new CallClient(wsClient, { baseUrl: 'http://localhost' });
 
-      const incomingPromise = new Promise<Awaited<ReturnType<typeof client.startCall>>>((resolve) => {
+      const incomingPromise = new Promise<
+        Awaited<ReturnType<typeof client.startCall>>
+      >((resolve) => {
         client.onIncomingCall((session) => resolve(session));
       });
 
@@ -297,7 +294,7 @@ describe('CallClient', () => {
 
       const end = sentEvents.find((e) => e.type === 'callEnd');
       expect(end).toBeDefined();
-      expect(end!.type === 'callEnd' && end!.reason).toBe('rejected');
+      expect(end?.type === 'callEnd' && end?.reason).toBe('rejected');
       expect(session.state).toBe('ended');
     });
   });
@@ -313,7 +310,9 @@ describe('CallClient', () => {
         callerId: CALLER_ID,
       });
 
-      const offerCountBefore = sentEvents.filter((e) => e.type === 'callOffer').length;
+      const offerCountBefore = sentEvents.filter(
+        (e) => e.type === 'callOffer',
+      ).length;
 
       // Simulate connection failure
       latestMockPC.helpers.simulateConnectionState('failed');
@@ -322,8 +321,12 @@ describe('CallClient', () => {
       await vi.advanceTimersByTimeAsync(0);
 
       // Should have sent a new offer (ICE restart)
-      expect(latestMockPC.pc.createOffer).toHaveBeenCalledWith({ iceRestart: true });
-      const offerCountAfter = sentEvents.filter((e) => e.type === 'callOffer').length;
+      expect(latestMockPC.pc.createOffer).toHaveBeenCalledWith({
+        iceRestart: true,
+      });
+      const offerCountAfter = sentEvents.filter(
+        (e) => e.type === 'callOffer',
+      ).length;
       expect(offerCountAfter).toBe(offerCountBefore + 1);
 
       // Session should NOT be ended yet (gave ICE restart a chance)
@@ -355,7 +358,7 @@ describe('CallClient', () => {
     });
 
     it('resets ICE restart flag when connection succeeds', async () => {
-      const { wsClient, sentEvents } = createMockWsClient();
+      const { wsClient } = createMockWsClient();
       const client = new CallClient(wsClient, { baseUrl: 'http://localhost' });
 
       const session = await client.startCall({
@@ -376,7 +379,9 @@ describe('CallClient', () => {
       latestMockPC.helpers.simulateConnectionState('failed');
       await vi.advanceTimersByTimeAsync(0);
 
-      const iceRestartOffers = (latestMockPC.pc.createOffer as ReturnType<typeof vi.fn>).mock.calls.filter(
+      const iceRestartOffers = (
+        latestMockPC.pc.createOffer as ReturnType<typeof vi.fn>
+      ).mock.calls.filter(
         (args: unknown[]) => (args[0] as { iceRestart?: boolean })?.iceRestart,
       );
       expect(iceRestartOffers).toHaveLength(2);

@@ -1,5 +1,9 @@
 import { TreeKEMDecryptionError } from './treekem-errors';
-import type { ECKeyPair, EncryptedPathSecret, NodeIndex } from './treekem-types';
+import type {
+  ECKeyPair,
+  EncryptedPathSecret,
+  NodeIndex,
+} from './treekem-types';
 
 const ECDH_PARAMS: EcKeyGenParams = { name: 'ECDH', namedCurve: 'P-256' };
 const AES_KEY_LENGTH = 256;

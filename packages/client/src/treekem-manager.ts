@@ -1,17 +1,23 @@
 import type { GroupCipher } from '@microchat/crypto';
 import {
-  TreeKEM,
+  type Commit,
   type ECKeyPair,
+  type GroupContext,
   type KeyPackage,
   type LeafIndex,
-  type RatchetTree,
-  serializeTree,
-  serializeUpdatePath,
-  deserializeTree,
-  deserializeUpdatePath,
+  MLSGroup,
+  type SerializedKeyPackage,
+  type Welcome,
 } from '@microchat/crypto';
 import type { GroupId } from '@microchat/shared';
 
+export interface SerializedCommitUpdate {
+  commit: string;
+  welcome?: string;
+  epoch: number;
+}
+
+/** @deprecated Use SerializedCommitUpdate instead */
 export interface SerializedUpdate {
   updatePath: string;
   treeData: string;
@@ -19,45 +25,56 @@ export interface SerializedUpdate {
 }
 
 export class TreeKEMManager {
-  private trees: Map<string, TreeKEM> = new Map();
-  private epochs: Map<string, number> = new Map();
+  private groups: Map<string, MLSGroup> = new Map();
 
   constructor(private readonly cipher: GroupCipher) {}
 
   /**
    * Initialize tree for a newly created group (creator is leaf 0).
+   * Returns a serialized Commit for posting to the server.
    */
   async initGroup(
     groupId: GroupId,
     myKeyPair: ECKeyPair,
     myCredential: Uint8Array,
-    otherMembers: KeyPackage[],
-  ): Promise<SerializedUpdate> {
-    const { treekem, updatePath } = await TreeKEM.createGroup(
+    _otherMembers: KeyPackage[],
+  ): Promise<SerializedCommitUpdate> {
+    // MLSGroup.create handles TreeKEM creation and key derivation
+    const { group, commit } = await MLSGroup.create(
+      groupId,
       myKeyPair,
       myCredential,
-      otherMembers,
+      this.cipher,
     );
 
-    this.trees.set(groupId, treekem);
-    const epoch = 1;
-    this.epochs.set(groupId, epoch);
-
-    // Derive group key from tree root
-    const groupSecret = await treekem.deriveGroupSecret();
-    await this.cipher.deriveGroupKey(groupId, epoch, groupSecret);
+    this.groups.set(groupId, group);
 
     return {
-      updatePath: await serializeUpdatePath(updatePath),
-      treeData: await serializeTree(treekem.getTree()),
-      epoch,
+      commit: JSON.stringify(commit),
+      epoch: group.getEpoch(),
     };
   }
 
   /**
-   * Join an existing group using the current tree state.
-   * The joiner reconstructs the tree from the serialized state
-   * and awaits a tree update from an existing member.
+   * Join an existing group using a Welcome message.
+   */
+  async joinFromWelcome(
+    groupId: GroupId,
+    welcomeJson: string,
+    myKeyPair: ECKeyPair,
+  ): Promise<void> {
+    const welcome: Welcome = JSON.parse(welcomeJson);
+    const group = await MLSGroup.joinFromWelcome(
+      welcome,
+      myKeyPair,
+      this.cipher,
+    );
+    this.groups.set(groupId, group);
+  }
+
+  /**
+   * Join an existing group using the current tree state (legacy path).
+   * Used when no Welcome message is available (e.g., reconnecting).
    */
   async joinGroup(
     groupId: GroupId,
@@ -65,6 +82,34 @@ export class TreeKEMManager {
     myLeafIndex: LeafIndex,
     myKeyPair: ECKeyPair,
   ): Promise<void> {
+    // Build a synthetic Welcome for backward compatibility
+    const welcome: Welcome = {
+      groupId,
+      epoch: 0, // Will be updated on first processCommit
+      treeData: treeDataJson,
+      commit: {
+        epoch: 0,
+        newEpoch: 0,
+        proposals: [],
+        updatePath:
+          '{"sender":0,"pathPublicKeys":[],"encryptedPathSecrets":[]}',
+        treeData: treeDataJson,
+        transcriptHash: '',
+        committer: 0,
+      },
+      leafIndex: myLeafIndex,
+      groupContext: {
+        groupId,
+        epoch: 0,
+        treeHash: '',
+        transcriptHash: '',
+      },
+    };
+
+    // For the legacy path, we need to create the MLSGroup differently
+    // since there's no valid commit to process. We'll use the tree directly.
+    const { deserializeTree } = await import('@microchat/crypto');
+
     const tree = await deserializeTree(treeDataJson);
 
     // Insert our full key pair at our leaf position
@@ -74,31 +119,61 @@ export class TreeKEMManager {
       leafNode.keyPair = myKeyPair;
     }
 
-    const treekem = new TreeKEM(tree, myLeafIndex);
-    this.trees.set(groupId, treekem);
-    // Epoch will be set when we receive the next treeUpdate
+    // Create a minimal MLSGroup by joining with a synthetic welcome
+    // that has the tree data but empty commit (no path processing needed)
+    const group = await MLSGroup.joinFromWelcome(
+      {
+        ...welcome,
+        commit: {
+          ...welcome.commit,
+          // Empty update path — no path secrets to process for legacy join
+          updatePath:
+            '{"sender":0,"pathPublicKeys":[],"encryptedPathSecrets":[]}',
+        },
+      },
+      myKeyPair,
+      this.cipher,
+    );
+
+    this.groups.set(groupId, group);
   }
 
   /**
-   * Process an incoming tree update from another member.
+   * Process an incoming commit from another member.
+   */
+  async processCommit(groupId: GroupId, commitJson: string): Promise<void> {
+    const group = this.groups.get(groupId);
+    if (!group) {
+      throw new Error(`No MLS group state for group ${groupId}`);
+    }
+
+    const commit: Commit = JSON.parse(commitJson);
+    await group.processCommit(commit);
+  }
+
+  /**
+   * @deprecated Use processCommit instead
+   * Process an incoming tree update (legacy path for backward compat).
    */
   async processUpdate(
     groupId: GroupId,
     serializedUpdatePath: string,
     newEpoch: number,
   ): Promise<void> {
-    const treekem = this.trees.get(groupId);
-    if (!treekem) {
-      throw new Error(`No tree state for group ${groupId}`);
+    const group = this.groups.get(groupId);
+    if (!group) {
+      throw new Error(`No MLS group state for group ${groupId}`);
     }
 
-    const updatePath = await deserializeUpdatePath(serializedUpdatePath);
-    await treekem.processUpdatePath(updatePath);
+    // For legacy updates, we process the update path directly on the
+    // underlying TreeKEM since we don't have valid transcript hashes
+    const { deserializeUpdatePath } = await import('@microchat/crypto');
 
-    this.epochs.set(groupId, newEpoch);
+    const updatePath = await deserializeUpdatePath(serializedUpdatePath);
+    await group.getTreeKEM().processUpdatePath(updatePath);
 
     // Derive the new group key
-    const groupSecret = await treekem.deriveGroupSecret();
+    const groupSecret = await group.getTreeKEM().deriveGroupSecret();
     await this.cipher.deriveGroupKey(groupId, newEpoch, groupSecret);
   }
 
@@ -106,101 +181,107 @@ export class TreeKEMManager {
    * Get the current epoch for a group.
    */
   getEpoch(groupId: GroupId): number {
-    return this.epochs.get(groupId) ?? 0;
+    const group = this.groups.get(groupId);
+    return group?.getEpoch() ?? 0;
   }
 
   /**
    * Trigger a key update (PCS healing or routine rotation).
    */
-  async update(groupId: GroupId): Promise<SerializedUpdate> {
-    const treekem = this.trees.get(groupId);
-    if (!treekem) {
-      throw new Error(`No tree state for group ${groupId}`);
+  async update(groupId: GroupId): Promise<SerializedCommitUpdate> {
+    const group = this.groups.get(groupId);
+    if (!group) {
+      throw new Error(`No MLS group state for group ${groupId}`);
     }
 
-    const updatePath = await treekem.update();
-    const currentEpoch = this.epochs.get(groupId) ?? 0;
-    const newEpoch = currentEpoch + 1;
-    this.epochs.set(groupId, newEpoch);
-
-    const groupSecret = await treekem.deriveGroupSecret();
-    await this.cipher.deriveGroupKey(groupId, newEpoch, groupSecret);
+    const { commit } = await group.commit([group.proposeUpdate()]);
 
     return {
-      updatePath: await serializeUpdatePath(updatePath),
-      treeData: await serializeTree(treekem.getTree()),
-      epoch: newEpoch,
+      commit: JSON.stringify(commit),
+      epoch: group.getEpoch(),
     };
   }
 
   /**
-   * Handle member addition — extends tree, performs update.
+   * Handle member addition — creates AddProposal + Commit.
    */
   async addMember(
     groupId: GroupId,
     newMemberKeyPackage: KeyPackage,
-  ): Promise<SerializedUpdate & { newLeafIndex: LeafIndex }> {
-    const treekem = this.trees.get(groupId);
-    if (!treekem) {
-      throw new Error(`No tree state for group ${groupId}`);
+  ): Promise<SerializedCommitUpdate & { newLeafIndex: LeafIndex }> {
+    const group = this.groups.get(groupId);
+    if (!group) {
+      throw new Error(`No MLS group state for group ${groupId}`);
     }
 
-    const { updatePath, newLeafIndex } =
-      await treekem.addMember(newMemberKeyPackage);
-    const currentEpoch = this.epochs.get(groupId) ?? 0;
-    const newEpoch = currentEpoch + 1;
-    this.epochs.set(groupId, newEpoch);
+    // Serialize the KeyPackage for the AddProposal
+    const pubRaw = new Uint8Array(
+      await crypto.subtle.exportKey('raw', newMemberKeyPackage.publicKey),
+    );
+    const serializedKP: SerializedKeyPackage = {
+      publicKey: uint8ToBase64(pubRaw),
+      credential: uint8ToBase64(newMemberKeyPackage.credential),
+    };
 
-    const groupSecret = await treekem.deriveGroupSecret();
-    await this.cipher.deriveGroupKey(groupId, newEpoch, groupSecret);
+    const addProposal = group.proposeAdd(serializedKP);
+    const { commit, welcome } = await group.commit([addProposal]);
 
     return {
-      updatePath: await serializeUpdatePath(updatePath),
-      treeData: await serializeTree(treekem.getTree()),
-      epoch: newEpoch,
-      newLeafIndex,
+      commit: JSON.stringify(commit),
+      welcome: welcome ? JSON.stringify(welcome) : undefined,
+      epoch: group.getEpoch(),
+      newLeafIndex: welcome?.leafIndex ?? 0,
     };
   }
 
   /**
-   * Handle member removal — blanks leaf, performs update.
+   * Handle member removal — creates RemoveProposal + Commit.
    */
   async removeMember(
     groupId: GroupId,
     leafIndex: LeafIndex,
-  ): Promise<SerializedUpdate> {
-    const treekem = this.trees.get(groupId);
-    if (!treekem) {
-      throw new Error(`No tree state for group ${groupId}`);
+  ): Promise<SerializedCommitUpdate> {
+    const group = this.groups.get(groupId);
+    if (!group) {
+      throw new Error(`No MLS group state for group ${groupId}`);
     }
 
-    treekem.removeMember(leafIndex);
-    const updatePath = await treekem.update();
-    const currentEpoch = this.epochs.get(groupId) ?? 0;
-    const newEpoch = currentEpoch + 1;
-    this.epochs.set(groupId, newEpoch);
-
-    const groupSecret = await treekem.deriveGroupSecret();
-    await this.cipher.deriveGroupKey(groupId, newEpoch, groupSecret);
+    const removeProposal = group.proposeRemove(leafIndex);
+    const { commit } = await group.commit([removeProposal]);
 
     return {
-      updatePath: await serializeUpdatePath(updatePath),
-      treeData: await serializeTree(treekem.getTree()),
-      epoch: newEpoch,
+      commit: JSON.stringify(commit),
+      epoch: group.getEpoch(),
     };
+  }
+
+  /**
+   * Get GroupContext for a group.
+   */
+  getContext(groupId: GroupId): GroupContext | undefined {
+    const group = this.groups.get(groupId);
+    return group?.getContext();
   }
 
   /**
    * Check if a group has an initialized tree.
    */
   hasTree(groupId: GroupId): boolean {
-    return this.trees.has(groupId);
+    return this.groups.has(groupId);
   }
 
   /**
    * Get the tree for a group (for inspection/debugging).
    */
-  getTree(groupId: GroupId): RatchetTree | undefined {
-    return this.trees.get(groupId)?.getTree();
+  getTree(groupId: GroupId) {
+    return this.groups.get(groupId)?.getTreeKEM().getTree();
   }
+}
+
+function uint8ToBase64(bytes: Uint8Array): string {
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
 }

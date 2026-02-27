@@ -215,7 +215,7 @@ export class MicroChatClient {
     groupId: GroupId,
   ): Promise<{ epoch: number; treeData: string } | null> {
     const response = await fetch(
-      `${this.authClient['baseUrl']}/api/groups/${groupId}/tree-state`,
+      `${this.authClient.baseUrl}/api/groups/${groupId}/tree-state`,
       { method: 'GET', credentials: 'include' },
     );
     if (response.status === 404) return null;
@@ -228,10 +228,10 @@ export class MicroChatClient {
 
   async postTreeUpdate(
     groupId: GroupId,
-    update: { epoch: number; updatePath: string; treeData: string },
+    update: { epoch: number; commit: string; welcome?: string },
   ): Promise<void> {
     const response = await fetch(
-      `${this.authClient['baseUrl']}/api/groups/${groupId}/tree-update`,
+      `${this.authClient.baseUrl}/api/groups/${groupId}/tree-update`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

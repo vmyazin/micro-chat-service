@@ -7,7 +7,10 @@ import type {
   UpdatePath,
 } from './treekem-types';
 
-const ECDH_IMPORT_PARAMS: EcKeyImportParams = { name: 'ECDH', namedCurve: 'P-256' };
+const ECDH_IMPORT_PARAMS: EcKeyImportParams = {
+  name: 'ECDH',
+  namedCurve: 'P-256',
+};
 
 // --- Base64 helpers ---
 
@@ -66,7 +69,9 @@ interface SerializedUpdatePath {
 
 // --- Tree serialization (public keys only, no secrets) ---
 
-async function serializeNode(node: TreeNode | null): Promise<SerializedTreeNode | null> {
+async function serializeNode(
+  node: TreeNode | null,
+): Promise<SerializedTreeNode | null> {
   if (!node) return null;
 
   if (node.type === 'leaf') {
@@ -178,7 +183,9 @@ export async function deserializeTree(json: string): Promise<RatchetTree> {
  * Serialize an UpdatePath to a JSON string.
  * Exports public keys and encrypted path secrets as base64.
  */
-export async function serializeUpdatePath(updatePath: UpdatePath): Promise<string> {
+export async function serializeUpdatePath(
+  updatePath: UpdatePath,
+): Promise<string> {
   const pathPublicKeys: string[] = [];
   for (const key of updatePath.pathPublicKeys) {
     const raw = await crypto.subtle.exportKey('raw', key);
@@ -189,7 +196,10 @@ export async function serializeUpdatePath(updatePath: UpdatePath): Promise<strin
   for (const level of updatePath.encryptedPathSecrets) {
     const serializedLevel: SerializedEncryptedPathSecret[] = [];
     for (const eps of level) {
-      const ephRaw = await crypto.subtle.exportKey('raw', eps.ephemeralPublicKey);
+      const ephRaw = await crypto.subtle.exportKey(
+        'raw',
+        eps.ephemeralPublicKey,
+      );
       serializedLevel.push({
         targetNode: eps.targetNode,
         ciphertext: uint8ToBase64(eps.ciphertext),

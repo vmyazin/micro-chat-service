@@ -181,8 +181,8 @@ export type WebSocketEvent =
       type: 'treeUpdate';
       groupId: GroupId;
       epoch: number;
-      updatePath: string;
-      treeData: string;
+      commit: string;
+      welcome?: string;
     }
   | { type: 'connected' }
   | { type: 'disconnected' }

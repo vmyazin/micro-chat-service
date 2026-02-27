@@ -205,7 +205,9 @@ function NerdContent() {
       <section className="nerd-principles grid md:grid-cols-3 gap-6">
         <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-lg">
           <div className="text-blue-600 font-mono text-sm mb-2">Encryption</div>
-          <div className="text-3xl font-bold mb-2 text-slate-900">End-to-End</div>
+          <div className="text-3xl font-bold mb-2 text-slate-900">
+            End-to-End
+          </div>
           <div className="text-slate-500 text-sm">Zero Server Access</div>
         </div>
         <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-lg">

@@ -4,7 +4,7 @@ import { useChatClientStore } from '@/stores/chat-client-store';
 import type { GroupId, WebSocketEvent } from '@microchat/client';
 import { generateECDHKeyPair } from '@microchat/crypto';
 import type { ECKeyPair } from '@microchat/crypto';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 
 const IDENTITY_KEY_STORAGE = 'microchat-identity-key';
 
@@ -80,9 +80,9 @@ function base64ToUint8(base64: string): Uint8Array {
 /**
  * Hook that manages TreeKEM lifecycle for group encryption.
  *
- * - On group creation: initializes the ratchet tree and posts the update to server
- * - On treeUpdate WebSocket event: processes the update to sync local tree state
- * - On joining existing group: fetches tree state from server
+ * - On group creation: initializes the ratchet tree and posts the commit to server
+ * - On treeUpdate WebSocket event: processes the commit to sync local tree state
+ * - On joining existing group: fetches tree state from server or uses Welcome
  */
 export function useTreeKEM() {
   const getClient = useChatClientStore((state) => state.getClient);
@@ -112,10 +112,10 @@ export function useTreeKEM() {
         groupId,
         keyPair,
         pubRaw,
-        [], // No other members yet at creation time
+        [],
       );
 
-      // Post tree update to server
+      // Post commit to server
       const client = getClient();
       await client.postTreeUpdate(groupId, update);
     },
@@ -124,17 +124,25 @@ export function useTreeKEM() {
 
   /**
    * Fetch existing tree state and join a group's TreeKEM session.
-   * Should be called when joining an existing group or reconnecting.
+   * Uses Welcome message if available, falls back to tree state fetch.
    */
   const joinGroupTree = useCallback(
-    async (groupId: GroupId, leafIndex: number) => {
+    async (groupId: GroupId, leafIndex: number, welcomeJson?: string) => {
       if (treekemManager.hasTree(groupId)) return;
 
+      const keyPair = await getIdentityKey();
+
+      if (welcomeJson) {
+        // Join via Welcome message (preferred path)
+        await treekemManager.joinFromWelcome(groupId, welcomeJson, keyPair);
+        return;
+      }
+
+      // Legacy fallback: fetch tree state from server
       const client = getClient();
       const treeState = await client.getTreeState(groupId);
-      if (!treeState) return; // No tree state yet (group hasn't initialized TreeKEM)
+      if (!treeState) return;
 
-      const keyPair = await getIdentityKey();
       await treekemManager.joinGroup(
         groupId,
         treeState.treeData,
@@ -147,6 +155,7 @@ export function useTreeKEM() {
 
   /**
    * Handle an incoming treeUpdate WebSocket event.
+   * Deserializes the Commit and processes it via MLSGroup.
    */
   const handleTreeUpdate = useCallback(
     async (event: WebSocketEvent) => {
@@ -154,15 +163,11 @@ export function useTreeKEM() {
 
       if (!treekemManager.hasTree(event.groupId)) {
         // We don't have tree state for this group yet — might be a new joiner
-        // The tree data is included in the event, so we can bootstrap from it
+        // If there's a welcome, we could use it to bootstrap
         return;
       }
 
-      await treekemManager.processUpdate(
-        event.groupId,
-        event.updatePath,
-        event.epoch,
-      );
+      await treekemManager.processCommit(event.groupId, event.commit);
     },
     [treekemManager],
   );

@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { TreeKEMDecryptionError } from './treekem-errors';
 import {
   decryptPathSecret,
   derivePathSecret,
@@ -9,6 +8,7 @@ import {
   exportPublicKey,
   generateECDHKeyPair,
 } from './treekem-crypto';
+import { TreeKEMDecryptionError } from './treekem-errors';
 
 describe('treekem-crypto', () => {
   describe('generateECDHKeyPair', () => {

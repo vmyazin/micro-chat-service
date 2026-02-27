@@ -477,9 +477,10 @@ groupsRouter.get('/api/groups/:id/tree-state', requireAuth, async (c) => {
     epoch: number;
     tree_data: string;
     updated_at: string;
-  }>('SELECT group_id, epoch, tree_data, updated_at FROM group_tree_state WHERE group_id = ?', [
-    groupId,
-  ]);
+  }>(
+    'SELECT group_id, epoch, tree_data, updated_at FROM group_tree_state WHERE group_id = ?',
+    [groupId],
+  );
 
   if (rows.length === 0) {
     return c.json({ error: 'No tree state found for this group' }, 404);
@@ -511,15 +512,21 @@ groupsRouter.post('/api/groups/:id/tree-update', requireAuth, async (c) => {
 
   const body = await c.req.json<{
     epoch: number;
-    updatePath: string;
-    treeData: string;
+    commit: string;
+    welcome?: string;
   }>();
 
-  if (!body.updatePath || !body.treeData || typeof body.epoch !== 'number') {
-    return c.json(
-      { error: 'epoch, updatePath, and treeData are required' },
-      400,
-    );
+  if (!body.commit || typeof body.epoch !== 'number') {
+    return c.json({ error: 'epoch and commit are required' }, 400);
+  }
+
+  // Extract treeData from the commit for storage
+  let treeData: string;
+  try {
+    const parsed = JSON.parse(body.commit) as { treeData?: string };
+    treeData = parsed.treeData ?? body.commit;
+  } catch {
+    treeData = body.commit;
   }
 
   const now = new Date().toISOString();
@@ -534,15 +541,7 @@ groupsRouter.post('/api/groups/:id/tree-update', requireAuth, async (c) => {
       sql: `INSERT INTO group_tree_state (group_id, epoch, tree_data, updated_at)
             VALUES (?, ?, ?, ?)
             ON CONFLICT(group_id) DO UPDATE SET epoch = ?, tree_data = ?, updated_at = ?`,
-      params: [
-        groupId,
-        body.epoch,
-        body.treeData,
-        now,
-        body.epoch,
-        body.treeData,
-        now,
-      ],
+      params: [groupId, body.epoch, treeData, now, body.epoch, treeData, now],
     },
   ]);
 
@@ -553,8 +552,8 @@ groupsRouter.post('/api/groups/:id/tree-update', requireAuth, async (c) => {
     type: 'treeUpdate',
     groupId,
     epoch: body.epoch,
-    updatePath: body.updatePath,
-    treeData: body.treeData,
+    commit: body.commit,
+    welcome: body.welcome,
   };
   await hub.fetch('https://hub/broadcast', {
     method: 'POST',
