@@ -40,6 +40,7 @@ export interface CallSession {
   localStream: MediaStream | null;
   remoteStream: MediaStream | null;
   state: CallState;
+  endReason: 'hangup' | 'rejected' | 'missed' | 'error' | null;
 
   accept(): Promise<void>;
   reject(): Promise<void>;
@@ -81,6 +82,7 @@ class CallSessionImpl implements CallSession {
   remoteUserName: string | null;
   localStream: MediaStream | null = null;
   remoteStream: MediaStream | null = null;
+  endReason: 'hangup' | 'rejected' | 'missed' | 'error' | null = null;
   private pc: RTCPeerConnection | null = null;
   private stateHandlers = new Set<CallStateChangeHandler>();
   private _state: CallState = 'idle';
@@ -473,6 +475,7 @@ class CallSessionImpl implements CallSession {
       reason: 'rejected',
     });
 
+    this.endReason = 'rejected';
     this.cleanup();
   }
 
@@ -488,6 +491,7 @@ class CallSessionImpl implements CallSession {
       reason: 'hangup',
     });
 
+    this.endReason = 'hangup';
     this.cleanup();
   }
 
@@ -554,6 +558,7 @@ class CallSessionImpl implements CallSession {
   }
 
   handleEnd(reason: 'hangup' | 'rejected' | 'missed' | 'error'): void {
+    this.endReason = reason;
     this.cleanup();
 
     if (reason === 'missed' && this.direction === 'outgoing') {

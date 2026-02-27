@@ -34,7 +34,11 @@
     "deleteFailed": "حذف پیام ناموفق بود",
     "countdownHour": "ساعت",
     "countdownMinute": "د",
-    "countdownSecond": "ث"
+    "countdownSecond": "ث",
+    "callMissed": "تماس از دست رفته",
+    "callCompleted": "تماس پایان یافت",
+    "callDeclined": "تماس رد شد",
+    "callFailed": "تماس ناموفق بود"
   },
   "GroupList": {
     "newGroup": "گروه جدید",

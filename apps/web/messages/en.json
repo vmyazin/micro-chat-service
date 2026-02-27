@@ -34,7 +34,11 @@
     "deleteFailed": "Failed to delete message",
     "countdownHour": "h",
     "countdownMinute": "m",
-    "countdownSecond": "s"
+    "countdownSecond": "s",
+    "callMissed": "Missed call",
+    "callCompleted": "Call ended",
+    "callDeclined": "Call declined",
+    "callFailed": "Call failed"
   },
   "GroupList": {
     "newGroup": "New Group",

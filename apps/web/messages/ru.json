@@ -34,7 +34,11 @@
     "deleteFailed": "Не удалось удалить сообщение",
     "countdownHour": "ч",
     "countdownMinute": "м",
-    "countdownSecond": "с"
+    "countdownSecond": "с",
+    "callMissed": "Пропущенный звонок",
+    "callCompleted": "Звонок завершён",
+    "callDeclined": "Звонок отклонён",
+    "callFailed": "Ошибка звонка"
   },
   "GroupList": {
     "newGroup": "Новая группа",

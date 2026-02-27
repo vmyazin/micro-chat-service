@@ -475,8 +475,13 @@ Security page references a Trail of Bits audit, SOC 2 Type II, GDPR, and CCPA co
 
 ## Call Events In Chat UI
 
-**Status:** not implemented. Call events aren't logged in the chat UI.
+**Status:** Completed (Feb 27, 2026) ✅
 
-- Display missed calls in the chat UI
-- Display accept/reject in the chat UI
-- Display call duration in the completed call record
+Call events are displayed as system messages in the chat timeline:
+
+- Missed calls shown with red styling and phone-missed icon
+- Declined calls shown as muted system message
+- Completed calls shown with call duration (MM:SS format)
+- Failed calls shown with red styling
+- Translations in English, Russian, and Farsi
+- Events are client-side synthetic messages (ephemeral, consistent with no-call-history architecture)

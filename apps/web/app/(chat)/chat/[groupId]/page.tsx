@@ -12,10 +12,14 @@ import {
   DotsThreeVerticalIcon,
   HighlighterIcon,
   LockIcon,
+  PhoneIcon,
+  PhoneSlashIcon,
+  PhoneXIcon,
   SpinnerGapIcon,
   TrashIcon,
 } from '@phosphor-icons/react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
+import { useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -31,7 +35,7 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useDeleteMessage } from '@/hooks/useDeleteMessage';
 import { useJoinGroup } from '@/hooks/useJoinGroup';
 import { useMembers } from '@/hooks/useMembers';
-import { useMessages } from '@/hooks/useMessages';
+import { messagesQueryKey, useMessages } from '@/hooks/useMessages';
 import { useSendMessage } from '@/hooks/useSendMessage';
 import { useSfx } from '@/hooks/useSfx';
 import { useWebSocket } from '@/hooks/useWebSocket';
@@ -109,9 +113,11 @@ export default function ConversationPage() {
     : false;
   const onlineUserCount = onlineUsers?.size ?? 0;
 
+  const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const remoteAudioRef = useRef<HTMLAudioElement>(null);
   const [_callDuration, setCallDuration] = useState(0);
+  const callDurationRef = useRef(0);
   const [nowMs, setNowMs] = useState(() => Date.now());
 
   // Periodically update UI so messages fade/expire on time
@@ -153,15 +159,53 @@ export default function ConversationPage() {
   useEffect(() => {
     if (callState !== 'in-call') {
       setCallDuration(0);
+      callDurationRef.current = 0;
       return;
     }
 
     const interval = window.setInterval(() => {
-      setCallDuration((prev) => prev + 1);
+      setCallDuration((prev) => {
+        const next = prev + 1;
+        callDurationRef.current = next;
+        return next;
+      });
     }, 1000);
 
     return () => window.clearInterval(interval);
   }, [callState]);
+
+  // Inject a synthetic system message into the chat timeline for a call event
+  const injectCallEvent = useCallback(
+    (
+      callGroupId: GroupId,
+      payload: {
+        callId: string;
+        event: 'missed' | 'completed' | 'rejected' | 'error';
+        remoteName: string | null;
+        direction: 'outgoing' | 'incoming';
+        duration: number | null;
+      },
+    ) => {
+      const msg: MessageListItem = {
+        id: `call-${payload.callId}`,
+        groupId: callGroupId,
+        senderId: 'system' as UserId,
+        senderName: null,
+        encryptedContent: JSON.stringify({ _callEvent: true, ...payload }),
+        createdAt: new Date().toISOString(),
+        deleted: false,
+      };
+      queryClient.setQueryData(
+        messagesQueryKey(callGroupId),
+        (old: MessageListItem[] | undefined) => {
+          if (!old) return [msg];
+          if (old.some((m) => m.id === msg.id)) return old;
+          return [...old, msg];
+        },
+      );
+    },
+    [queryClient],
+  );
 
   // Setup call event listeners
   useEffect(() => {
@@ -182,6 +226,16 @@ export default function ConversationPage() {
           setIsCalling(false);
           setCallState('in-call');
         } else if (state === 'ended') {
+          const reason = session.endReason;
+          if (reason) {
+            injectCallEvent(session.groupId, {
+              callId: session.callId,
+              event: reason === 'hangup' ? 'completed' : reason,
+              remoteName: session.remoteUserName,
+              direction: session.direction,
+              duration: reason === 'hangup' ? callDurationRef.current : null,
+            });
+          }
           setActiveSession(null);
           setIncomingSession(null);
           setIsCalling(false);
@@ -206,6 +260,7 @@ export default function ConversationPage() {
     setIsCalling,
     setCallState,
     setCallGroupId,
+    injectCallEvent,
   ]);
 
   // Update call target info when members change.
@@ -343,6 +398,16 @@ export default function ConversationPage() {
           setCallState('in-call');
         }
         if (state === 'ended') {
+          const reason = session.endReason;
+          if (reason) {
+            injectCallEvent(session.groupId, {
+              callId: session.callId,
+              event: reason === 'hangup' ? 'completed' : reason,
+              remoteName: session.remoteUserName,
+              direction: session.direction,
+              duration: reason === 'hangup' ? callDurationRef.current : null,
+            });
+          }
           setActiveSession(null);
           setIsCalling(false);
           setCallState('idle');
@@ -582,7 +647,10 @@ export default function ConversationPage() {
                     variant="outline"
                     size="sm"
                     type="button"
-                    onClick={() => { sendMessage.reset(); setShowSettings(true); }}
+                    onClick={() => {
+                      sendMessage.reset();
+                      setShowSettings(true);
+                    }}
                     className="ml-3 border-red-700 dark:border-red-400"
                   >
                     {t('initializeEncryption')}
@@ -731,8 +799,67 @@ function MessageBubble({
     return () => clearInterval(id);
   }, [isHovered]);
 
-  // System messages: centered pill (always plain text)
+  // System messages: centered pill
   if (isSystem) {
+    // Detect call event system messages
+    let callEvent: {
+      _callEvent: boolean;
+      event: 'missed' | 'completed' | 'rejected' | 'error';
+      remoteName: string | null;
+      direction: 'outgoing' | 'incoming';
+      duration: number | null;
+    } | null = null;
+    try {
+      const parsed = JSON.parse(message.encryptedContent);
+      if (parsed?._callEvent) callEvent = parsed;
+    } catch {
+      // Not JSON — regular system message
+    }
+
+    if (callEvent) {
+      const labelKey =
+        callEvent.event === 'completed'
+          ? 'callCompleted'
+          : callEvent.event === 'rejected'
+            ? 'callDeclined'
+            : callEvent.event === 'missed'
+              ? 'callMissed'
+              : 'callFailed';
+
+      const durationStr =
+        callEvent.duration != null && callEvent.duration > 0
+          ? ` \u00b7 ${String(Math.floor(callEvent.duration / 60)).padStart(2, '0')}:${String(callEvent.duration % 60).padStart(2, '0')}`
+          : '';
+
+      const isMissedOrFailed =
+        callEvent.event === 'missed' || callEvent.event === 'error';
+
+      const CallIcon =
+        callEvent.event === 'missed' || callEvent.event === 'error'
+          ? PhoneXIcon
+          : callEvent.event === 'rejected'
+            ? PhoneSlashIcon
+            : PhoneIcon;
+
+      return (
+        <div className="flex justify-center my-2">
+          <span
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs ${
+              isMissedOrFailed
+                ? 'text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/20'
+                : 'text-(--text-muted) bg-(--surface-muted)'
+            }`}
+          >
+            <CallIcon size={14} aria-hidden="true" />
+            <span>
+              {t(labelKey)}
+              {durationStr}
+            </span>
+          </span>
+        </div>
+      );
+    }
+
     return (
       <div className="flex justify-center my-1">
         <span className="px-3 py-1 rounded-full text-xs text-(--text-muted) bg-(--surface-muted)">
