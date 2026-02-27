@@ -15,6 +15,8 @@
     "offline": "Offline",
     "reconnecting": "Reconnecting to real-time updates...",
     "failedToSend": "Failed to send message",
+    "encryptionKeysNotFound": "Encryption keys aren't set up for this group.",
+    "initializeEncryption": "Set up encryption",
     "dismiss": "Dismiss",
     "noMessages": "No messages yet. Start the conversation!",
     "selectGroup": "Select a group to view messages",

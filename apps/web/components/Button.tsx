@@ -26,7 +26,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             'bg-green-600 text-white enabled:hover:bg-green-700 rounded-md': variant === 'success',
             'bg-orange-600 text-white enabled:hover:bg-orange-700 rounded-md': variant === 'warning',
             'bg-gray-100 dark:bg-gray-800 enabled:hover:bg-gray-200 dark:enabled:hover:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md': variant === 'secondary',
-            'border-base enabled:hover:bg-gray-100 dark:enabled:hover:bg-gray-800 bg-transparent rounded-md': variant === 'outline',
+            'border border-base enabled:hover:bg-gray-100 dark:enabled:hover:bg-gray-800 bg-transparent rounded-md': variant === 'outline',
             'enabled:hover:bg-gray-100 dark:enabled:hover:bg-gray-800 bg-transparent rounded-md': variant === 'ghost',
             'px-3 py-1.5 text-sm': size === 'sm',
             'px-4 py-2 text-sm': size === 'md',

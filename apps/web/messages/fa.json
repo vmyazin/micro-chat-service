@@ -15,6 +15,8 @@
     "offline": "آفلاین",
     "reconnecting": "در حال اتصال مجدد...",
     "failedToSend": "ارسال پیام ناموفق بود",
+    "encryptionKeysNotFound": "کلیدهای رمزنگاری برای این گروه تنظیم نشده‌اند.",
+    "initializeEncryption": "راه‌اندازی رمزنگاری",
     "dismiss": "بستن",
     "noMessages": "هنوز پیامی نیست. گفتگو را شروع کنید!",
     "selectGroup": "یک گروه را برای مشاهده پیام‌ها انتخاب کنید",

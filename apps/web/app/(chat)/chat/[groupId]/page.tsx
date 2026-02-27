@@ -11,6 +11,7 @@ import {
   ClockIcon,
   DotsThreeVerticalIcon,
   HighlighterIcon,
+  LockIcon,
   SpinnerGapIcon,
   TrashIcon,
 } from '@phosphor-icons/react';
@@ -573,15 +574,33 @@ export default function ConversationPage() {
           )}
           {sendMessage.isError && (
             <div className="px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 text-sm text-center">
-              <span>{sendMessage.error?.message || t('failedToSend')}</span>
-              <Button
-                variant="ghost"
-                type="button"
-                onClick={() => sendMessage.reset()}
-                className="ml-3 text-xs underline hover:no-underline"
-              >
-                {t('dismiss')}
-              </Button>
+              {sendMessage.error?.message?.includes('No key found') ? (
+                <>
+                  <LockIcon className="inline w-3.5 h-3.5 mr-1.5 opacity-60" />
+                  <span>{t('encryptionKeysNotFound')}</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    type="button"
+                    onClick={() => { sendMessage.reset(); setShowSettings(true); }}
+                    className="ml-3 border-red-700 dark:border-red-400"
+                  >
+                    {t('initializeEncryption')}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <span>{sendMessage.error?.message || t('failedToSend')}</span>
+                  <Button
+                    variant="ghost"
+                    type="button"
+                    onClick={() => sendMessage.reset()}
+                    className="ml-3 text-xs underline hover:no-underline"
+                  >
+                    {t('dismiss')}
+                  </Button>
+                </>
+              )}
             </div>
           )}
           <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 py-3 space-y-1.5">
