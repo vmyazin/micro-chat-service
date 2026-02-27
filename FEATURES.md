@@ -297,6 +297,8 @@ New WebSocket event variants:
 
 ## Message Lifecycle Countdown
 
+**Status:** Completed (Feb 26, 2026) ✅
+
 - Show countdown timer over a message bubble on hover to indicate how much time left before the message is deleted.
 
 ## QR Code For Invites
@@ -347,4 +349,50 @@ New WebSocket event variants:
 - `apps/web/messages/fa.json` (added translations)
 - `apps/web/package.json` (added qrcode.react dependency)
 
+## TreeKEM (Ratchet Tree)
 
+**Status:** not implemented. Described on `/protocol/for-engineers`.
+
+Group members arranged in a left-balanced binary tree where leaf nodes are members, intermediate nodes hold derived key pairs, and the root key is the shared group secret. Achieves O(log N) encryption cost per group operation instead of O(N) pairwise encryption.
+
+- Leaf nodes represent individual members with their own key pairs
+- Path secrets: each member knows all private keys on their direct path to root
+- Key updates encrypt new path secrets up the tree (logarithmic cost)
+- Currently using flat per-epoch symmetric keys instead
+
+## MLS Protocol (RFC 9420)
+
+**Status:** not implemented. Stub interfaces only in `packages/crypto/src/mls-client.ts`.
+
+Full Messaging Layer Security state machine with Proposals, Commits, and epoch transitions. Each group operation (add, remove, update, send) advances the group to Epoch N+1 with fresh key material.
+
+- Discrete epoch-based group state transitions
+- Commit messages that bundle proposals and advance epochs
+- Integration with TreeKEM for key agreement
+- Requires OpenMLS or mls-rs library integration
+
+## HPKE (Hybrid Public Key Encryption)
+
+**Status:** not implemented. Listed on protocol page as a core primitive.
+
+Asymmetric encryption primitive used by MLS for encrypting path secrets to specific tree nodes. Combines Diffie-Hellman key exchange with symmetric AEAD encryption.
+
+- Encap/decap operations for encrypting to public keys
+- Used by TreeKEM to encrypt path secrets to sibling nodes
+- Currently only symmetric AES-GCM is used (no asymmetric encryption)
+
+## Forward Secrecy (Per-Message)
+
+**Status:** partial. Epoch-level only, not per-message.
+
+The protocol page describes one-way KDF chains where key material for Epoch N is derived from Epoch N-1 and old keys are deleted. Current implementation uses a static key per epoch (same key + random IV for all messages in that epoch). True forward secrecy requires per-message key ratcheting so compromising one message key doesn't expose other messages in the same epoch.
+
+## Post-Compromise Security
+
+**Status:** not implemented. Described on protocol page and in `THREAT_MODEL.md`.
+
+When a member's device is compromised, a Key Update from any member generates new entropy that "heals" the tree, locking the attacker out of future messages. Requires TreeKEM to propagate new path secrets up the ratchet tree.
+
+- No key rotation mechanism on member compromise
+- No key update operation exists
+- Depends on TreeKEM and MLS epoch transitions
