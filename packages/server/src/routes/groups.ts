@@ -176,6 +176,20 @@ groupsRouter.post('/api/groups/:id/join', requireAuth, async (c) => {
     // Ignore concurrent insert errors
   }
 
+  // Broadcast memberJoined to group
+  const hubId = c.env.CHAT_HUB.idFromName('main');
+  const hub = c.env.CHAT_HUB.get(hubId);
+  const event: WebSocketEvent = {
+    type: 'memberJoined',
+    groupId,
+    userId: user.id,
+    displayName: user.displayName,
+  };
+  await hub.fetch('https://hub/broadcast', {
+    method: 'POST',
+    body: JSON.stringify(event),
+  });
+
   return c.json({ success: true });
 });
 
@@ -268,6 +282,20 @@ groupsRouter.post('/api/invites/:code/accept', requireAuth, async (c) => {
 
   const group = groups[0];
 
+  // Broadcast memberJoined to group
+  const hubId = c.env.CHAT_HUB.idFromName('main');
+  const hub = c.env.CHAT_HUB.get(hubId);
+  const joinEvent: WebSocketEvent = {
+    type: 'memberJoined',
+    groupId: group.id,
+    userId: user.id,
+    displayName: user.displayName,
+  };
+  await hub.fetch('https://hub/broadcast', {
+    method: 'POST',
+    body: JSON.stringify(joinEvent),
+  });
+
   return c.json({
     groupId: group.id,
     encryptedName: group.encrypted_name,
@@ -317,6 +345,19 @@ groupsRouter.delete(
       'DELETE FROM group_members WHERE group_id = ? AND user_id = ?',
       [groupId, targetUserId],
     );
+
+    // Broadcast memberLeft to group
+    const hubId = c.env.CHAT_HUB.idFromName('main');
+    const hub = c.env.CHAT_HUB.get(hubId);
+    const event: WebSocketEvent = {
+      type: 'memberLeft',
+      groupId,
+      userId: targetUserId,
+    };
+    await hub.fetch('https://hub/broadcast', {
+      method: 'POST',
+      body: JSON.stringify(event),
+    });
 
     return c.json({ success: true });
   },
@@ -400,7 +441,127 @@ groupsRouter.post('/api/groups/:id/leave', requireAuth, async (c) => {
     [groupId, user.id],
   );
 
+  // Broadcast memberLeft to group
+  const hubId = c.env.CHAT_HUB.idFromName('main');
+  const hub = c.env.CHAT_HUB.get(hubId);
+  const leaveEvent: WebSocketEvent = {
+    type: 'memberLeft',
+    groupId,
+    userId: user.id,
+  };
+  await hub.fetch('https://hub/broadcast', {
+    method: 'POST',
+    body: JSON.stringify(leaveEvent),
+  });
+
   return c.json({ success: true });
+});
+
+// TreeKEM: Get current tree state for a group
+groupsRouter.get('/api/groups/:id/tree-state', requireAuth, async (c) => {
+  const groupId = c.req.param('id') as GroupId;
+  const user = c.get('user');
+  const db = new Database(c.env.DB);
+
+  const membership = await db.query<{ id: string }>(
+    'SELECT id FROM group_members WHERE group_id = ? AND user_id = ?',
+    [groupId, user.id],
+  );
+
+  if (membership.length === 0) {
+    return c.json({ error: 'Not a member of this group' }, 403);
+  }
+
+  const rows = await db.query<{
+    group_id: GroupId;
+    epoch: number;
+    tree_data: string;
+    updated_at: string;
+  }>('SELECT group_id, epoch, tree_data, updated_at FROM group_tree_state WHERE group_id = ?', [
+    groupId,
+  ]);
+
+  if (rows.length === 0) {
+    return c.json({ error: 'No tree state found for this group' }, 404);
+  }
+
+  const state = rows[0];
+  return c.json({
+    groupId: state.group_id,
+    epoch: state.epoch,
+    treeData: state.tree_data,
+    updatedAt: state.updated_at,
+  });
+});
+
+// TreeKEM: Post a tree update (epoch advancement + key rotation)
+groupsRouter.post('/api/groups/:id/tree-update', requireAuth, async (c) => {
+  const groupId = c.req.param('id') as GroupId;
+  const user = c.get('user');
+  const db = new Database(c.env.DB);
+
+  const membership = await db.query<{ id: string }>(
+    'SELECT id FROM group_members WHERE group_id = ? AND user_id = ?',
+    [groupId, user.id],
+  );
+
+  if (membership.length === 0) {
+    return c.json({ error: 'Not a member of this group' }, 403);
+  }
+
+  const body = await c.req.json<{
+    epoch: number;
+    updatePath: string;
+    treeData: string;
+  }>();
+
+  if (!body.updatePath || !body.treeData || typeof body.epoch !== 'number') {
+    return c.json(
+      { error: 'epoch, updatePath, and treeData are required' },
+      400,
+    );
+  }
+
+  const now = new Date().toISOString();
+
+  // Increment epoch on the group and upsert tree state
+  await db.batch([
+    {
+      sql: 'UPDATE groups SET epoch = ? WHERE id = ?',
+      params: [body.epoch, groupId],
+    },
+    {
+      sql: `INSERT INTO group_tree_state (group_id, epoch, tree_data, updated_at)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(group_id) DO UPDATE SET epoch = ?, tree_data = ?, updated_at = ?`,
+      params: [
+        groupId,
+        body.epoch,
+        body.treeData,
+        now,
+        body.epoch,
+        body.treeData,
+        now,
+      ],
+    },
+  ]);
+
+  // Broadcast treeUpdate to all group members
+  const hubId = c.env.CHAT_HUB.idFromName('main');
+  const hub = c.env.CHAT_HUB.get(hubId);
+  const event: WebSocketEvent = {
+    type: 'treeUpdate',
+    groupId,
+    epoch: body.epoch,
+    updatePath: body.updatePath,
+    treeData: body.treeData,
+  };
+  await hub.fetch('https://hub/broadcast', {
+    method: 'POST',
+    body: JSON.stringify(event),
+  });
+
+  return c.json({ success: true, epoch: body.epoch });
 });
 
 groupsRouter.delete('/api/groups/:id', requireAuth, async (c) => {
@@ -439,6 +600,10 @@ groupsRouter.delete('/api/groups/:id', requireAuth, async (c) => {
     { sql: 'DELETE FROM messages WHERE group_id = ?', params: [groupId] },
     { sql: 'DELETE FROM invites WHERE group_id = ?', params: [groupId] },
     { sql: 'DELETE FROM group_members WHERE group_id = ?', params: [groupId] },
+    {
+      sql: 'DELETE FROM group_tree_state WHERE group_id = ?',
+      params: [groupId],
+    },
     { sql: 'DELETE FROM groups WHERE id = ?', params: [groupId] },
   ]);
 

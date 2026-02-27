@@ -29,6 +29,14 @@ export interface GroupsTable {
   owner_id: UserId;
   created_at: string;
   last_activity_at: string;
+  epoch: number;
+}
+
+export interface GroupTreeStateTable {
+  group_id: GroupId;
+  epoch: number;
+  tree_data: string;
+  updated_at: string;
 }
 
 export interface GroupMembersTable {
@@ -98,4 +106,5 @@ export interface DatabaseSchema {
   invites: InvitesTable;
   delivery_receipts: DeliveryReceiptsTable;
   image_attachments: ImageAttachmentsTable;
+  group_tree_state: GroupTreeStateTable;
 }

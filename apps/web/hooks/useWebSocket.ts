@@ -101,6 +101,10 @@ export function useWebSocket(activeGroupId?: GroupId | null) {
         break;
       }
 
+      // TreeKEM updates are handled by useTreeKEM - don't process here
+      case 'treeUpdate':
+        break;
+
       // Call events are handled by CallClient internally - don't process here
       case 'callOffer':
       case 'callAnswer':

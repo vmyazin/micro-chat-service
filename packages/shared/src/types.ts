@@ -177,6 +177,13 @@ export type WebSocketEvent =
       messageId: string;
       userId: UserId;
     }
+  | {
+      type: 'treeUpdate';
+      groupId: GroupId;
+      epoch: number;
+      updatePath: string;
+      treeData: string;
+    }
   | { type: 'connected' }
   | { type: 'disconnected' }
   | { type: 'error'; error: string };

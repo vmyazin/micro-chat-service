@@ -26,6 +26,7 @@ import {
   SenderTokenStore,
   type SenderTokenStoreOptions,
 } from './sender-token-store';
+import type { TreeKEMManager } from './treekem-manager';
 import {
   WebSocketClient,
   type WebSocketEventHandler,
@@ -40,6 +41,10 @@ export interface MicroChatClientOptions {
   enableVoiceCalls?: boolean;
   /** Group cipher for sealed-sender call identity */
   callCipher?: GroupCipher;
+  /** Group cipher for message encryption/decryption */
+  messageCipher?: GroupCipher;
+  /** TreeKEM manager for group key management */
+  treekemManager?: TreeKEMManager;
   /** Resolve the active group epoch for sealed-sender calls */
   getGroupEpoch?: (groupId: GroupId) => number | Promise<number>;
   /** Options for sender token management */
@@ -53,6 +58,7 @@ export class MicroChatClient {
   private wsClient: WebSocketClient;
   private senderTokenStore?: SenderTokenStore;
   readonly calls?: CallClient;
+  readonly treekemManager?: TreeKEMManager;
 
   constructor(options: MicroChatClientOptions) {
     this.authClient = new AuthClient(options.baseUrl);
@@ -64,9 +70,10 @@ export class MicroChatClient {
       : undefined;
     this.messageClient = new MessageClient(
       options.baseUrl,
-      undefined,
+      options.messageCipher,
       this.senderTokenStore,
     );
+    this.treekemManager = options.treekemManager;
     this.wsClient = new WebSocketClient(options.wsUrl ?? options.baseUrl);
     this.calls = options.enableVoiceCalls
       ? new CallClient(this.wsClient, {
@@ -201,6 +208,41 @@ export class MicroChatClient {
 
   deleteMessage(groupId: GroupId, messageId: string): Promise<void> {
     return this.messageClient.deleteMessage(groupId, messageId);
+  }
+
+  // TreeKEM methods
+  async getTreeState(
+    groupId: GroupId,
+  ): Promise<{ epoch: number; treeData: string } | null> {
+    const response = await fetch(
+      `${this.authClient['baseUrl']}/api/groups/${groupId}/tree-state`,
+      { method: 'GET', credentials: 'include' },
+    );
+    if (response.status === 404) return null;
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to get tree state');
+    }
+    return response.json();
+  }
+
+  async postTreeUpdate(
+    groupId: GroupId,
+    update: { epoch: number; updatePath: string; treeData: string },
+  ): Promise<void> {
+    const response = await fetch(
+      `${this.authClient['baseUrl']}/api/groups/${groupId}/tree-update`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(update),
+        credentials: 'include',
+      },
+    );
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to post tree update');
+    }
   }
 
   // Sealed Sender methods

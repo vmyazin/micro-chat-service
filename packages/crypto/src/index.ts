@@ -9,5 +9,7 @@ export * from './memory-key-store';
 export * from './mls-client';
 export * from './sealed-sender';
 export * from './treekem';
+export * from './treekem-crypto';
 export * from './treekem-errors';
+export * from './treekem-serialization';
 export * from './treekem-types';

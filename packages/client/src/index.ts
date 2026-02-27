@@ -53,6 +53,10 @@ export {
   type SenderTokenStoreOptions,
 } from './sender-token-store';
 export {
+  TreeKEMManager,
+  type SerializedUpdate,
+} from './treekem-manager';
+export {
   WebSocketClient,
   type WebSocketEvent,
   type WebSocketEventHandler,

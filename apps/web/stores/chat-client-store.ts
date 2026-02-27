@@ -1,7 +1,7 @@
 'use client';
 
 import type { GroupId } from '@microchat/client';
-import { MicroChatClient, type MicroChatClientOptions } from '@microchat/client';
+import { MicroChatClient, TreeKEMManager, type MicroChatClientOptions } from '@microchat/client';
 import { GroupCipher, MemoryKeyStore } from '@microchat/crypto';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
@@ -9,6 +9,8 @@ import { devtools } from 'zustand/middleware';
 interface ChatClientStore {
   client: MicroChatClient | null;
   callCipher: GroupCipher;
+  messageCipher: GroupCipher;
+  treekemManager: TreeKEMManager;
   ensureCallKey: (groupId: GroupId) => Promise<void>;
   getClient: (options?: MicroChatClientOptions) => MicroChatClient;
   clearClient: () => void;
@@ -18,6 +20,11 @@ interface ChatClientStore {
 const callKeyStore = new MemoryKeyStore();
 const callCipher = new GroupCipher(callKeyStore);
 const initializedCallGroups = new Set<string>();
+
+// Message encryption setup - singleton instances
+const messageKeyStore = new MemoryKeyStore();
+const messageCipher = new GroupCipher(messageKeyStore);
+const treekemManager = new TreeKEMManager(messageCipher);
 
 async function deriveCallGroupKey(groupId: GroupId): Promise<Uint8Array> {
   const encoder = new TextEncoder();
@@ -35,7 +42,9 @@ const createClient = (options?: MicroChatClientOptions) => {
     enableVoiceCalls: true,
     enableSealedSender: true,
     callCipher,
-    getGroupEpoch: () => 0,
+    messageCipher,
+    treekemManager,
+    getGroupEpoch: (gid: GroupId) => treekemManager.getEpoch(gid),
     ...options,
   });
 };
@@ -45,6 +54,8 @@ export const useChatClientStore = create<ChatClientStore>()(
     (set, get) => ({
       client: null,
       callCipher,
+      messageCipher,
+      treekemManager,
 
       ensureCallKey: async (groupId: GroupId) => {
         if (initializedCallGroups.has(groupId)) {
