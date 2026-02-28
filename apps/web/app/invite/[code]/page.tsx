@@ -16,7 +16,7 @@ export default function InvitePage() {
   const [error, setError] = useState<string | null>(null);
 
   const acceptInvite = useAcceptInvite();
-  const { joinGroupTree } = useTreeKEM();
+  const { joinGroupTree, getIdentityKey } = useTreeKEM();
   const hasAttemptedRef = useRef(false);
 
   useEffect(() => {
@@ -24,34 +24,39 @@ export default function InvitePage() {
     if (!code || hasAttemptedRef.current) return;
     hasAttemptedRef.current = true;
 
-    acceptInvite
-      .mutateAsync(code)
-      .then(async (result) => {
-        setState('tree-init');
-        const timeout = new Promise<void>((resolve) =>
-          setTimeout(resolve, 5000),
-        );
-        await Promise.race([
-          joinGroupTree(result.groupId, result.leafIndex ?? 0),
-          timeout,
-        ]).catch((err) => {
-          if (process.env.NODE_ENV !== 'production') {
-            console.warn(
-              '[TreeKEM] joinGroupTree failed during invite acceptance:',
-              err,
-            );
-          }
-        });
-        setState('success');
-        router.replace(`/chat/${result.groupId}`);
-      })
-      .catch((err) => {
-        setState('error');
-        setError(
-          err instanceof Error ? err.message : 'Failed to accept invite',
-        );
+    const run = async () => {
+      // Export our identity public key so existing members can generate a TreeKEM Welcome for us.
+      let publicKey: string | undefined;
+      try {
+        const keyPair = await getIdentityKey();
+        const pubRaw = new Uint8Array(await crypto.subtle.exportKey('raw', keyPair.publicKey));
+        publicKey = btoa(String.fromCharCode(...pubRaw));
+      } catch {
+        // Non-fatal — invite acceptance works without TreeKEM
+      }
+
+      const result = await acceptInvite.mutateAsync({ code, publicKey });
+      setState('tree-init');
+
+      const timeout = new Promise<void>((resolve) => setTimeout(resolve, 5000));
+      await Promise.race([
+        joinGroupTree(result.groupId, result.leafIndex ?? 0),
+        timeout,
+      ]).catch((err) => {
+        if (process.env.NODE_ENV !== 'production') {
+          console.warn('[TreeKEM] joinGroupTree failed during invite acceptance:', err);
+        }
       });
-  }, [params.code, router, acceptInvite.mutateAsync, joinGroupTree]);
+
+      setState('success');
+      router.replace(`/chat/${result.groupId}`);
+    };
+
+    run().catch((err) => {
+      setState('error');
+      setError(err instanceof Error ? err.message : 'Failed to accept invite');
+    });
+  }, [params.code, router, acceptInvite.mutateAsync, joinGroupTree, getIdentityKey]);
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">

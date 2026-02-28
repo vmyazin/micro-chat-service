@@ -260,6 +260,15 @@ groupsRouter.post('/api/invites/:code/accept', requireAuth, async (c) => {
     return c.json({ error: 'Already a member of this group' }, 400);
   }
 
+  // Parse optional body (publicKey for TreeKEM Welcome generation)
+  let publicKey: string | undefined;
+  try {
+    const body = await c.req.json<{ publicKey?: string }>();
+    if (typeof body.publicKey === 'string') publicKey = body.publicKey;
+  } catch {
+    // Body is optional — invite acceptance works without TreeKEM
+  }
+
   const memberId = generateMemberId();
 
   await db.execute(
@@ -268,8 +277,8 @@ groupsRouter.post('/api/invites/:code/accept', requireAuth, async (c) => {
   );
 
   await db.execute(
-    'INSERT INTO group_members (id, group_id, user_id, joined_at) VALUES (?, ?, ?, ?)',
-    [memberId, invite.group_id, user.id, now],
+    'INSERT INTO group_members (id, group_id, user_id, joined_at, identity_key) VALUES (?, ?, ?, ?, ?)',
+    [memberId, invite.group_id, user.id, now, publicKey ?? null],
   );
 
   const groups = await db.query<{
@@ -289,7 +298,7 @@ groupsRouter.post('/api/invites/:code/accept', requireAuth, async (c) => {
   );
   const leafIndex = (memberCountRows[0]?.count ?? 1) - 1;
 
-  // Broadcast memberJoined to group
+  // Broadcast memberJoined to group (include publicKey so existing members can generate a Welcome)
   const hubId = c.env.CHAT_HUB.idFromName('main');
   const hub = c.env.CHAT_HUB.get(hubId);
   const joinEvent: WebSocketEvent = {
@@ -297,6 +306,7 @@ groupsRouter.post('/api/invites/:code/accept', requireAuth, async (c) => {
     groupId: group.id,
     userId: user.id,
     displayName: user.displayName,
+    publicKey,
   };
   await hub.fetch('https://hub/broadcast', {
     method: 'POST',
@@ -495,6 +505,28 @@ groupsRouter.get('/api/groups/:id/tree-state', requireAuth, async (c) => {
   }
 
   const state = rows[0];
+
+  // Check for a pending Welcome generated specifically for this user
+  const welcomeRows = await db.query<{ welcome_json: string }>(
+    'SELECT welcome_json FROM pending_welcomes WHERE group_id = ? AND user_id = ?',
+    [groupId, user.id],
+  );
+
+  if (welcomeRows.length > 0) {
+    // One-time read: delete after serving
+    await db.execute(
+      'DELETE FROM pending_welcomes WHERE group_id = ? AND user_id = ?',
+      [groupId, user.id],
+    );
+    return c.json({
+      groupId: state.group_id,
+      epoch: state.epoch,
+      treeData: state.tree_data,
+      updatedAt: state.updated_at,
+      welcome: welcomeRows[0].welcome_json,
+    });
+  }
+
   return c.json({
     groupId: state.group_id,
     epoch: state.epoch,
@@ -522,6 +554,8 @@ groupsRouter.post('/api/groups/:id/tree-update', requireAuth, async (c) => {
     epoch: number;
     commit: string;
     welcome?: string;
+    /** User ID of the new member this Welcome is intended for */
+    welcomeUserId?: string;
   }>();
 
   if (!body.commit || typeof body.epoch !== 'number') {
@@ -540,7 +574,7 @@ groupsRouter.post('/api/groups/:id/tree-update', requireAuth, async (c) => {
   const now = new Date().toISOString();
 
   // Increment epoch on the group and upsert tree state
-  await db.batch([
+  const batchOps: { sql: string; params: unknown[] }[] = [
     {
       sql: 'UPDATE groups SET epoch = ? WHERE id = ?',
       params: [body.epoch, groupId],
@@ -551,7 +585,19 @@ groupsRouter.post('/api/groups/:id/tree-update', requireAuth, async (c) => {
             ON CONFLICT(group_id) DO UPDATE SET epoch = ?, tree_data = ?, updated_at = ?`,
       params: [groupId, body.epoch, treeData, now, body.epoch, treeData, now],
     },
-  ]);
+  ];
+
+  // Store the Welcome for the new member so they can fetch it via getTreeState
+  if (body.welcome && body.welcomeUserId) {
+    batchOps.push({
+      sql: `INSERT INTO pending_welcomes (group_id, user_id, welcome_json, created_at)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(group_id, user_id) DO UPDATE SET welcome_json = ?, created_at = ?`,
+      params: [groupId, body.welcomeUserId, body.welcome, now, body.welcome, now],
+    });
+  }
+
+  await db.batch(batchOps);
 
   // Broadcast treeUpdate to all group members
   const hubId = c.env.CHAT_HUB.idFromName('main');

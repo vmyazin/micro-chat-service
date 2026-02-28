@@ -8,6 +8,8 @@ import { type GroupsEnv, groupsRouter } from './routes/groups';
 
 export interface AppEnv extends AuthEnv, GroupsEnv, CallsEnv {
   CHAT_HUB: DurableObjectNamespace;
+  /** Set to "true" in local dev to bypass rate limiting (all requests resolve to "unknown" IP). */
+  DISABLE_RATE_LIMIT?: string;
 }
 
 const app = new Hono<{ Bindings: AppEnv }>();
@@ -21,13 +23,20 @@ app.get('/health', (c) => {
 // every navigation), so it uses the general API limiter instead of the
 // stricter auth limiter reserved for login/register mutations.
 app.use('/api/auth/*', async (c, next) => {
+  if (c.env.DISABLE_RATE_LIMIT === 'true') return next();
   if (new URL(c.req.url).pathname === '/api/auth/me') {
     return rateLimitApi()(c, next);
   }
   return rateLimitAuth()(c, next);
 });
-app.use('/api/groups/*', rateLimitApi());
-app.use('/api/calls/*', rateLimitApi());
+app.use('/api/groups/*', async (c, next) => {
+  if (c.env.DISABLE_RATE_LIMIT === 'true') return next();
+  return rateLimitApi()(c, next);
+});
+app.use('/api/calls/*', async (c, next) => {
+  if (c.env.DISABLE_RATE_LIMIT === 'true') return next();
+  return rateLimitApi()(c, next);
+});
 
 // WebSocket upgrade endpoint
 app.get('/ws', async (c) => {

@@ -87,9 +87,11 @@ export class GroupClient {
     return response.json();
   }
 
-  async acceptInvite(code: string): Promise<AcceptInviteResult> {
+  async acceptInvite(code: string, publicKey?: string): Promise<AcceptInviteResult> {
     const response = await fetch(`${this.baseUrl}/api/invites/${code}/accept`, {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ publicKey }),
       credentials: 'include',
     });
 

@@ -44,6 +44,8 @@ export interface GroupMembersTable {
   group_id: GroupId;
   user_id: UserId;
   joined_at: string;
+  /** Base64 raw P-256 ECDH public key for TreeKEM Welcome generation */
+  identity_key: string | null;
 }
 
 export interface MessagesTable {
@@ -95,6 +97,13 @@ export interface ImageAttachmentsTable {
   created_at: string;
 }
 
+export interface PendingWelcomesTable {
+  group_id: GroupId;
+  user_id: UserId;
+  welcome_json: string;
+  created_at: string;
+}
+
 export interface DatabaseSchema {
   users: UsersTable;
   sessions: SessionsTable;
@@ -107,4 +116,5 @@ export interface DatabaseSchema {
   delivery_receipts: DeliveryReceiptsTable;
   image_attachments: ImageAttachmentsTable;
   group_tree_state: GroupTreeStateTable;
+  pending_welcomes: PendingWelcomesTable;
 }

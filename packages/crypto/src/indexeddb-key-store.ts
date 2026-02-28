@@ -3,7 +3,7 @@ import type { KeyMetadata, KeyStore, StoredKey } from './key-store';
 
 const DB_NAME = 'microchat-keys';
 const STORE_NAME = 'group-keys';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 interface IDBRecord {
   id: string;
@@ -21,9 +21,11 @@ function openDb(): Promise<IDBDatabase> {
       const req = indexedDB.open(DB_NAME, DB_VERSION);
       req.onupgradeneeded = (e) => {
         const db = (e.target as IDBOpenDBRequest).result;
-        if (!db.objectStoreNames.contains(STORE_NAME)) {
-          db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+        // Delete and recreate to guarantee correct keyPath on any upgrade path
+        if (db.objectStoreNames.contains(STORE_NAME)) {
+          db.deleteObjectStore(STORE_NAME);
         }
+        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
       };
       req.onsuccess = (e) => resolve((e.target as IDBOpenDBRequest).result);
       req.onerror = (e) => reject((e.target as IDBOpenDBRequest).error);

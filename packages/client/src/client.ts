@@ -127,8 +127,8 @@ export class MicroChatClient {
     return this.groupClient.createInvite(groupId);
   }
 
-  acceptInvite(code: string): Promise<AcceptInviteResult> {
-    return this.groupClient.acceptInvite(code);
+  acceptInvite(code: string, publicKey?: string): Promise<AcceptInviteResult> {
+    return this.groupClient.acceptInvite(code, publicKey);
   }
 
   removeMember(groupId: GroupId, userId: UserId): Promise<void> {
@@ -215,7 +215,7 @@ export class MicroChatClient {
   // TreeKEM methods
   async getTreeState(
     groupId: GroupId,
-  ): Promise<{ epoch: number; treeData: string } | null> {
+  ): Promise<{ epoch: number; treeData: string; welcome?: string } | null> {
     const response = await fetch(
       `${this.baseUrl}/api/groups/${groupId}/tree-state`,
       { method: 'GET', credentials: 'include' },
@@ -230,7 +230,7 @@ export class MicroChatClient {
 
   async postTreeUpdate(
     groupId: GroupId,
-    update: { epoch: number; commit: string; welcome?: string },
+    update: { epoch: number; commit: string; welcome?: string; welcomeUserId?: string },
   ): Promise<void> {
     const response = await fetch(
       `${this.baseUrl}/api/groups/${groupId}/tree-update`,

@@ -10,10 +10,10 @@ export function useAcceptInvite() {
   const getClient = useChatClientStore((state) => state.getClient);
   const queryClient = useQueryClient();
 
-  return useMutation<AcceptInviteResult, Error, string>({
-    mutationFn: async (code) => {
+  return useMutation<AcceptInviteResult, Error, { code: string; publicKey?: string }>({
+    mutationFn: async ({ code, publicKey }) => {
       const c = client ?? getClient();
-      return c.acceptInvite(code);
+      return c.acceptInvite(code, publicKey);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({

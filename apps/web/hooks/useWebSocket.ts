@@ -17,7 +17,7 @@ export function useWebSocket(activeGroupId?: GroupId | null) {
   const getClient = useChatClientStore((state) => state.getClient);
   const queryClient = useQueryClient();
   const { data: groups } = useGroups();
-  const { handleTreeUpdate } = useTreeKEM();
+  const { handleTreeUpdate, addMemberToTree } = useTreeKEM();
 
   const setConnectionStatus = useChatStore((state) => state.setConnectionStatus);
 
@@ -117,6 +117,15 @@ export function useWebSocket(activeGroupId?: GroupId | null) {
         queryClient.invalidateQueries({
           queryKey: invalidateGroups(),
         });
+
+        // If the new member shared their public key, generate and post a Welcome for them
+        if (event.type === 'memberJoined' && event.publicKey) {
+          addMemberToTree(event.groupId, event.userId, event.publicKey).catch((err) => {
+            if (process.env.NODE_ENV !== 'production') {
+              console.warn('[TreeKEM] addMemberToTree failed:', err);
+            }
+          });
+        }
         break;
       }
 
@@ -146,6 +155,7 @@ export function useWebSocket(activeGroupId?: GroupId | null) {
     queryClient,
     setConnectionStatus,
     handleTreeUpdate,
+    addMemberToTree,
   ]);
 
   useEffect(() => {

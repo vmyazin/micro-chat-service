@@ -10,6 +10,7 @@ RP_ORIGIN = "http://localhost:3000"
 CLOUDFLARE_CALLS_APP_ID = "..."
 CLOUDFLARE_CALLS_TOKEN = "..."
 ICE_FALLBACK_SERVERS = "[]"
+DISABLE_RATE_LIMIT = "true"
 
 [env.production.vars]
 RP_ID = "microchat.smoxu.com"
