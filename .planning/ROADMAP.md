@@ -1,27 +1,26 @@
 # MicroChat Roadmap
 
-> Minimal GSD stub — enables quick task tracking without full milestone ceremony.
+## Milestones
 
-## Project
+- ✅ **v1.0 MVP** — Phases 1-4 (shipped 2026-02-28)
 
-MicroChat is a secure, end-to-end encrypted messaging service built on Cloudflare Workers, WebRTC, and a custom TreeKEM protocol.
+## Phases
 
-## Milestone 1 — MVP
+<details>
+<summary>✅ v1.0 MVP (Phases 1-4) — SHIPPED 2026-02-28</summary>
 
-**Status:** In Progress
+- [x] Phase 1: Core Chat — completed
+- [x] Phase 2: Voice Calls — completed
+- [x] Phase 3: TreeKEM Crypto + Server Wiring — completed
+- [x] Phase 4: TreeKEM UI Integration — completed 2026-02-28
 
-### Phase 1: Core Chat ✅
-### Phase 2: Voice Calls ✅
-### Phase 3: TreeKEM Crypto + Server Wiring ✅
+</details>
 
-### Phase 4: TreeKEM UI Integration
+## Progress
 
-**Goal:** Wire all UI flows (create group, join group, send message) to the TreeKEM lifecycle so the app uses live key material instead of epoch 0 fallbacks.
-
-**Status:** In Progress
-
-**Success Criteria:**
-1. `useCreateGroup` calls `initGroupTree()` after group creation
-2. `useAcceptInvite` calls `joinGroupTree()` after joining
-3. `useWebSocket` handles `treeUpdate` events via `handleTreeUpdate()`
-4. All message types (text, voice, image) pass the current epoch when sending
+| Phase                             | Milestone | Status   | Completed  |
+| --------------------------------- | --------- | -------- | ---------- |
+| 1. Core Chat                      | v1.0      | Complete | —          |
+| 2. Voice Calls                    | v1.0      | Complete | —          |
+| 3. TreeKEM Crypto + Server Wiring | v1.0      | Complete | —          |
+| 4. TreeKEM UI Integration         | v1.0      | Complete | 2026-02-28 |
