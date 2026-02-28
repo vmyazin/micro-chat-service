@@ -54,6 +54,7 @@ export default function ConversationPage() {
   const client = getClient();
   const treekemManager = useChatClientStore((state) => state.treekemManager);
   const treeEpochs = useChatClientStore((state) => state.treeEpochs);
+  const setTreeEpoch = useChatClientStore((state) => state.setTreeEpoch);
   const { initGroupTree, joinGroupTree } = useTreeKEM();
   const _playSfx = useSfx();
 
@@ -522,6 +523,10 @@ export default function ConversationPage() {
       const joinedEpoch = treekemManager.getEpoch(groupId as GroupId);
       if (treekemManager.hasTree(groupId as GroupId) && joinedEpoch === 0) {
         setResyncFailed(true);
+      } else if (treekemManager.hasTree(groupId as GroupId)) {
+        // Update Zustand so UI encryptionEpoch reflects the new tree state.
+        // Only when hasTree is true and epoch > 0 — avoids setting 0 on 404-no-tree case.
+        setTreeEpoch(groupId as GroupId, joinedEpoch);
       }
     } catch (err) {
       console.error('[TreeKEM] Resync failed:', err);
@@ -531,6 +536,8 @@ export default function ConversationPage() {
       // Always refetch — on success new keys are active; on failure preserved
       // keys may still decrypt some historical messages.
       refetch().catch(() => {});
+      // Invalidate members so the list is fresh after resync
+      queryClient.invalidateQueries({ queryKey: ['members', groupId] });
     }
   }
 
