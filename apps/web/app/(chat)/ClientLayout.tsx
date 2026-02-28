@@ -126,7 +126,7 @@ export default function ChatLayout({
 
           {/* Sign Out button */}
           <div className="p-4 border-t border-(--border-color) space-y-2">
-            <div className="flex items-center justify-between gap-2 px-2">
+            <div className="flex items-center justify-between gap-2">
               <a href="/" className="text-sm font-medium hover:underline">
                 {t('homePage')}
               </a>
