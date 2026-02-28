@@ -2,8 +2,8 @@
 
 import { GhostIcon } from '@phosphor-icons/react';
 import { motion } from 'framer-motion';
-import Link from 'next/link';
 import { Eyebrow } from '@/components/Eyebrow';
+import { MarketingButton } from '@/components/MarketingButton';
 import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
 
@@ -55,18 +55,12 @@ export default function NotFound() {
             transition={{ delay: 0.4 }}
             className="flex flex-col sm:flex-row items-center justify-center gap-4"
           >
-            <Link
-              href="/chat"
-              className="w-full sm:w-auto bg-blue-600 text-white px-10 py-4 rounded-full font-bold text-base hover:bg-blue-700 transition-all shadow-xl shadow-blue-600/20 active:scale-95 text-center"
-            >
+            <MarketingButton href="/chat" className="w-full sm:w-auto">
               Chat Securely Now
-            </Link>
-            <Link
-              href="/"
-              className="w-full sm:w-auto bg-white text-slate-700 px-10 py-4 rounded-full font-bold text-base border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all active:scale-95 text-center"
-            >
+            </MarketingButton>
+            <MarketingButton href="/" variant="secondary" className="w-full sm:w-auto">
               Learn about MicroChat
-            </Link>
+            </MarketingButton>
           </motion.div>
         </div>
       </main>

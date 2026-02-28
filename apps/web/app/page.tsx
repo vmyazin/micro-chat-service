@@ -16,9 +16,8 @@ import {
   WaveformIcon,
 } from '@phosphor-icons/react';
 import { motion } from 'framer-motion';
-import Link from 'next/link';
-import { Button } from '@/components/Button';
 import { Eyebrow } from '@/components/Eyebrow';
+import { MarketingButton } from '@/components/MarketingButton';
 import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
 
@@ -125,16 +124,12 @@ export default function Home() {
               transition={{ delay: 0.3 }}
               className="flex flex-col sm:flex-row items-center justify-center gap-4"
             >
-              <Link
-                href="/chat"
-                className="w-full sm:w-auto bg-blue-600 text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-blue-700 transition-all shadow-xl shadow-blue-600/20 cursor-pointer active:scale-95 text-center"
-              >
+              <MarketingButton href="/chat" className="w-full sm:w-auto text-lg">
                 Chat Securely Now
-              </Link>
-              <Button
-                variant="ghost"
-                type="button"
-                className="w-full sm:w-auto bg-white text-foreground border border-gray-200 font-bold text-lg hover:bg-gray-50 transition-all cursor-pointer"
+              </MarketingButton>
+              <MarketingButton
+                variant="secondary"
+                className="w-full sm:w-auto text-lg"
                 onClick={() =>
                   document
                     .getElementById('how-it-works')
@@ -142,7 +137,7 @@ export default function Home() {
                 }
               >
                 How it works
-              </Button>
+              </MarketingButton>
             </motion.div>
           </div>
         </section>
@@ -510,12 +505,9 @@ export default function Home() {
               platforms.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-8 relative z-10">
-              <Link
-                href="/chat"
-                className="w-full sm:w-auto bg-blue-600 text-white px-12 py-5 rounded-full font-bold text-xl hover:bg-blue-500 transition-all shadow-xl shadow-blue-600/30 cursor-pointer active:scale-95 text-center"
-              >
+              <MarketingButton href="/chat" size="lg" className="w-full sm:w-auto">
                 Chat Securely Now
-              </Link>
+              </MarketingButton>
               <a
                 href="/whitepaper"
                 className="text-white/60 hover:text-white transition-colors flex items-center gap-2 group cursor-pointer text-lg"
