@@ -271,14 +271,21 @@ groupsRouter.post('/api/invites/:code/accept', requireAuth, async (c) => {
 
   const memberId = generateMemberId();
 
+  // Count existing members BEFORE insert to get the new member's 0-based leaf index
+  const memberCountRows = await db.query<{ count: number }>(
+    'SELECT COUNT(*) as count FROM group_members WHERE group_id = ?',
+    [invite.group_id],
+  );
+  const leafIndex = memberCountRows[0]?.count ?? 0;
+
   await db.execute(
     'UPDATE invites SET used = 1, used_by = ?, used_at = ? WHERE id = ?',
     [user.id, now, code],
   );
 
   await db.execute(
-    'INSERT INTO group_members (id, group_id, user_id, joined_at, identity_key) VALUES (?, ?, ?, ?, ?)',
-    [memberId, invite.group_id, user.id, now, publicKey ?? null],
+    'INSERT INTO group_members (id, group_id, user_id, joined_at, identity_key, leaf_index) VALUES (?, ?, ?, ?, ?, ?)',
+    [memberId, invite.group_id, user.id, now, publicKey ?? null, leafIndex],
   );
 
   const groups = await db.query<{
@@ -290,13 +297,6 @@ groupsRouter.post('/api/invites/:code/accept', requireAuth, async (c) => {
   ]);
 
   const group = groups[0];
-
-  // Count members after insert to determine leaf index (0-based position in ratchet tree)
-  const memberCountRows = await db.query<{ count: number }>(
-    'SELECT COUNT(*) as count FROM group_members WHERE group_id = ?',
-    [invite.group_id],
-  );
-  const leafIndex = (memberCountRows[0]?.count ?? 1) - 1;
 
   // Broadcast memberJoined to group (include publicKey so existing members can generate a Welcome)
   const hubId = c.env.CHAT_HUB.idFromName('main');
