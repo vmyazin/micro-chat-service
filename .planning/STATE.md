@@ -3,36 +3,37 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Encryption Hardening
 status: in_progress
-last_updated: "2026-02-28T23:27:51Z"
-last_activity: "2026-02-28 — Completed 06-01 encryption reliability fixes: epoch-0 guard in GroupCipher.deriveGroupKey, try/catch removed from joinGroup commitJson path"
+last_updated: "2026-02-28T20:15:00Z"
+last_activity: "2026-02-28 — Completed 06-02 UI reliability fixes: 403-retry backoff in useMessages/useMembers, handleResync Zustand epoch sync + members invalidation, REQ-6.4 confirmed"
 progress:
   total_phases: 2
   completed_phases: 1
   total_plans: 4
-  completed_plans: 4
+  completed_plans: 5
 ---
 
 # Project State
 
 **Project:** MicroChat
-**Last activity:** 2026-02-28 — Completed 06-01 encryption reliability fixes: epoch-0 guard in GroupCipher.deriveGroupKey, try/catch removed from joinGroup commitJson path
+**Last activity:** 2026-02-28 — Completed 06-02 UI reliability fixes: 403-retry backoff in useMessages/useMembers, handleResync Zustand epoch sync + members invalidation, REQ-6.4 confirmed
 
 ## Project Reference
 
 See: .planning/PROJECT.md (updated 2026-02-28)
 
 **Core value:** End-to-end encryption that works without a central key server
-**Current focus:** Phase 06 — Encryption reliability fixes (In progress)
+**Current focus:** Phase 06 — Encryption reliability fixes (Complete)
 
 ## Current Phase
 
 **Phase:** 06-encryption-reliability-fixes
-**Plan:** 01 of 1 (complete)
-**Status:** In progress
+**Plan:** 02 of 2 (complete)
+**Status:** Phase complete
 
 | Plan | Name | Status |
 |------|------|--------|
 | 06-01 | Crypto bug fixes: epoch-0 guard + try/catch removal | Complete (f7d5aa3, 9ab3913) |
+| 06-02 | UI reliability: 403-retry, resync epoch sync, REQ-6.4 confirm | Complete (4e93bd9, 5b30cea, 6281e91) |
 
 ### Previous Phase
 
@@ -57,6 +58,10 @@ See: .planning/PROJECT.md (updated 2026-02-28)
 - Preserve full synthetic Welcome fallback for groups where commitJson is absent (owners, pre-migration)
 - [06-01] Epoch-0 guard placed as first statement in deriveGroupKey — before any HKDF logic — so no crypto operation is attempted at epoch 0
 - [06-01] try/catch removed entirely from commitJson branch in joinGroup; decryption errors now propagate to handleResync for user-visible feedback
+- [06-02] 403-retry callback scoped to useMessages/useMembers only — avoids masking auth bugs in other queries
+- [06-02] setTreeEpoch only called when hasTree && epoch > 0 — else-if branch prevents writing epoch=0 to Zustand on 404-no-tree path
+- [06-02] Members query invalidation placed in finally block of handleResync — always runs regardless of resync success/failure
+- [06-02] REQ-6.4 confirmed as already safe — getTreeState returns null on 404, joinGroupTree has null guard; comment added for documentation
 
 ## Blockers/Concerns
 
