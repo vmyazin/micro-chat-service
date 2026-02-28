@@ -18,7 +18,7 @@
 
 ## v1.1 Encryption Hardening
 
-- [ ] Phase 5: TreeKEM State Recovery — Fix tree divergence: persist leaf_index + commit_json, enable real re-join without resetting epoch
+- [x] Phase 5: TreeKEM State Recovery — Fix tree divergence: persist leaf_index + commit_json, enable real re-join without resetting epoch
 
 **Goal:** Members whose TreeKEM state diverges (e.g. missed a commit) can self-recover by reloading without needing a full re-invite.
 
@@ -53,7 +53,7 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 06-01-PLAN.md — Crypto/client bug fixes: epoch-0 guard in GroupCipher, remove try/catch from joinGroup commitJson path (REQ-6.1, REQ-6.3)
+- [x] 06-01-PLAN.md — Crypto/client bug fixes: epoch-0 guard in GroupCipher, remove try/catch from joinGroup commitJson path (REQ-6.1, REQ-6.3)
 - [ ] 06-02-PLAN.md — Web/UI fixes: 403 retry in useMessages + useMembers, post-resync Zustand sync, confirm 404 grace (REQ-6.2, REQ-6.4, REQ-6.5)
 
 ## Progress
@@ -64,5 +64,5 @@ Plans:
 | 2. Voice Calls                    | v1.0      | Complete | —          |
 | 3. TreeKEM Crypto + Server Wiring | v1.0      | Complete | —          |
 | 4. TreeKEM UI Integration         | v1.0      | Complete | 2026-02-28 |
-| 5. TreeKEM State Recovery         | v1.1      | Planned  | —          |
-| 6. Encryption Reliability Fixes   | v1.1      | Planned  | —          |
+| 5. TreeKEM State Recovery         | v1.1      | Complete | 2026-02-28 |
+| 6. Encryption Reliability Fixes   | v1.1      | In progress | —       |

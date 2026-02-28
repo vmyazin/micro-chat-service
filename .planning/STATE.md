@@ -2,33 +2,41 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Encryption Hardening
-status: completed
-last_updated: "2026-02-28T19:52:06.329Z"
-last_activity: "2026-02-28 — Completed 05-03 client integration: getTreeState extended with commitJson/leafIndex, deleteGroup async method, joinGroupTree reads server-supplied leaf index"
+status: in_progress
+last_updated: "2026-02-28T23:27:51Z"
+last_activity: "2026-02-28 — Completed 06-01 encryption reliability fixes: epoch-0 guard in GroupCipher.deriveGroupKey, try/catch removed from joinGroup commitJson path"
 progress:
-  total_phases: 1
+  total_phases: 2
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
+  total_plans: 4
+  completed_plans: 4
 ---
 
 # Project State
 
 **Project:** MicroChat
-**Last activity:** 2026-02-28 — Completed 05-03 client integration: getTreeState extended with commitJson/leafIndex, deleteGroup async method, joinGroupTree reads server-supplied leaf index
+**Last activity:** 2026-02-28 — Completed 06-01 encryption reliability fixes: epoch-0 guard in GroupCipher.deriveGroupKey, try/catch removed from joinGroup commitJson path
 
 ## Project Reference
 
 See: .planning/PROJECT.md (updated 2026-02-28)
 
 **Core value:** End-to-end encryption that works without a central key server
-**Current focus:** Phase 05 — TreeKEM state recovery (Complete)
+**Current focus:** Phase 06 — Encryption reliability fixes (In progress)
 
 ## Current Phase
 
-**Phase:** 05-treekem-state-recovery
-**Plan:** 03 of 3
-**Status:** Milestone complete
+**Phase:** 06-encryption-reliability-fixes
+**Plan:** 01 of 1 (complete)
+**Status:** In progress
+
+| Plan | Name | Status |
+|------|------|--------|
+| 06-01 | Crypto bug fixes: epoch-0 guard + try/catch removal | Complete (f7d5aa3, 9ab3913) |
+
+### Previous Phase
+
+**Phase:** 05-treekem-state-recovery (Complete)
 
 | Plan | Name | Status |
 |------|------|--------|
@@ -47,6 +55,8 @@ See: .planning/PROJECT.md (updated 2026-02-28)
 - Use '' (empty string) for treeHash in reconstructed Welcome — lazily computed inside MLSGroup
 - joinGroupTree drops leafIndex parameter entirely — server is now the authoritative source
 - Preserve full synthetic Welcome fallback for groups where commitJson is absent (owners, pre-migration)
+- [06-01] Epoch-0 guard placed as first statement in deriveGroupKey — before any HKDF logic — so no crypto operation is attempted at epoch 0
+- [06-01] try/catch removed entirely from commitJson branch in joinGroup; decryption errors now propagate to handleResync for user-visible feedback
 
 ## Blockers/Concerns
 
