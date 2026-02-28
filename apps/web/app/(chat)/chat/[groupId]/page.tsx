@@ -564,6 +564,10 @@ export default function ConversationPage() {
     );
   }
 
+  const encryptionEpoch = groupId
+    ? treekemManager.getEpoch(groupId as GroupId)
+    : 0;
+
   const TTL_MS = 24 * 60 * 60 * 1000;
   const visibleMessages = messages.filter((m) => {
     if (m.deleted) return false;
@@ -607,6 +611,19 @@ export default function ConversationPage() {
                       ? t('memberOnline')
                       : t('membersOnline')}
                   </span>
+                </>
+              )}
+            </div>
+            <div className="flex items-center gap-1 text-xs text-(--text-muted) select-none mt-0.5">
+              {encryptionEpoch > 0 ? (
+                <>
+                  <LockIcon className="w-3 h-3 shrink-0 text-emerald-500" aria-hidden="true" />
+                  <span className="text-emerald-600 dark:text-emerald-400">End-to-end encrypted</span>
+                </>
+              ) : (
+                <>
+                  <SpinnerGapIcon className="w-3 h-3 shrink-0 animate-spin" aria-hidden="true" />
+                  <span>Syncing encryption…</span>
                 </>
               )}
             </div>
