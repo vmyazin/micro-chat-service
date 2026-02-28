@@ -697,13 +697,14 @@ export default function ConversationPage() {
                     variant="outline"
                     size="sm"
                     type="button"
+                    disabled={encryptionSyncing}
                     onClick={() => {
                       sendMessage.reset();
-                      setShowSettings(true);
+                      handleResync();
                     }}
                     className="ml-3 border-red-700 dark:border-red-400"
                   >
-                    {t('initializeEncryption')}
+                    {encryptionSyncing ? t('resyncingEncryption') : t('resyncEncryption')}
                   </Button>
                 </>
               ) : (
