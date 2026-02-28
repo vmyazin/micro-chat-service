@@ -131,6 +131,8 @@ export type WebSocketEvent =
       displayName: string;
       /** Base64 raw P-256 ECDH public key — used by existing members to generate a TreeKEM Welcome */
       publicKey?: string;
+      /** Group owner's user ID — only the owner should call addMemberToTree to prevent race conditions */
+      ownerId?: string;
     }
   | { type: 'memberLeft'; groupId: GroupId; userId: UserId }
   | {

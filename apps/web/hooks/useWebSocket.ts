@@ -118,13 +118,20 @@ export function useWebSocket(activeGroupId?: GroupId | null) {
           queryKey: invalidateGroups(),
         });
 
-        // If the new member shared their public key, generate and post a Welcome for them
-        if (event.type === 'memberJoined' && event.publicKey) {
-          addMemberToTree(event.groupId, event.userId, event.publicKey).catch((err) => {
-            if (process.env.NODE_ENV !== 'production') {
-              console.warn('[TreeKEM] addMemberToTree failed:', err);
-            }
-          });
+        // Only the group owner generates the Welcome for a new member.
+        // If every online member did this, they'd each advance their local tree to
+        // a different epoch N+1, causing tree state divergence for the "losers" who
+        // get a 409 from the server (their local epoch is already N+1 so handleTreeUpdate
+        // would skip the winner's commit, leaving them with a wrong decryption key).
+        if (event.type === 'memberJoined' && event.publicKey && event.ownerId) {
+          const currentUser = queryClient.getQueryData<{ userId: string; displayName: string }>(['currentUser']);
+          if (currentUser && event.ownerId === currentUser.userId) {
+            addMemberToTree(event.groupId, event.userId, event.publicKey).catch((err) => {
+              if (process.env.NODE_ENV !== 'production') {
+                console.warn('[TreeKEM] addMemberToTree failed:', err);
+              }
+            });
+          }
         }
         break;
       }

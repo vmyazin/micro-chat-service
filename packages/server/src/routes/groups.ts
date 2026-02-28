@@ -307,6 +307,7 @@ groupsRouter.post('/api/invites/:code/accept', requireAuth, async (c) => {
     userId: user.id,
     displayName: user.displayName,
     publicKey,
+    ownerId: group.owner_id,
   };
   await hub.fetch('https://hub/broadcast', {
     method: 'POST',
