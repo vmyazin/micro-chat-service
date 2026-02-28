@@ -2,18 +2,53 @@
 'use client';
 
 import {
+  ArrowsLeftRightIcon,
+  CaretDownIcon,
   CaretRightIcon,
   CheckIcon,
+  HardDrivesIcon,
   LockIcon,
+  LockOpenIcon,
+  PhoneCallIcon,
   ShieldIcon,
   TrashIcon,
   WarningIcon,
+  WaveformIcon,
 } from '@phosphor-icons/react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { Button } from '@/components/Button';
 import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
+
+function StepConnector() {
+  return (
+    <div className="flex items-center justify-center py-2 md:py-0 md:pt-16">
+      <div className="hidden md:flex items-center gap-1">
+        {[0, 1, 2].map((i) => (
+          <motion.div
+            key={i}
+            className="w-1.5 h-1.5 rounded-full bg-gray-300"
+            animate={{ opacity: [0.2, 0.7, 0.2] }}
+            transition={{ duration: 2, repeat: Infinity, delay: i * 0.4 }}
+          />
+        ))}
+        <CaretRightIcon className="w-3.5 h-3.5 text-gray-300 ml-0.5" />
+      </div>
+      <div className="md:hidden flex flex-col items-center gap-1">
+        {[0, 1, 2].map((i) => (
+          <motion.div
+            key={i}
+            className="w-1.5 h-1.5 rounded-full bg-gray-300"
+            animate={{ opacity: [0.2, 0.7, 0.2] }}
+            transition={{ duration: 2, repeat: Infinity, delay: i * 0.4 }}
+          />
+        ))}
+        <CaretDownIcon className="w-3.5 h-3.5 text-gray-300 mt-0.5" />
+      </div>
+    </div>
+  );
+}
 
 export default function Home() {
   const features = [
@@ -105,11 +140,277 @@ export default function Home() {
               <Button
                 variant="ghost"
                 type="button"
-                className="w-full sm:w-auto bg-white text-[#1E293B] border border-gray-200 font-bold text-lg hover:bg-gray-50 transition-all cursor-pointer"
+                className="w-full sm:w-auto bg-white text-foreground border border-gray-200 font-bold text-lg hover:bg-gray-50 transition-all cursor-pointer"
+                onClick={() =>
+                  document
+                    .getElementById('how-it-works')
+                    ?.scrollIntoView({ behavior: 'smooth' })
+                }
               >
                 How it works
               </Button>
             </motion.div>
+          </div>
+        </section>
+
+        {/* How Messaging Works */}
+        <section
+          id="how-it-works"
+          className="py-24 bg-white border-y border-gray-100 px-6"
+        >
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-16">
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 border border-blue-100 mb-6"
+              >
+                <span className="text-xs font-bold text-blue-600 uppercase tracking-widest">
+                  Message Flow
+                </span>
+              </motion.div>
+              <h2
+                className="text-4xl md:text-5xl mb-6 font-semibold italic text-slate-900"
+                style={{ fontFamily: 'Bodoni Moda, serif' }}
+              >
+                How Messaging Works.
+              </h2>
+              <p className="text-gray-500 max-w-xl mx-auto font-light leading-relaxed text-lg">
+                Three steps. Encrypted before it leaves, relayed blindly,
+                decrypted only on arrival.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_2.5rem_1fr_2.5rem_1fr] gap-y-3 md:gap-y-0 items-start max-w-5xl mx-auto">
+              {/* Step 1: Encrypt */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="bg-white rounded-2xl border border-gray-200 shadow-md overflow-hidden"
+              >
+                <div className="h-1 bg-blue-500" />
+                <div className="p-8">
+                  <div className="flex items-start justify-between mb-6">
+                    <span
+                      className="text-5xl font-semibold italic text-blue-500/20 leading-none"
+                      style={{ fontFamily: 'Bodoni Moda, serif' }}
+                    >
+                      01
+                    </span>
+                    <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center border border-blue-100">
+                      <LockIcon className="w-6 h-6" />
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-bold mb-3 text-slate-900">
+                    Encrypt on Device
+                  </h3>
+                  <p className="text-gray-500 text-sm leading-relaxed font-light">
+                    Your message is encrypted with AES-256-GCM using the
+                    group&apos;s current epoch key. The key never leaves your
+                    device.
+                  </p>
+                </div>
+              </motion.div>
+
+              <StepConnector />
+
+              {/* Step 2: Relay */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.15 }}
+                className="bg-white rounded-2xl border border-gray-200 shadow-md overflow-hidden"
+              >
+                <div className="h-1 bg-slate-400" />
+                <div className="p-8">
+                  <div className="flex items-start justify-between mb-6">
+                    <span
+                      className="text-5xl font-semibold italic text-slate-400/20 leading-none"
+                      style={{ fontFamily: 'Bodoni Moda, serif' }}
+                    >
+                      02
+                    </span>
+                    <div className="w-12 h-12 bg-slate-100 text-slate-500 rounded-xl flex items-center justify-center border border-slate-200">
+                      <HardDrivesIcon className="w-6 h-6" />
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-bold mb-3 text-slate-900">
+                    Blind Relay
+                  </h3>
+                  <p className="text-gray-500 text-sm leading-relaxed font-light">
+                    Our server receives an encrypted blob and forwards it to
+                    group members. It can never read, modify, or log the
+                    plaintext.
+                  </p>
+                </div>
+              </motion.div>
+
+              <StepConnector />
+
+              {/* Step 3: Decrypt */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.3 }}
+                className="bg-white rounded-2xl border border-gray-200 shadow-md overflow-hidden"
+              >
+                <div className="h-1 bg-emerald-500" />
+                <div className="p-8">
+                  <div className="flex items-start justify-between mb-6">
+                    <span
+                      className="text-5xl font-semibold italic text-emerald-500/20 leading-none"
+                      style={{ fontFamily: 'Bodoni Moda, serif' }}
+                    >
+                      03
+                    </span>
+                    <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center border border-emerald-100">
+                      <LockOpenIcon className="w-6 h-6" />
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-bold mb-3 text-slate-900">
+                    Decrypt & Read
+                  </h3>
+                  <p className="text-gray-500 text-sm leading-relaxed font-light">
+                    Your friend&apos;s device retrieves the epoch key from its
+                    local store and decrypts. Messages only exist as plaintext on
+                    member devices.
+                  </p>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        </section>
+
+        {/* Secure Calling */}
+        <section className="py-24 px-6">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-16">
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-teal-50 border border-teal-100 mb-6"
+              >
+                <span className="text-xs font-bold text-teal-600 uppercase tracking-widest">
+                  Voice Calls
+                </span>
+              </motion.div>
+              <h2
+                className="text-4xl md:text-5xl mb-6 font-semibold italic text-slate-900"
+                style={{ fontFamily: 'Bodoni Moda, serif' }}
+              >
+                Secure Calling.
+              </h2>
+              <p className="text-gray-500 max-w-xl mx-auto font-light leading-relaxed text-lg">
+                One-to-one voice calls over WebRTC. The server relays the
+                handshake — never the audio.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_2.5rem_1fr_2.5rem_1fr] gap-y-3 md:gap-y-0 items-start max-w-5xl mx-auto">
+              {/* Step 1: Signal */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="bg-white rounded-2xl border border-gray-100 shadow-lg overflow-hidden"
+              >
+                <div className="h-1 bg-teal-500" />
+                <div className="p-8">
+                  <div className="flex items-start justify-between mb-6">
+                    <span
+                      className="text-5xl font-semibold italic text-teal-500/20 leading-none"
+                      style={{ fontFamily: 'Bodoni Moda, serif' }}
+                    >
+                      01
+                    </span>
+                    <div className="w-12 h-12 bg-teal-50 text-teal-600 rounded-xl flex items-center justify-center border border-teal-100">
+                      <PhoneCallIcon className="w-6 h-6" />
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-bold mb-3 text-slate-900">
+                    Signal Privately
+                  </h3>
+                  <p className="text-gray-500 text-sm leading-relaxed font-light">
+                    Your device sends an encrypted signaling offer through our
+                    server. Caller identity is sealed with AES-256-GCM — only
+                    group members can see who&apos;s calling.
+                  </p>
+                </div>
+              </motion.div>
+
+              <StepConnector />
+
+              {/* Step 2: P2P Connect */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.15 }}
+                className="bg-white rounded-2xl border border-gray-100 shadow-lg overflow-hidden"
+              >
+                <div className="h-1 bg-orange-500" />
+                <div className="p-8">
+                  <div className="flex items-start justify-between mb-6">
+                    <span
+                      className="text-5xl font-semibold italic text-orange-500/20 leading-none"
+                      style={{ fontFamily: 'Bodoni Moda, serif' }}
+                    >
+                      02
+                    </span>
+                    <div className="w-12 h-12 bg-orange-50 text-orange-600 rounded-xl flex items-center justify-center border border-orange-100">
+                      <ArrowsLeftRightIcon className="w-6 h-6" />
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-bold mb-3 text-slate-900">
+                    Connect Peer-to-Peer
+                  </h3>
+                  <p className="text-gray-500 text-sm leading-relaxed font-light">
+                    WebRTC establishes a direct connection between devices using
+                    ICE. Once connected, audio flows device-to-device — our
+                    server is out of the loop.
+                  </p>
+                </div>
+              </motion.div>
+
+              <StepConnector />
+
+              {/* Step 3: Encrypted Audio */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.3 }}
+                className="bg-white rounded-2xl border border-gray-100 shadow-lg overflow-hidden"
+              >
+                <div className="h-1 bg-indigo-500" />
+                <div className="p-8">
+                  <div className="flex items-start justify-between mb-6">
+                    <span
+                      className="text-5xl font-semibold italic text-indigo-500/20 leading-none"
+                      style={{ fontFamily: 'Bodoni Moda, serif' }}
+                    >
+                      03
+                    </span>
+                    <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center border border-indigo-100">
+                      <WaveformIcon className="w-6 h-6" />
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-bold mb-3 text-slate-900">
+                    Talk Encrypted
+                  </h3>
+                  <p className="text-gray-500 text-sm leading-relaxed font-light">
+                    All audio is encrypted with DTLS-SRTP — built into WebRTC
+                    and impossible to disable. The server never touches your
+                    voice data.
+                  </p>
+                </div>
+              </motion.div>
+            </div>
           </div>
         </section>
 
