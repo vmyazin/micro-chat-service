@@ -11,6 +11,8 @@ interface ChatClientStore {
   callCipher: GroupCipher;
   messageCipher: GroupCipher;
   treekemManager: TreeKEMManager;
+  treeEpochs: Record<string, number>;
+  setTreeEpoch: (groupId: GroupId, epoch: number) => void;
   ensureCallKey: (groupId: GroupId) => Promise<void>;
   getClient: (options?: MicroChatClientOptions) => MicroChatClient;
   clearClient: () => void;
@@ -56,6 +58,14 @@ export const useChatClientStore = create<ChatClientStore>()(
       callCipher,
       messageCipher,
       treekemManager,
+      treeEpochs: {},
+
+      setTreeEpoch: (groupId, epoch) =>
+        set(
+          (state) => ({ treeEpochs: { ...state.treeEpochs, [groupId]: epoch } }),
+          false,
+          'setTreeEpoch',
+        ),
 
       ensureCallKey: async (groupId: GroupId) => {
         if (initializedCallGroups.has(groupId)) {

@@ -44,7 +44,6 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
   const getClient = useChatClientStore((state) => state.getClient);
   const treekemManager = useChatClientStore((state) => state.treekemManager);
   const { initGroupTree } = useTreeKEM();
-  const treeInitialized = treekemManager.hasTree(groupId);
 
   // Local UI state
   const [inviteLink, setInviteLink] = useState<string | null>(null);
@@ -374,11 +373,7 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
                           <ArrowsClockwiseIcon className="w-4.5 h-4.5" />
                         )}
                         <span className={rotateStatus === 'done' ? 'text-green-600 dark:text-green-400' : ''}>
-                          {rotateStatus === 'done'
-                            ? t('rotateKeysDone')
-                            : treeInitialized
-                              ? t('rotateKeys')
-                              : t('initializeEncryption')}
+                          {rotateStatus === 'done' ? t('rotateKeysDone') : t('rotateKeys')}
                         </span>
                       </button>
                       <button
@@ -402,7 +397,7 @@ export default function GroupSettings({ groupId, open, onClose }: GroupSettingsP
                           transition={{ duration: 0.18 }}
                           className="overflow-hidden px-3 text-xs text-(--text-muted) leading-relaxed"
                         >
-                          {treeInitialized ? t('rotateKeysDescription') : t('initializeEncryptionDescription')}
+                          {t('rotateKeysDescription')}
                         </motion.p>
                       )}
                     </AnimatePresence>

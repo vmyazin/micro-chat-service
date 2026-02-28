@@ -75,10 +75,6 @@
     "rotateKeysDone": "Keys Rotated!",
     "rotateKeysDescription": "Lost a device or think your account was compromised? Rotating keys locks out any old sessions from reading future messages.",
     "rotateKeysFailed": "Failed to rotate keys",
-    "initializeEncryption": "Initialize Encryption",
-    "initializeEncryptionDescription": "This group was created without encryption. Right now, messages pass through our servers. Encrypt them so only group members can read them.",
-    "initializeEncryptionWait": "Encryption setup will be delivered by an existing member. Wait until the tree update arrives.",
-    "initializeEncryptionOwnerOnly": "Only an existing member can initialize encryption for this group.",
     "rotateKeysHelpToggle": "why?"
   },
   "InviteQRDialog": {

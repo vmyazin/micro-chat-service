@@ -87,6 +87,7 @@ function base64ToUint8(base64: string): Uint8Array {
 export function useTreeKEM() {
   const getClient = useChatClientStore((state) => state.getClient);
   const treekemManager = useChatClientStore((state) => state.treekemManager);
+  const setTreeEpoch = useChatClientStore((state) => state.setTreeEpoch);
   const identityKeyRef = useRef<ECKeyPair | null>(null);
 
   // Lazily get or create identity key
@@ -118,8 +119,9 @@ export function useTreeKEM() {
       // Post commit to server
       const client = getClient();
       await client.postTreeUpdate(groupId, update);
+      setTreeEpoch(groupId, treekemManager.getEpoch(groupId));
     },
-    [treekemManager, getClient, getIdentityKey],
+    [treekemManager, getClient, getIdentityKey, setTreeEpoch],
   );
 
   /**
@@ -136,6 +138,7 @@ export function useTreeKEM() {
       if (welcomeJson) {
         // Join via Welcome message (preferred path)
         await treekemManager.joinFromWelcome(groupId, welcomeJson, keyPair);
+        setTreeEpoch(groupId, treekemManager.getEpoch(groupId));
         return;
       }
 
@@ -147,6 +150,7 @@ export function useTreeKEM() {
       if (treeState.welcome) {
         // Use the stored Welcome — this gives us the correct epoch key
         await treekemManager.joinFromWelcome(groupId, treeState.welcome, keyPair);
+        setTreeEpoch(groupId, treekemManager.getEpoch(groupId));
         return;
       }
 
@@ -157,8 +161,9 @@ export function useTreeKEM() {
         keyPair,
         treeState.commitJson,        // undefined when server has no commit yet → synthetic fallback
       );
+      setTreeEpoch(groupId, treekemManager.getEpoch(groupId));
     },
-    [treekemManager, getClient, getIdentityKey],
+    [treekemManager, getClient, getIdentityKey, setTreeEpoch],
   );
 
   /**
@@ -206,13 +211,15 @@ export function useTreeKEM() {
         // Skip if we're already at this epoch — means we were the committer
         if (treekemManager.getEpoch(event.groupId) >= event.epoch) return;
         await treekemManager.processCommit(event.groupId, event.commit);
+        setTreeEpoch(event.groupId, event.epoch);
       } else if (event.welcome) {
         // New joiner receiving welcome via broadcast — bootstrap tree
         const keyPair = await getIdentityKey();
         await treekemManager.joinFromWelcome(event.groupId, event.welcome, keyPair);
+        setTreeEpoch(event.groupId, treekemManager.getEpoch(event.groupId));
       }
     },
-    [treekemManager, getIdentityKey],
+    [treekemManager, getIdentityKey, setTreeEpoch],
   );
 
   return {

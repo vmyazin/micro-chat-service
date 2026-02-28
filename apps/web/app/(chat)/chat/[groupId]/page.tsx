@@ -34,6 +34,7 @@ import { VoiceMessagePlayer } from '@/components/VoiceMessagePlayer';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useDeleteMessage } from '@/hooks/useDeleteMessage';
 import { useJoinGroup } from '@/hooks/useJoinGroup';
+import { useTreeKEM } from '@/hooks/useTreeKEM';
 import { useMembers } from '@/hooks/useMembers';
 import { messagesQueryKey, useMessages } from '@/hooks/useMessages';
 import { useSendMessage } from '@/hooks/useSendMessage';
@@ -52,6 +53,8 @@ export default function ConversationPage() {
   const { getClient } = useChatClientStore();
   const client = getClient();
   const treekemManager = useChatClientStore((state) => state.treekemManager);
+  const treeEpochs = useChatClientStore((state) => state.treeEpochs);
+  const { initGroupTree } = useTreeKEM();
   const _playSfx = useSfx();
 
   // Server state with React Query
@@ -150,6 +153,16 @@ export default function ConversationPage() {
       }
     }
   }, [groupId, error, joinGroup.mutate]); // intentionally omit joinGroup to avoid loop
+
+  // Owner-init fallback: if tree has no server state (initGroupTree failed during creation),
+  // auto-initialize when the group page loads and the user is the owner.
+  const encryptionEpochForInit = groupId ? (treeEpochs[groupId] ?? 0) : 0;
+  useEffect(() => {
+    if (!groupId || encryptionEpochForInit > 0 || !members.length || !currentUser) return;
+    const isOwner = members.some((m) => m.isOwner && m.userId === currentUser.userId);
+    if (!isOwner) return;
+    initGroupTree(groupId as GroupId).catch(console.error);
+  }, [groupId, encryptionEpochForInit, members, currentUser, initGroupTree]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -564,9 +577,7 @@ export default function ConversationPage() {
     );
   }
 
-  const encryptionEpoch = groupId
-    ? treekemManager.getEpoch(groupId as GroupId)
-    : 0;
+  const encryptionEpoch = groupId ? (treeEpochs[groupId] ?? 0) : 0;
 
   const TTL_MS = 24 * 60 * 60 * 1000;
   const visibleMessages = messages.filter((m) => {
