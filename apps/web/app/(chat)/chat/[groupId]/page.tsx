@@ -514,14 +514,23 @@ export default function ConversationPage() {
     setEncryptionSyncing(true);
     setResyncFailed(false);
     try {
-      await treekemManager.deleteGroup(groupId as GroupId);
+      // clearTree preserves IndexedDB keys so historical messages remain
+      // decryptable even if re-join fails (unlike deleteGroup which wipes all keys).
+      treekemManager.clearTree(groupId as GroupId);
       await joinGroupTree(groupId as GroupId);
-      await refetch();
+      // Synthetic fallback lands at epoch 0 — tree exists but keys aren't usable
+      const joinedEpoch = treekemManager.getEpoch(groupId as GroupId);
+      if (treekemManager.hasTree(groupId as GroupId) && joinedEpoch === 0) {
+        setResyncFailed(true);
+      }
     } catch (err) {
       console.error('[TreeKEM] Resync failed:', err);
       setResyncFailed(true);
     } finally {
       setEncryptionSyncing(false);
+      // Always refetch — on success new keys are active; on failure preserved
+      // keys may still decrypt some historical messages.
+      refetch().catch(() => {});
     }
   }
 
@@ -604,6 +613,19 @@ export default function ConversationPage() {
     const ageMs = nowMs - new Date(m.createdAt).getTime();
     return ageMs < TTL_MS;
   });
+
+  // Find the most-recent undecrypted message — only it shows the full guard with
+  // the resync action. All earlier undecrypted messages show a compact lock pill.
+  // Skip system messages (senderId === 'system') as they use a separate render path.
+  let lastUndecryptedId: string | null = null;
+  for (let i = visibleMessages.length - 1; i >= 0; i--) {
+    const m = visibleMessages[i];
+    if (m.senderId === ('system' as UserId)) continue;
+    if (typeof decodeContent(m.encryptedContent) === 'string') {
+      lastUndecryptedId = m.id;
+      break;
+    }
+  }
 
   return (
     <div className="chat-area flex flex-col flex-1 min-h-0 h-full w-full">
@@ -786,6 +808,7 @@ export default function ConversationPage() {
                           onResync={handleResync}
                           encryptionSyncing={encryptionSyncing}
                           resyncFailed={resyncFailed}
+                          showFullGuard={message.id === lastUndecryptedId}
                         />
                       </motion.div>
                     );
@@ -831,6 +854,8 @@ interface MessageBubbleProps {
   onResync: () => void;
   encryptionSyncing: boolean;
   resyncFailed: boolean;
+  /** Show the full guard with action text/button; false = compact lock pill only */
+  showFullGuard: boolean;
 }
 
 function MessageBubble({
@@ -848,6 +873,7 @@ function MessageBubble({
   onResync,
   encryptionSyncing,
   resyncFailed,
+  showFullGuard,
 }: MessageBubbleProps) {
   const t = useTranslations('GroupChat');
   const isSystem = message.senderId === ('system' as UserId);
@@ -934,11 +960,44 @@ function MessageBubble({
 
   const decoded = decodeContent(message.encryptedContent);
 
-  // Encrypted message that couldn't be decrypted — nonce+epoch present but content is still ciphertext
-  const isUndecrypted =
-    !!message.nonce && message.epoch !== undefined && typeof decoded === 'string';
+  // Content is still ciphertext — all valid messages are JSON-wrapped MessagePayloads,
+  // so a non-object result means decryption failed regardless of nonce/epoch presence.
+  const isUndecrypted = typeof decoded === 'string';
 
   if (isUndecrypted) {
+    // Compact lock pill for all but the most-recent undecrypted message
+    if (!showFullGuard) {
+      const senderColor = avatarColor(message.senderName ?? t('anonymous'));
+      return (
+        <div className={`flex items-end gap-2 ${isOwn ? 'justify-end' : 'justify-start'}`}>
+          {!isOwn && (
+            <div
+              className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-xs font-bold text-white select-none"
+              style={{ background: senderColor }}
+              aria-hidden="true"
+            >
+              {(message.senderName ?? '?').charAt(0).toUpperCase()}
+            </div>
+          )}
+          <div className={`flex flex-col gap-0.5 ${isOwn ? 'items-end' : 'items-start'}`}>
+            {!isOwn && (
+              <span className="text-xs font-semibold px-1" style={{ color: senderColor }}>
+                {message.senderName ?? t('anonymous')}
+              </span>
+            )}
+            <div
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-(--surface-muted) border border-(--border-color) text-xs text-(--text-muted) opacity-60"
+              title={t('messageEncryptedBadKey')}
+            >
+              <LockIcon className="w-3 h-3 shrink-0 text-amber-400" aria-label={t('messageEncryptedBadKey')} />
+              <span>{formatTime(message.createdAt)}</span>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Full guard for the most-recent undecrypted message
     return (
       <div className={`flex items-end gap-2 ${isOwn ? 'justify-end' : 'justify-start'}`}>
         {!isOwn && (

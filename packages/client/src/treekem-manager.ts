@@ -87,24 +87,31 @@ export class TreeKEMManager {
   ): Promise<void> {
     if (commitJson) {
       // Real recovery path: reconstruct Welcome from server-persisted Commit.
-      // The member's private key at myLeafIndex can decrypt the path secret encrypted for them.
-      const commit: Commit = JSON.parse(commitJson);
-      const welcome: Welcome = {
-        groupId,
-        epoch: commit.newEpoch,
-        treeData: treeDataJson,
-        commit,
-        leafIndex: myLeafIndex,
-        groupContext: {
+      // Falls through to synthetic path if the commit's update path doesn't include
+      // this member (e.g. the server's latest commit was for a different member, or
+      // the user regenerated their identity key).
+      try {
+        const commit: Commit = JSON.parse(commitJson);
+        const welcome: Welcome = {
           groupId,
           epoch: commit.newEpoch,
-          treeHash: '',                        // Lazily computed inside MLSGroup; '' is acceptable
-          transcriptHash: commit.transcriptHash,
-        },
-      };
-      const group = await MLSGroup.joinFromWelcome(welcome, myKeyPair, this.cipher);
-      this.groups.set(groupId, group);
-      return;
+          treeData: treeDataJson,
+          commit,
+          leafIndex: myLeafIndex,
+          groupContext: {
+            groupId,
+            epoch: commit.newEpoch,
+            treeHash: '',
+            transcriptHash: commit.transcriptHash,
+          },
+        };
+        const group = await MLSGroup.joinFromWelcome(welcome, myKeyPair, this.cipher);
+        this.groups.set(groupId, group);
+        return;
+      } catch {
+        // Commit reconstruction failed — fall through to synthetic epoch-0 join.
+        // The caller can detect this via getEpoch() === 0 and prompt for re-invite.
+      }
     }
 
     // Build a synthetic Welcome for backward compatibility
@@ -293,6 +300,16 @@ export class TreeKEMManager {
    */
   hasTree(groupId: GroupId): boolean {
     return this.groups.has(groupId);
+  }
+
+  /**
+   * Clear in-memory tree state for a group without deleting IndexedDB keys.
+   * Use before re-joining so that historical epoch keys are preserved in case
+   * the re-join fails — old messages can still be decrypted with the saved keys.
+   * After calling this, hasTree() returns false and joinGroupTree() will proceed.
+   */
+  clearTree(groupId: GroupId): void {
+    this.groups.delete(groupId);
   }
 
   /**

@@ -148,10 +148,13 @@ export function useTreeKEM() {
       if (!treeState) return;
 
       if (treeState.welcome) {
-        // Use the stored Welcome — this gives us the correct epoch key
-        await treekemManager.joinFromWelcome(groupId, treeState.welcome, keyPair);
-        setTreeEpoch(groupId, treekemManager.getEpoch(groupId));
-        return;
+        try {
+          await treekemManager.joinFromWelcome(groupId, treeState.welcome, keyPair);
+          setTreeEpoch(groupId, treekemManager.getEpoch(groupId));
+          return;
+        } catch {
+          // Welcome decryption failed (stale or key mismatch) — fall through to joinGroup
+        }
       }
 
       await treekemManager.joinGroup(

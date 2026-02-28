@@ -44,7 +44,7 @@
     "messageEncryptedBadKey": "Message encrypted — your key is out of sync",
     "resyncEncryption": "Resync encryption",
     "resyncingEncryption": "Resyncing…",
-    "resyncFailedHint": "Resync failed — ask someone to re-invite you"
+    "resyncFailedHint": "Resync failed — ask them to re-invite you"
   },
   "GroupList": {
     "newGroup": "New Group",
