@@ -322,8 +322,9 @@ function NerdContent() {
             </div>
             <p className="text-slate-600 font-light mb-4">
               Authentication uses WebAuthn (FIDO2) — your credentials are
-              hardware-bound passkeys that never leave your device. No passwords,
-              no biometric data stored server-side, no recovery questions.
+              hardware-bound passkeys that never leave your device. No
+              passwords, no biometric data stored server-side, no recovery
+              questions.
             </p>
             <p className="text-slate-500 text-sm font-mono">
               Retention: Account lifetime only

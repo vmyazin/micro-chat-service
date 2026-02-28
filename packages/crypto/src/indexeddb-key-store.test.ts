@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto';
 import type { GroupId } from '@microchat/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { IndexedDBKeyStore, _resetDbForTesting } from './indexeddb-key-store';
+import { _resetDbForTesting, IndexedDBKeyStore } from './indexeddb-key-store';
 
 describe('IndexedDBKeyStore', () => {
   let store: IndexedDBKeyStore;

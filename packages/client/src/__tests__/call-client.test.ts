@@ -141,11 +141,20 @@ beforeEach(() => {
 
   latestMockPC = createMockPC();
 
-  vi.stubGlobal('RTCPeerConnection', function () { return latestMockPC.pc; });
-  vi.stubGlobal('RTCIceCandidate', function (init: RTCIceCandidateInit) { return init; });
+  // biome-ignore lint/complexity/useArrowFunction: constructor mock
+  vi.stubGlobal('RTCPeerConnection', function () {
+    return latestMockPC.pc;
+  });
+  // biome-ignore lint/complexity/useArrowFunction: constructor mock
+  vi.stubGlobal('RTCIceCandidate', function (init: RTCIceCandidateInit) {
+    return init;
+  });
+  // biome-ignore lint/complexity/useArrowFunction: constructor mock
   vi.stubGlobal(
     'RTCSessionDescription',
-    function (init: RTCSessionDescriptionInit) { return init; },
+    function (init: RTCSessionDescriptionInit) {
+      return init;
+    },
   );
 
   // Mock getUserMedia — no navigator.mediaDevices in Node

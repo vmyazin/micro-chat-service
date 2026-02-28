@@ -124,7 +124,10 @@ export default function Home() {
               transition={{ delay: 0.3 }}
               className="flex flex-col sm:flex-row items-center justify-center gap-4"
             >
-              <MarketingButton href="/chat" className="w-full sm:w-auto text-lg">
+              <MarketingButton
+                href="/chat"
+                className="w-full sm:w-auto text-lg"
+              >
                 Chat Securely Now
               </MarketingButton>
               <MarketingButton
@@ -258,8 +261,8 @@ export default function Home() {
                   </h3>
                   <p className="text-gray-500 text-sm leading-relaxed font-light">
                     Your friend&apos;s device retrieves the epoch key from its
-                    local store and decrypts. Messages only exist as plaintext on
-                    member devices.
+                    local store and decrypts. Messages only exist as plaintext
+                    on member devices.
                   </p>
                 </div>
               </motion.div>
@@ -505,7 +508,11 @@ export default function Home() {
               platforms.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-8 relative z-10">
-              <MarketingButton href="/chat" size="lg" className="w-full sm:w-auto">
+              <MarketingButton
+                href="/chat"
+                size="lg"
+                className="w-full sm:w-auto"
+              >
                 Chat Securely Now
               </MarketingButton>
               <a

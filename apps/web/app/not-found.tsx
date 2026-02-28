@@ -14,7 +14,6 @@ export default function NotFound() {
 
       <main className="flex-1 flex items-center justify-center px-6">
         <div className="text-center max-w-2xl mx-auto">
-
           {/* Floating ghost */}
           <motion.div
             className="flex justify-center mb-10"
@@ -25,7 +24,9 @@ export default function NotFound() {
           </motion.div>
 
           {/* Error badge */}
-          <Eyebrow mono className="mb-8">Error 404</Eyebrow>
+          <Eyebrow mono className="mb-8">
+            Error 404
+          </Eyebrow>
 
           {/* Headline */}
           <motion.h1
@@ -58,7 +59,11 @@ export default function NotFound() {
             <MarketingButton href="/chat" className="w-full sm:w-auto">
               Chat Securely Now
             </MarketingButton>
-            <MarketingButton href="/" variant="secondary" className="w-full sm:w-auto">
+            <MarketingButton
+              href="/"
+              variant="secondary"
+              className="w-full sm:w-auto"
+            >
               Learn about MicroChat
             </MarketingButton>
           </motion.div>

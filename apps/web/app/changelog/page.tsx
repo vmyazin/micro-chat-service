@@ -50,7 +50,9 @@ export default function ChangelogPage() {
       <header className="pt-40 pb-20 px-6 text-center max-w-4xl mx-auto">
         <Eyebrow
           animate={false}
-          icon={<ClockCounterClockwiseIcon className="w-4 h-4 text-slate-600" />}
+          icon={
+            <ClockCounterClockwiseIcon className="w-4 h-4 text-slate-600" />
+          }
           className="mb-8"
         >
           Always Improving

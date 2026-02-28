@@ -1,10 +1,4 @@
-import {
-  ArrowUpRightIcon,
-  FileTextIcon,
-  LockIcon,
-  ShieldIcon,
-  TreeStructureIcon,
-} from '@phosphor-icons/react/ssr';
+import { ArrowUpRightIcon, FileTextIcon } from '@phosphor-icons/react/ssr';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Eyebrow } from '@/components/Eyebrow';
@@ -69,16 +63,16 @@ export default function WhitepaperPage() {
             model that underpin its security guarantees.
           </p>
           <p>
-            The primary security properties are: <strong>end-to-end
-            confidentiality</strong>, <strong>forward secrecy</strong>, and{' '}
+            The primary security properties are:{' '}
+            <strong>end-to-end confidentiality</strong>,{' '}
+            <strong>forward secrecy</strong>, and{' '}
             <strong>post-compromise security</strong>. Messages are encrypted
             on-device before transmission; the server processes only opaque
             ciphertext and never holds key material.
           </p>
           <Callout>
-            This is a working draft. Sections marked{' '}
-            <Badge>Pending</Badge> are placeholders for content under active
-            development.
+            This is a working draft. Sections marked <Badge>Pending</Badge> are
+            placeholders for content under active development.
           </Callout>
         </Section>
 
@@ -120,9 +114,9 @@ export default function WhitepaperPage() {
               direct path to the root.
             </p>
             <p>
-              Group key material (the <em>epoch secret</em>) is derived from
-              the root node's key using HKDF. All per-message keys are derived
-              from the epoch secret, ensuring that different epochs produce
+              Group key material (the <em>epoch secret</em>) is derived from the
+              root node's key using HKDF. All per-message keys are derived from
+              the epoch secret, ensuring that different epochs produce
               cryptographically independent key streams.
             </p>
             <p className="text-slate-400 italic">
@@ -132,11 +126,10 @@ export default function WhitepaperPage() {
 
           <SubSection title="3.2 Commits & Proposals">
             <p>
-              Group state advances through{' '}
-              <strong>Commits</strong>. A Commit bundles one or more{' '}
-              <strong>Proposals</strong> (Add, Remove, Update) and transitions
-              the group to a new epoch. Each Commit is authenticated with
-              the committer's leaf credential.
+              Group state advances through <strong>Commits</strong>. A Commit
+              bundles one or more <strong>Proposals</strong> (Add, Remove,
+              Update) and transitions the group to a new epoch. Each Commit is
+              authenticated with the committer's leaf credential.
             </p>
             <p>
               Application messages do not advance the epoch. This means a
@@ -190,7 +183,10 @@ export default function WhitepaperPage() {
             compromised client device, coercive key extraction, or traffic
             analysis by a global passive adversary. These are out of scope and
             documented in the full{' '}
-            <Link href="/security/for-engineers" className="text-blue-600 hover:underline">
+            <Link
+              href="/security/for-engineers"
+              className="text-blue-600 hover:underline"
+            >
               threat model
             </Link>
             .
@@ -224,7 +220,7 @@ export default function WhitepaperPage() {
               '[TreeKEM] Bhargavan, K. et al. "TreeKEM: Asynchronous Decentralized Key Management for Large Dynamic Groups." RWC 2019.',
               '[Signal] Marlinspike, M. and Perrin, T. "The Double Ratchet Algorithm." Signal, 2016.',
             ].map((ref, i) => (
-              <li key={i} className="flex gap-3">
+              <li key={ref} className="flex gap-3">
                 <span className="shrink-0 text-slate-300">{i + 1}.</span>
                 {ref}
               </li>
@@ -352,10 +348,22 @@ function Badge({
 function PrimitivesTable() {
   const rows = [
     { primitive: 'Key Agreement', algorithm: 'P-256 (ECDH)', status: 'Live' },
-    { primitive: 'Symmetric Encryption', algorithm: 'AES-256-GCM', status: 'Live' },
+    {
+      primitive: 'Symmetric Encryption',
+      algorithm: 'AES-256-GCM',
+      status: 'Live',
+    },
     { primitive: 'Key Derivation', algorithm: 'HKDF-SHA-256', status: 'Live' },
-    { primitive: 'Digital Signatures', algorithm: 'Ed25519', status: 'Pending' },
-    { primitive: 'Public Key Encryption', algorithm: 'HPKE (X25519, AES-GCM)', status: 'Pending' },
+    {
+      primitive: 'Digital Signatures',
+      algorithm: 'Ed25519',
+      status: 'Pending',
+    },
+    {
+      primitive: 'Public Key Encryption',
+      algorithm: 'HPKE (X25519, AES-GCM)',
+      status: 'Pending',
+    },
     { primitive: 'Hash', algorithm: 'SHA-256', status: 'Live' },
   ];
 
@@ -364,16 +372,29 @@ function PrimitivesTable() {
       <table className="w-full text-sm">
         <thead>
           <tr className="bg-slate-50 border-b border-slate-200">
-            <th className="text-left px-5 py-3 font-semibold text-slate-700">Primitive</th>
-            <th className="text-left px-5 py-3 font-semibold text-slate-700">Algorithm</th>
-            <th className="text-left px-5 py-3 font-semibold text-slate-700">Status</th>
+            <th className="text-left px-5 py-3 font-semibold text-slate-700">
+              Primitive
+            </th>
+            <th className="text-left px-5 py-3 font-semibold text-slate-700">
+              Algorithm
+            </th>
+            <th className="text-left px-5 py-3 font-semibold text-slate-700">
+              Status
+            </th>
           </tr>
         </thead>
         <tbody>
           {rows.map((row, i) => (
-            <tr key={row.primitive} className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}>
-              <td className="px-5 py-3 text-slate-700 font-medium">{row.primitive}</td>
-              <td className="px-5 py-3 font-mono text-slate-500">{row.algorithm}</td>
+            <tr
+              key={row.primitive}
+              className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}
+            >
+              <td className="px-5 py-3 text-slate-700 font-medium">
+                {row.primitive}
+              </td>
+              <td className="px-5 py-3 font-mono text-slate-500">
+                {row.algorithm}
+              </td>
               <td className="px-5 py-3">
                 <span
                   className={`text-xs font-bold px-2 py-0.5 rounded uppercase tracking-wider ${
@@ -395,12 +416,36 @@ function PrimitivesTable() {
 
 function ThreatTable() {
   const rows = [
-    { threat: 'Passive network observer', protected: true, notes: 'All traffic is TLS + E2E encrypted' },
-    { threat: 'Compromised server', protected: true, notes: 'Server holds only opaque ciphertext' },
-    { threat: 'Malicious insider', protected: true, notes: 'No plaintext key material server-side' },
-    { threat: 'Stolen long-term keys', protected: true, notes: 'Forward secrecy via epoch rotation' },
-    { threat: 'Compromised device', protected: false, notes: 'Out of scope — endpoint security' },
-    { threat: 'Global passive adversary', protected: false, notes: 'Traffic analysis not addressed' },
+    {
+      threat: 'Passive network observer',
+      protected: true,
+      notes: 'All traffic is TLS + E2E encrypted',
+    },
+    {
+      threat: 'Compromised server',
+      protected: true,
+      notes: 'Server holds only opaque ciphertext',
+    },
+    {
+      threat: 'Malicious insider',
+      protected: true,
+      notes: 'No plaintext key material server-side',
+    },
+    {
+      threat: 'Stolen long-term keys',
+      protected: true,
+      notes: 'Forward secrecy via epoch rotation',
+    },
+    {
+      threat: 'Compromised device',
+      protected: false,
+      notes: 'Out of scope — endpoint security',
+    },
+    {
+      threat: 'Global passive adversary',
+      protected: false,
+      notes: 'Traffic analysis not addressed',
+    },
   ];
 
   return (
@@ -408,15 +453,26 @@ function ThreatTable() {
       <table className="w-full text-sm">
         <thead>
           <tr className="bg-slate-50 border-b border-slate-200">
-            <th className="text-left px-5 py-3 font-semibold text-slate-700">Threat</th>
-            <th className="text-left px-5 py-3 font-semibold text-slate-700">Mitigated</th>
-            <th className="text-left px-5 py-3 font-semibold text-slate-700">Notes</th>
+            <th className="text-left px-5 py-3 font-semibold text-slate-700">
+              Threat
+            </th>
+            <th className="text-left px-5 py-3 font-semibold text-slate-700">
+              Mitigated
+            </th>
+            <th className="text-left px-5 py-3 font-semibold text-slate-700">
+              Notes
+            </th>
           </tr>
         </thead>
         <tbody>
           {rows.map((row, i) => (
-            <tr key={row.threat} className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}>
-              <td className="px-5 py-3 text-slate-700 font-medium">{row.threat}</td>
+            <tr
+              key={row.threat}
+              className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}
+            >
+              <td className="px-5 py-3 text-slate-700 font-medium">
+                {row.threat}
+              </td>
               <td className="px-5 py-3">
                 <span
                   className={`text-xs font-bold px-2 py-0.5 rounded uppercase tracking-wider ${
@@ -428,7 +484,9 @@ function ThreatTable() {
                   {row.protected ? 'Yes' : 'No'}
                 </span>
               </td>
-              <td className="px-5 py-3 text-slate-500 font-light">{row.notes}</td>
+              <td className="px-5 py-3 text-slate-500 font-light">
+                {row.notes}
+              </td>
             </tr>
           ))}
         </tbody>

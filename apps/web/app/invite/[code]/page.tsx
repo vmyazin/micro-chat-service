@@ -36,7 +36,10 @@ export default function InvitePage() {
           timeout,
         ]).catch((err) => {
           if (process.env.NODE_ENV !== 'production') {
-            console.warn('[TreeKEM] joinGroupTree failed during invite acceptance:', err);
+            console.warn(
+              '[TreeKEM] joinGroupTree failed during invite acceptance:',
+              err,
+            );
           }
         });
         setState('success');

@@ -146,8 +146,8 @@ function LaymanContent() {
             <strong>rotates its keys</strong> — when someone joins, leaves, or
             manually rotates. Once a lock is replaced, its old key is shredded.
             Even if a thief steals your keys today, they can never unlock the
-            boxes from before the last rotation. This is called{' '}
-            "Forward Secrecy".
+            boxes from before the last rotation. This is called "Forward
+            Secrecy".
           </p>
         </div>
         <div className="h-80 bg-white rounded-3xl border border-gray-100 shadow-xl flex items-center justify-center overflow-hidden lg:order-1">
@@ -301,9 +301,9 @@ function NerdContent() {
           </h2>
           <p className="text-lg text-slate-500 font-light">
             The state of the group advances in discrete <strong>Epochs</strong>.
-            Each <strong>Commit</strong> (add, remove, or key update) transitions
-            the group to Epoch N+1. Application messages do not advance the
-            epoch.
+            Each <strong>Commit</strong> (add, remove, or key update)
+            transitions the group to Epoch N+1. Application messages do not
+            advance the epoch.
           </p>
         </div>
 

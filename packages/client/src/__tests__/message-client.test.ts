@@ -159,27 +159,32 @@ describe('MessageClient.getMessages — decryption', () => {
     await cipher.generateGroupKey(groupId, 1);
 
     const plaintext = JSON.stringify({ type: 'text', content: 'hello' });
-    const { ciphertext, nonce } = await makeEncryptedMessage(cipher, plaintext, 1);
+    const { ciphertext, nonce } = await makeEncryptedMessage(
+      cipher,
+      plaintext,
+      1,
+    );
 
-    globalThis.fetch = vi.fn(async () =>
-      new Response(
-        JSON.stringify({
-          messages: [
-            {
-              id: 'msg-1',
-              senderId: 'u1',
-              senderName: 'Alice',
-              encryptedPayload: ciphertext,
-              nonce,
-              epoch: 1,
-              createdAt: '2024-01-01T00:00:00Z',
-              deleted: false,
-              sealedSender: null,
-            },
-          ],
-        }),
-        { headers: { 'Content-Type': 'application/json' } },
-      ),
+    globalThis.fetch = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            messages: [
+              {
+                id: 'msg-1',
+                senderId: 'u1',
+                senderName: 'Alice',
+                encryptedPayload: ciphertext,
+                nonce,
+                epoch: 1,
+                createdAt: '2024-01-01T00:00:00Z',
+                deleted: false,
+                sealedSender: null,
+              },
+            ],
+          }),
+          { headers: { 'Content-Type': 'application/json' } },
+        ),
     );
 
     const client = new MessageClient('http://localhost:8787', cipher);
@@ -198,27 +203,32 @@ describe('MessageClient.getMessages — decryption', () => {
     const encryptCipher = new GroupCipher(new MemoryKeyStore());
     await encryptCipher.generateGroupKey(groupId, 5);
     const plaintext = 'secret';
-    const { ciphertext, nonce } = await makeEncryptedMessage(encryptCipher, plaintext, 5);
+    const { ciphertext, nonce } = await makeEncryptedMessage(
+      encryptCipher,
+      plaintext,
+      5,
+    );
 
-    globalThis.fetch = vi.fn(async () =>
-      new Response(
-        JSON.stringify({
-          messages: [
-            {
-              id: 'msg-2',
-              senderId: 'u1',
-              senderName: 'Alice',
-              encryptedPayload: ciphertext,
-              nonce,
-              epoch: 5,
-              createdAt: '2024-01-01T00:00:00Z',
-              deleted: false,
-              sealedSender: null,
-            },
-          ],
-        }),
-        { headers: { 'Content-Type': 'application/json' } },
-      ),
+    globalThis.fetch = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            messages: [
+              {
+                id: 'msg-2',
+                senderId: 'u1',
+                senderName: 'Alice',
+                encryptedPayload: ciphertext,
+                nonce,
+                epoch: 5,
+                createdAt: '2024-01-01T00:00:00Z',
+                deleted: false,
+                sealedSender: null,
+              },
+            ],
+          }),
+          { headers: { 'Content-Type': 'application/json' } },
+        ),
     );
 
     const client = new MessageClient('http://localhost:8787', cipher);
@@ -232,25 +242,26 @@ describe('MessageClient.getMessages — decryption', () => {
   it('passes through content unchanged when no cipher is configured', async () => {
     const rawPayload = JSON.stringify({ type: 'text', content: 'plaintext' });
 
-    globalThis.fetch = vi.fn(async () =>
-      new Response(
-        JSON.stringify({
-          messages: [
-            {
-              id: 'msg-3',
-              senderId: 'u1',
-              senderName: 'Alice',
-              encryptedPayload: rawPayload,
-              nonce: 'some-nonce',
-              epoch: 0,
-              createdAt: '2024-01-01T00:00:00Z',
-              deleted: false,
-              sealedSender: null,
-            },
-          ],
-        }),
-        { headers: { 'Content-Type': 'application/json' } },
-      ),
+    globalThis.fetch = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            messages: [
+              {
+                id: 'msg-3',
+                senderId: 'u1',
+                senderName: 'Alice',
+                encryptedPayload: rawPayload,
+                nonce: 'some-nonce',
+                epoch: 0,
+                createdAt: '2024-01-01T00:00:00Z',
+                deleted: false,
+                sealedSender: null,
+              },
+            ],
+          }),
+          { headers: { 'Content-Type': 'application/json' } },
+        ),
     );
 
     // No cipher passed — development/unencrypted mode
@@ -261,25 +272,26 @@ describe('MessageClient.getMessages — decryption', () => {
   });
 
   it('maps epoch from server response into MessageListItem', async () => {
-    globalThis.fetch = vi.fn(async () =>
-      new Response(
-        JSON.stringify({
-          messages: [
-            {
-              id: 'msg-4',
-              senderId: 'u1',
-              senderName: 'Alice',
-              encryptedPayload: 'data',
-              nonce: 'nonce',
-              epoch: 7,
-              createdAt: '2024-01-01T00:00:00Z',
-              deleted: false,
-              sealedSender: null,
-            },
-          ],
-        }),
-        { headers: { 'Content-Type': 'application/json' } },
-      ),
+    globalThis.fetch = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            messages: [
+              {
+                id: 'msg-4',
+                senderId: 'u1',
+                senderName: 'Alice',
+                encryptedPayload: 'data',
+                nonce: 'nonce',
+                epoch: 7,
+                createdAt: '2024-01-01T00:00:00Z',
+                deleted: false,
+                sealedSender: null,
+              },
+            ],
+          }),
+          { headers: { 'Content-Type': 'application/json' } },
+        ),
     );
 
     const client = new MessageClient('http://localhost:8787');

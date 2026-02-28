@@ -28,7 +28,12 @@ describe('messages — epoch storage and retrieval', () => {
       },
     ]);
     mockD1._seed('group_members', [
-      { id: 'm1', group_id: 'g1', user_id: 'u1', joined_at: '2024-01-01T00:00:00Z' },
+      {
+        id: 'm1',
+        group_id: 'g1',
+        user_id: 'u1',
+        joined_at: '2024-01-01T00:00:00Z',
+      },
     ]);
     mockD1._seed('messages', []);
   });
@@ -36,7 +41,16 @@ describe('messages — epoch storage and retrieval', () => {
   it('stores epoch alongside encryptedPayload and nonce', async () => {
     await db.execute(
       'INSERT INTO messages (id, group_id, sender_id, encrypted_payload, nonce, epoch, created_at, sealed_sender) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      ['msg-1', 'g1', 'u1', 'base64ciphertext==', 'nonce-abc', 3, '2024-01-01T00:00:00Z', null],
+      [
+        'msg-1',
+        'g1',
+        'u1',
+        'base64ciphertext==',
+        'nonce-abc',
+        3,
+        '2024-01-01T00:00:00Z',
+        null,
+      ],
     );
 
     const rows = mockD1._getTable('messages');
@@ -50,7 +64,16 @@ describe('messages — epoch storage and retrieval', () => {
     // Simulate a pre-fix INSERT that omits epoch (column has DEFAULT 0)
     await db.execute(
       'INSERT INTO messages (id, group_id, sender_id, encrypted_payload, nonce, epoch, created_at, sealed_sender) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      ['msg-2', 'g1', 'u1', 'payload', 'nonce', 0, '2024-01-01T00:00:00Z', null],
+      [
+        'msg-2',
+        'g1',
+        'u1',
+        'payload',
+        'nonce',
+        0,
+        '2024-01-01T00:00:00Z',
+        null,
+      ],
     );
 
     const rows = mockD1._getTable('messages');
@@ -93,7 +116,16 @@ describe('messages — epoch storage and retrieval', () => {
 
     await db.execute(
       'INSERT INTO messages (id, group_id, sender_id, encrypted_payload, nonce, epoch, created_at, sealed_sender) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      ['msg-rt', 'g1', 'u1', 'encrypted', 'nonceXYZ', originalEpoch, '2024-01-01T00:00:00Z', null],
+      [
+        'msg-rt',
+        'g1',
+        'u1',
+        'encrypted',
+        'nonceXYZ',
+        originalEpoch,
+        '2024-01-01T00:00:00Z',
+        null,
+      ],
     );
 
     const rows = await db.query<{ epoch: number; nonce: string }>(
@@ -106,7 +138,11 @@ describe('messages — epoch storage and retrieval', () => {
   });
 
   it('preserves different epochs per message in the DB', async () => {
-    for (const [id, epoch] of [['msg-a', 1], ['msg-b', 3], ['msg-c', 5]] as [string, number][]) {
+    for (const [id, epoch] of [
+      ['msg-a', 1],
+      ['msg-b', 3],
+      ['msg-c', 5],
+    ] as [string, number][]) {
       await db.execute(
         'INSERT INTO messages (id, group_id, sender_id, encrypted_payload, nonce, epoch, created_at, sealed_sender) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
         [id, 'g1', 'u1', 'ct', 'n', epoch, '2024-01-01T00:00:00Z', null],
@@ -115,6 +151,8 @@ describe('messages — epoch storage and retrieval', () => {
 
     const stored = mockD1._getTable('messages');
     expect(stored).toHaveLength(3);
-    expect(stored.map((r: Record<string, unknown>) => r.epoch).sort()).toEqual([1, 3, 5]);
+    expect(stored.map((r: Record<string, unknown>) => r.epoch).sort()).toEqual([
+      1, 3, 5,
+    ]);
   });
 });
