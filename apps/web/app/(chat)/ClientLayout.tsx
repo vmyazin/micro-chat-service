@@ -21,6 +21,7 @@ import { CallFaviconUpdater } from '@/components/CallFaviconUpdater';
 import GroupList from '@/components/GroupList';
 import NewGroupDialog from '@/components/NewGroupDialog';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useTreeKEMAutoInit } from '@/hooks/useTreeKEMAutoInit';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { useUiStore } from '@/stores/ui-store';
 
@@ -56,6 +57,9 @@ export default function ChatLayout({
 
   // Preserve global WebSocket connection universally
   useWebSocket(selectedGroupId as GroupId | undefined);
+
+  // Silently re-initialize TreeKEM for all groups after page reload
+  useTreeKEMAutoInit();
 
   async function handleSignOut() {
     setIsSigningOut(true);

@@ -678,3 +678,380 @@ try {
 
 **Research date:** 2026-02-27
 **Valid until:** 2026-03-14 (30 days — stable codebase)
+
+---
+
+## Deep Dive: Race Condition Patterns
+
+**Added:** 2026-02-28
+**Scope:** Exact before/after for all three call sites; loading state mechanics; `useTreeKEM` API assessment; hook placement for auto-join.
+
+### Findings from Direct Source Inspection (HIGH confidence)
+
+Reading the four files in full revealed these precise facts that the earlier research inferred but did not confirm at line-level:
+
+| File | Line | Actual Code | Consequence |
+|------|------|-------------|-------------|
+| `NewGroupDialog.tsx` | 56 | `initGroupTree(result.groupId).catch(console.error)` | No `await`. Execution continues to `onClose()` line 70, `router.push()` line 71 synchronously. |
+| `NewGroupDialog.tsx` | 61-68 | `navigator.clipboard.writeText(inviteLink)` is `await`-ed inside an `if (!safariCopied)` block after line 56 | Clipboard write has `await` but tree init does not — inverted priority. |
+| `invite/[code]/page.tsx` | 29-35 | `.then((result) => { joinGroupTree(...).catch(...); setState('success'); router.replace(...) })` | The `.then` callback is synchronous. `joinGroupTree` is launched but not awaited; `router.replace` fires immediately after. |
+| `page.tsx` | 149 | `joinGroup.mutate(groupId as GroupId)` | Uses `.mutate()`, not `.mutateAsync()`. `.mutate()` returns `void` — cannot chain `.then()`. Must change to `.mutateAsync()` to chain `joinGroupTree`. |
+| `useTreeKEM.ts` | 131 | `if (treekemManager.hasTree(groupId)) return;` | `joinGroupTree` already has idempotency guard. `initGroupTree` (line 104) does NOT. |
+| `useTreeKEM.ts` | 104-123 | `initGroupTree` is a `useCallback` returning `Promise<void>` | Fully awaitable. No internal state changes to `useState` — safe to `await` inside a form submit handler. |
+| `useTreeKEM.ts` | 129-154 | `joinGroupTree` is a `useCallback` returning `Promise<void>` | Fully awaitable. Same — safe to `await` inside `.then(async ...)`. |
+| `page.tsx` | 144-152 | Auto-join lives inside a `useEffect`. `joinGroup` is from `useJoinGroup()` at line 68. | `useJoinGroup` is a `useMutation` hook. `joinGroup.mutate` is stable across renders. `joinGroup.mutateAsync` is also stable (same reference). |
+
+### Call Site 1: NewGroupDialog — Exact Before/After
+
+**Current `handleSubmit` (lines 37-75), annotated:**
+
+```typescript
+async function handleSubmit(e: React.FormEvent) {
+  e.preventDefault();
+  // ...validation...
+
+  try {
+    const createPromise = createGroup.mutateAsync(groupName.trim());
+
+    // Safari clipboard path — fire-and-forget (correct, clipboard can race)
+    let safariCopied = false;
+    try {
+      if (typeof window !== 'undefined' && window.ClipboardItem && navigator.clipboard?.write) {
+        const item = new ClipboardItem({
+          'text/plain': createPromise.then(result =>
+            new Blob([`${window.location.origin}/chat/${result.groupId}`], { type: 'text/plain' })
+          )
+        });
+        navigator.clipboard.write([item]).catch(console.error); // correct: fire-and-forget
+        safariCopied = true;
+      }
+    } catch (e) { /* ignored */ }
+
+    const result = await createPromise; // <-- awaited correctly
+
+    // BUG: fire-and-forget — initGroupTree races with navigation below
+    initGroupTree(result.groupId).catch(console.error); // LINE 56
+
+    setGroupName('');
+    onGroupCreated?.(result.groupId);
+
+    if (!safariCopied) {
+      try {
+        const inviteLink = `${window.location.origin}/chat/${result.groupId}`;
+        await navigator.clipboard.writeText(inviteLink); // awaited — but tree init is NOT
+      } catch (clipboardError) {
+        console.error('Failed to copy to clipboard', clipboardError);
+      }
+    }
+
+    onClose();           // fires before tree init completes
+    router.push(`/chat/${result.groupId}`); // fires before tree init completes
+  } catch (err) {
+    setLocalError(err instanceof Error ? err.message : t('failedCreateGroup'));
+  }
+}
+```
+
+**Fixed version — minimal diff:**
+
+The fix is two changes: (a) add `await` before `initGroupTree`, (b) add a local `isInitializingTree` boolean to keep the submit button disabled during tree init. The clipboard `await` can be moved after tree init or kept before — order does not matter for correctness.
+
+```typescript
+async function handleSubmit(e: React.FormEvent) {
+  e.preventDefault();
+  if (!groupName.trim()) {
+    setLocalError(t('enterGroupName'));
+    return;
+  }
+  setLocalError(null);
+
+  try {
+    const createPromise = createGroup.mutateAsync(groupName.trim());
+
+    // Safari clipboard — keep fire-and-forget (correct)
+    let safariCopied = false;
+    try {
+      if (typeof window !== 'undefined' && window.ClipboardItem && navigator.clipboard?.write) {
+        const item = new ClipboardItem({
+          'text/plain': createPromise.then(result =>
+            new Blob([`${window.location.origin}/chat/${result.groupId}`], { type: 'text/plain' })
+          )
+        });
+        navigator.clipboard.write([item]).catch(console.error);
+        safariCopied = true;
+      }
+    } catch (_e) { /* ignored */ }
+
+    const result = await createPromise;
+
+    // FIX: await tree init before navigation
+    // createGroup.isPending remains true until createGroup.mutateAsync resolves,
+    // but after that line the button needs to stay disabled.
+    // Add a local isInitializingTree state OR rely on the fact that the button
+    // has disabled={createGroup.isPending || !groupName.trim()} and the form
+    // is still mounted/blocking until router.push fires.
+    // Simplest approach: add setIsInitializingTree(true) before this line.
+    await initGroupTree(result.groupId); // was: initGroupTree(...).catch(console.error)
+
+    if (!safariCopied) {
+      try {
+        await navigator.clipboard.writeText(`${window.location.origin}/chat/${result.groupId}`);
+      } catch (_e) { /* ignored */ }
+    }
+
+    setGroupName('');
+    onGroupCreated?.(result.groupId);
+    onClose();
+    router.push(`/chat/${result.groupId}`);
+  } catch (err) {
+    setLocalError(err instanceof Error ? err.message : t('failedCreateGroup'));
+  }
+}
+```
+
+**Loading state question — does the user see a delay?**
+
+Yes. `initGroupTree` takes ~100-400ms (key export + HTTP). The dialog stays open during this wait because `onClose()` is after the `await`. The submit button remains disabled because:
+- `createGroup.isPending` stays `true` until `createGroup.mutateAsync` resolves
+- After the `await createPromise` line, `createGroup.isPending` becomes `false`
+- The user could theoretically click submit again between `await createPromise` and `await initGroupTree`
+
+To prevent this, add one `useState` boolean:
+
+```typescript
+const [isInitializingTree, setIsInitializingTree] = useState(false);
+
+// In handleSubmit, wrap the initGroupTree call:
+setIsInitializingTree(true);
+try {
+  await initGroupTree(result.groupId);
+} finally {
+  setIsInitializingTree(false);
+}
+
+// In the submit button:
+disabled={createGroup.isPending || isInitializingTree || !groupName.trim()}
+```
+
+The spinner already shows on `createGroup.isPending`. Since `isInitializingTree` immediately follows `createGroup.mutateAsync` resolving and the dialog closes on success, this gap is ~100-400ms with the dialog still visible. The spinner can be left as-is (it stops when `createGroup.isPending` becomes false) or explicitly extended. The simplest correct implementation: add `isInitializingTree` state, show spinner while either is true.
+
+**What if `initGroupTree` fails?**
+
+The `catch (err)` block at the bottom of `handleSubmit` catches it. `setLocalError(...)` will display the error. The group was already created on the server. The user sees the error, can try again, but the group exists. A retry of the full dialog would try to create a second group. This is acceptable for the phase scope — the error message should hint "Group created but encryption init failed; go to settings to initialize."
+
+Alternatively, if `initGroupTree` throws, navigate anyway and let GroupSettings handle it. This is the "degraded mode" approach: navigate on group create success regardless of tree init outcome, show the "No key found" banner in the chat page, and let the user click "Initialize Encryption" in GroupSettings. This avoids the "second group" retry problem.
+
+**Prescriptive recommendation:** Use the degraded mode approach in `NewGroupDialog`:
+
+```typescript
+const result = await createPromise;
+
+// Best-effort tree init — failure is recoverable via GroupSettings
+try {
+  await initGroupTree(result.groupId);
+} catch (treeErr) {
+  console.error('[treekem] initGroupTree failed after group creation', treeErr);
+  // Continue to navigate — GroupSettings "Rotate Keys" can recover
+}
+
+setGroupName('');
+onGroupCreated?.(result.groupId);
+onClose();
+router.push(`/chat/${result.groupId}`);
+```
+
+This satisfies "await before navigate" while ensuring a failed tree init does not leave the user in the dialog without a group.
+
+**Timeout:** No timeout is needed. `postTreeUpdate` uses the standard `fetch` which will timeout per browser defaults (2 minutes). A 5-second timeout is reasonable but adds complexity. Skip for this phase.
+
+### Call Site 2: invite/[code]/page.tsx — Exact Before/After
+
+**Current code (lines 22-43), annotated:**
+
+```typescript
+useEffect(() => {
+  const code = params.code;
+  if (!code || hasAttemptedRef.current) return;
+  hasAttemptedRef.current = true;
+
+  acceptInvite
+    .mutateAsync(code)
+    .then((result) => {
+      // BUG: joinGroupTree is fire-and-forget
+      joinGroupTree(result.groupId, result.leafIndex ?? 0).catch(console.error); // LINE 31
+      setState('success'); // fires immediately
+      router.replace(`/chat/${result.groupId}`); // navigates immediately
+    })
+    .catch((err) => {
+      setState('error');
+      setError(err instanceof Error ? err.message : 'Failed to accept invite');
+    });
+}, [params.code, router, acceptInvite.mutateAsync, joinGroupTree]);
+```
+
+**Fixed version — minimal diff:**
+
+Convert the `.then` callback to `async`. Error in `joinGroupTree` should fall through to the outer `.catch`:
+
+```typescript
+acceptInvite
+  .mutateAsync(code)
+  .then(async (result) => {
+    // Await tree join before navigating — prevents epoch-0 first message
+    // joinGroupTree already has hasTree guard, so double-calls are safe
+    try {
+      await joinGroupTree(result.groupId, result.leafIndex ?? 0);
+    } catch (treeErr) {
+      console.error('[treekem] joinGroupTree failed on invite accept', treeErr);
+      // Navigate anyway — tree can recover via next treeUpdate WebSocket event
+    }
+    setState('success');
+    router.replace(`/chat/${result.groupId}`);
+  })
+  .catch((err) => {
+    setState('error');
+    setError(err instanceof Error ? err.message : 'Failed to accept invite');
+  });
+```
+
+**What does the user see?** The invite page shows "Joining group... Accepting your invite" (the `state === 'loading'` UI) while both `acceptInvite.mutateAsync` and `joinGroupTree` complete. After both succeed, `setState('success')` shows "You're in! Redirecting..." briefly before `router.replace`. The added delay for `joinGroupTree` is ~100-400ms. This is invisible to the user given the page already shows a loading spinner.
+
+**Navigate before or after tree init?** Navigate AFTER. The question was whether to navigate first and init in the background on the chat page. That approach has a problem: the chat page does not automatically call `joinGroupTree` on mount (there is no `useEffect` that checks `!treekemManager.hasTree(groupId)` and calls `joinGroupTree`). The auto-join path in `page.tsx` only fires on "Not a member" error — which doesn't apply here since `acceptInvite` already made the user a member. So navigating first and hoping tree init happens in the background does not work with the current architecture. The only reliable place to call `joinGroupTree` for the invite path is in the invite page's `.then` callback.
+
+### Call Site 3: page.tsx Auto-Join — Exact Hook Placement
+
+**Current code (lines 143-152), annotated:**
+
+```typescript
+// Auto-join group if not a member
+const joinAttemptedRef = useRef(false);
+useEffect(() => {
+  if (groupId && error && error.message.includes('Not a member')) {
+    if (!joinAttemptedRef.current) {
+      joinAttemptedRef.current = true;
+      joinGroup.mutate(groupId as GroupId); // LINE 149 — .mutate() returns void
+    }
+  }
+}, [groupId, error, joinGroup.mutate]); // intentionally omit joinGroup to avoid loop
+```
+
+**The dependency array issue:** The comment says "intentionally omit joinGroup to avoid loop." This is because `joinGroup` is a TanStack Query mutation object — if it were in the deps, every re-render triggered by `joinGroup.isPending` changing would re-run the effect. The comment is correct. `joinGroup.mutate` is stable (same function reference) so it is safe to include.
+
+**The `.mutate()` vs `.mutateAsync()` question:** `.mutate()` is `void`-returning — it cannot be chained. `.mutateAsync()` returns `Promise<result>`. Changing to `.mutateAsync()` inside a `useEffect` requires a wrapper:
+
+```typescript
+useEffect(() => {
+  if (groupId && error && error.message.includes('Not a member')) {
+    if (!joinAttemptedRef.current) {
+      joinAttemptedRef.current = true;
+      // Use mutateAsync so we can chain joinGroupTree
+      joinGroup
+        .mutateAsync(groupId as GroupId)
+        .then(() => joinGroupTree(groupId as GroupId, 0))
+        .catch(console.error);
+    }
+  }
+}, [groupId, error, joinGroup.mutate, joinGroupTree]);
+// joinGroupTree must be in deps since it's used inside the effect
+```
+
+**`joinGroupTree` in the dependency array:** `joinGroupTree` is a `useCallback` from `useTreeKEM`. Its deps are `[treekemManager, getClient, getIdentityKey]` — all stable (Zustand selectors and useCallback). So including it in deps does not cause infinite loops.
+
+**Where does `useTreeKEM` need to be added in `page.tsx`?** The hook is not currently imported in `page.tsx`. It must be added:
+
+```typescript
+// apps/web/app/(chat)/chat/[groupId]/page.tsx
+// Add import alongside other hook imports:
+import { useTreeKEM } from '@/hooks/useTreeKEM';
+
+// In ConversationPage():
+const { joinGroupTree } = useTreeKEM();
+
+// In the auto-join useEffect (lines 144-152):
+useEffect(() => {
+  if (groupId && error && error.message.includes('Not a member')) {
+    if (!joinAttemptedRef.current) {
+      joinAttemptedRef.current = true;
+      joinGroup
+        .mutateAsync(groupId as GroupId)
+        .then(() => joinGroupTree(groupId as GroupId, 0))
+        .catch(console.error);
+    }
+  }
+}, [groupId, error, joinGroup.mutate, joinGroupTree]);
+```
+
+**`leafIndex=0` correctness for auto-join:** In the auto-join path (direct URL navigation), there is no `leafIndex` from the server. The user is joining a group they were not invited to (or were invited by sharing the chat URL, not the invite page). `leafIndex=0` will be wrong if the group creator occupies leaf 0. However, the next `treeUpdate` WebSocket event (which fires whenever any member updates the tree) will call `handleTreeUpdate`, which calls `treekemManager.processCommit()` and advances the epoch correctly. The user's first few sends may use epoch 0, but after the first background `treeUpdate` event they sync. This is the accepted degraded path.
+
+### useTreeKEM API Assessment — What Needs to Change
+
+**Current exports from `useTreeKEM.ts` line 178-184:**
+```typescript
+return {
+  treekemManager,
+  initGroupTree,
+  joinGroupTree,
+  handleTreeUpdate,
+  getIdentityKey,
+};
+```
+
+**Does the hook need new methods to support the fixes?** No. The three fixes (await in NewGroupDialog, await in invite page, add joinGroupTree to auto-join) use the existing API:
+- `initGroupTree(groupId: GroupId): Promise<void>` — already correct
+- `joinGroupTree(groupId: GroupId, leafIndex: number, welcomeJson?: string): Promise<void>` — already correct
+- Both are stable `useCallback` refs — safe to use in `useEffect` dependency arrays and `.then()` chains
+
+**Does `initGroupTree` need an idempotency guard?** Confirmed: no guard exists (line 104). Recommended addition:
+
+```typescript
+const initGroupTree = useCallback(
+  async (groupId: GroupId) => {
+    // Guard: skip if already initialized (prevents double-init from React Strict Mode)
+    if (treekemManager.hasTree(groupId)) return;
+
+    const keyPair = await getIdentityKey();
+    // ... rest unchanged
+  },
+  [treekemManager, getClient, getIdentityKey],
+);
+```
+
+**Why add it now?** The await pattern in NewGroupDialog means the function is called once and awaited. But if `NewGroupDialog` is ever refactored to call `initGroupTree` via `useEffect` instead of inside `handleSubmit`, Strict Mode double-invocation becomes a real risk. The guard costs one line and `hasTree` is O(1) Map lookup.
+
+### Summary Decision Table
+
+| Call Site | Current Pattern | Fix | Loading State Change | Error Handling |
+|-----------|----------------|-----|---------------------|----------------|
+| `NewGroupDialog.tsx:56` | `initGroupTree(...).catch(console.error)` — fire-and-forget | `await initGroupTree(...)` inside try/catch | Add `isInitializingTree` boolean to keep button disabled; or use degraded mode (navigate on createGroup success, skip await) | On failure: log error, navigate anyway (GroupSettings recovers) |
+| `invite/[code]/page.tsx:31` | `.then((result) => { joinGroupTree(...).catch(); navigate() })` | `.then(async (result) => { await joinGroupTree(...); navigate() })` | None needed — invite page already shows spinner the whole time | On failure: log error, navigate anyway |
+| `page.tsx:149` | `joinGroup.mutate(groupId)` — void, no chain | `joinGroup.mutateAsync(groupId).then(() => joinGroupTree(...)).catch(console.error)` | None — existing joinGroup.isPending spinner covers the join; tree init is fire-and-forget here (acceptable) | Silent `.catch(console.error)` — auto-join tree init failure is non-fatal |
+| `useTreeKEM.ts:104` (initGroupTree) | No idempotency guard | Add `if (treekemManager.hasTree(groupId)) return;` | N/A | N/A |
+
+### Manual Testing Steps for Race Condition Fixes (per CLAUDE.md)
+
+1. **Test 1 — NewGroupDialog epoch check:**
+   - Open DevTools Network tab, filter by `/api/groups`
+   - Create a new group
+   - Watch: `POST /api/groups` (create) fires first, then `POST /api/groups/{id}/tree-update` (epoch 1)
+   - Immediately type a message in the new chat and send
+   - Verify: `POST /api/groups/{id}/messages` request body shows `epoch: 1` (not `epoch: 0`)
+   - Before fix: message arrives at chat page before tree-update completes, epoch is 0
+   - After fix: dialog stays open until tree-update completes, first message has epoch 1
+
+2. **Test 2 — Invite page epoch check:**
+   - Open two browser windows (Alice and Bob)
+   - Alice creates a group and copies the invite link
+   - Bob opens the invite link in the second window
+   - Watch Bob's Network tab: `POST /api/groups/{id}/accept-invite` fires, then `GET /api/groups/{id}/tree-state`
+   - Bob types a message immediately after being redirected to chat
+   - Verify: Bob's first message has `epoch >= 1` (not 0)
+   - Before fix: Bob arrives at chat before `joinGroupTree` completes, epoch is 0
+   - After fix: redirect waits for `joinGroupTree`, epoch is correct
+
+3. **Test 3 — Auto-join tree init:**
+   - Alice creates a group
+   - Bob navigates directly to `/chat/{groupId}` (not via invite)
+   - Bob sees "Not a member" briefly, then the join spinner
+   - After joining, Bob sends a message
+   - Verify: Bob's message has `epoch >= 1` (may be 0 if no treeUpdate has fired yet — this is the acceptable degraded path)
+   - Note: This path does not have a waiting mechanism for tree init. epoch-0 on first message is expected and acceptable.

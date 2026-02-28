@@ -7,7 +7,7 @@ import { Button } from '@/components/Button';
 import { useAcceptInvite } from '@/hooks/useAcceptInvite';
 import { useTreeKEM } from '@/hooks/useTreeKEM';
 
-type InviteState = 'loading' | 'error' | 'success';
+type InviteState = 'loading' | 'tree-init' | 'error' | 'success';
 
 export default function InvitePage() {
   const params = useParams<{ code: string }>();
@@ -26,11 +26,19 @@ export default function InvitePage() {
 
     acceptInvite
       .mutateAsync(code)
-      .then((result) => {
-        // Bootstrap TreeKEM tree for the joined group (fire-and-forget)
-        joinGroupTree(result.groupId, result.leafIndex ?? 0).catch(
-          console.error,
+      .then(async (result) => {
+        setState('tree-init');
+        const timeout = new Promise<void>((resolve) =>
+          setTimeout(resolve, 5000),
         );
+        await Promise.race([
+          joinGroupTree(result.groupId, result.leafIndex ?? 0),
+          timeout,
+        ]).catch((err) => {
+          if (process.env.NODE_ENV !== 'production') {
+            console.warn('[TreeKEM] joinGroupTree failed during invite acceptance:', err);
+          }
+        });
         setState('success');
         router.replace(`/chat/${result.groupId}`);
       })
@@ -51,6 +59,18 @@ export default function InvitePage() {
             <h1 className="text-xl font-bold mt-4">Joining group...</h1>
             <p className="text-gray-600 dark:text-gray-400 mt-2">
               Accepting your invite
+            </p>
+          </>
+        )}
+
+        {state === 'tree-init' && (
+          <>
+            <LoadingSpinner />
+            <h1 className="text-xl font-bold mt-4">
+              Setting up encrypted session…
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-2">
+              Just a moment
             </p>
           </>
         )}

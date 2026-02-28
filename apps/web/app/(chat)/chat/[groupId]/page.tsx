@@ -424,7 +424,8 @@ export default function ConversationPage() {
 
   async function handleSendMessage(content: string) {
     if (!groupId) return;
-    const epoch = treekemManager.getEpoch(groupId as GroupId);
+    const rawEpoch = treekemManager.getEpoch(groupId as GroupId);
+    const epoch = rawEpoch > 0 ? rawEpoch : undefined;
     await sendMessage.mutateAsync({ content, epoch });
   }
 
@@ -432,7 +433,8 @@ export default function ConversationPage() {
     if (!groupId) return;
 
     try {
-      const epoch = treekemManager.getEpoch(groupId as GroupId);
+      const rawEpoch = treekemManager.getEpoch(groupId as GroupId);
+      const epoch = rawEpoch > 0 ? rawEpoch : undefined;
       const result = await client.sendVoiceMessage(
         groupId as GroupId,
         audioBlob,
@@ -460,7 +462,8 @@ export default function ConversationPage() {
     if (!groupId) return;
 
     try {
-      const epoch = treekemManager.getEpoch(groupId as GroupId);
+      const rawEpoch = treekemManager.getEpoch(groupId as GroupId);
+      const epoch = rawEpoch > 0 ? rawEpoch : undefined;
       const result = await client.sendImageMessage(
         groupId as GroupId,
         blob,

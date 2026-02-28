@@ -5,6 +5,7 @@ export * from './crypto-erasure';
 export * from './group-cipher';
 export * from './key-management';
 export * from './key-store';
+export * from './indexeddb-key-store';
 export * from './memory-key-store';
 export * from './mls-client';
 export * from './mls-commit';

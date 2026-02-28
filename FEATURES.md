@@ -433,9 +433,9 @@ When a member's device is compromised, a Key Update from any member generates ne
 
 ## TreeKEM UI Integration
 
-**Status:** not implemented. Crypto and server wiring done; chat flow not connected.
+**Status:** Completed (Feb 28, 2026) ✅
 
-`useCreateGroup`, `useWebSocket`, `useAcceptInvite`, and `useSendMessage` must call TreeKEM lifecycle methods. Until wired, messages use epoch 0 / hardcoded keys.
+`NewGroupDialog` calls `initGroupTree()` after group creation (fire-and-forget). `useWebSocket` processes `treeUpdate` events via `handleTreeUpdate()`. Invite acceptance shows "Setting up encrypted session…" spinner while `joinGroupTree()` runs (5 s timeout → degraded mode). `useTreeKEMAutoInit` silently re-initializes all group trees on page load. Message sends derive epoch from `treekemManager.getEpoch()` (epoch > 0 = encrypted, epoch 0 = unencrypted degraded mode). `IndexedDBKeyStore` persists message keys across page refreshes.
 
 ## Message Deletion on Delivery
 
