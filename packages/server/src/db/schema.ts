@@ -36,6 +36,7 @@ export interface GroupTreeStateTable {
   group_id: GroupId;
   epoch: number;
   tree_data: string;
+  commit_json: string | null;   // Full MLS Commit JSON for Welcome reconstruction; NULL pre-migration
   updated_at: string;
 }
 
@@ -46,6 +47,8 @@ export interface GroupMembersTable {
   joined_at: string;
   /** Base64 raw P-256 ECDH public key for TreeKEM Welcome generation */
   identity_key: string | null;
+  /** Ratchet tree leaf position; NULL for group owners (leaf 0) and pre-migration members */
+  leaf_index: number | null;
 }
 
 export interface MessagesTable {
