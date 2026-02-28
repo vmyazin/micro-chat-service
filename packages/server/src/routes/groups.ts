@@ -495,9 +495,10 @@ groupsRouter.get('/api/groups/:id/tree-state', requireAuth, async (c) => {
     group_id: GroupId;
     epoch: number;
     tree_data: string;
+    commit_json: string | null;
     updated_at: string;
   }>(
-    'SELECT group_id, epoch, tree_data, updated_at FROM group_tree_state WHERE group_id = ?',
+    'SELECT group_id, epoch, tree_data, commit_json, updated_at FROM group_tree_state WHERE group_id = ?',
     [groupId],
   );
 
@@ -506,6 +507,13 @@ groupsRouter.get('/api/groups/:id/tree-state', requireAuth, async (c) => {
   }
 
   const state = rows[0];
+
+  // Fetch leaf_index for this member (null for owners/pre-migration members → default 0)
+  const memberLeafRows = await db.query<{ leaf_index: number | null }>(
+    'SELECT leaf_index FROM group_members WHERE group_id = ? AND user_id = ?',
+    [groupId, user.id],
+  );
+  const leafIndex = memberLeafRows[0]?.leaf_index ?? 0;
 
   // Check for a pending Welcome generated specifically for this user
   const welcomeRows = await db.query<{ welcome_json: string }>(
@@ -525,6 +533,8 @@ groupsRouter.get('/api/groups/:id/tree-state', requireAuth, async (c) => {
       treeData: state.tree_data,
       updatedAt: state.updated_at,
       welcome: welcomeRows[0].welcome_json,
+      leafIndex,
+      ...(state.commit_json ? { commitJson: state.commit_json } : {}),
     });
   }
 
@@ -533,6 +543,8 @@ groupsRouter.get('/api/groups/:id/tree-state', requireAuth, async (c) => {
     epoch: state.epoch,
     treeData: state.tree_data,
     updatedAt: state.updated_at,
+    leafIndex,
+    ...(state.commit_json ? { commitJson: state.commit_json } : {}),
   });
 });
 
@@ -581,10 +593,10 @@ groupsRouter.post('/api/groups/:id/tree-update', requireAuth, async (c) => {
       params: [body.epoch, groupId],
     },
     {
-      sql: `INSERT INTO group_tree_state (group_id, epoch, tree_data, updated_at)
-            VALUES (?, ?, ?, ?)
-            ON CONFLICT(group_id) DO UPDATE SET epoch = ?, tree_data = ?, updated_at = ?`,
-      params: [groupId, body.epoch, treeData, now, body.epoch, treeData, now],
+      sql: `INSERT INTO group_tree_state (group_id, epoch, tree_data, commit_json, updated_at)
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(group_id) DO UPDATE SET epoch = ?, tree_data = ?, commit_json = ?, updated_at = ?`,
+      params: [groupId, body.epoch, treeData, body.commit, now, body.epoch, treeData, body.commit, now],
     },
   ];
 
