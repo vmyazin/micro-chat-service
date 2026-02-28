@@ -1,17 +1,15 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
+milestone: v1.0
 milestone_name: Encryption Hardening
-status: complete
-last_updated: "2026-02-28"
-last_activity: "2026-02-28 - Completed 05-03 (Client integration for TreeKEM state recovery)"
+status: completed
+last_updated: "2026-02-28T19:52:06.329Z"
+last_activity: "2026-02-28 — Completed 05-03 client integration: getTreeState extended with commitJson/leafIndex, deleteGroup async method, joinGroupTree reads server-supplied leaf index"
 progress:
   total_phases: 1
   completed_phases: 1
   total_plans: 3
   completed_plans: 3
-current_phase: 05-treekem-state-recovery
-current_plan: 03
 ---
 
 # Project State
@@ -30,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-02-28)
 
 **Phase:** 05-treekem-state-recovery
 **Plan:** 03 of 3
-**Status:** Complete
+**Status:** Milestone complete
 
 | Plan | Name | Status |
 |------|------|--------|
