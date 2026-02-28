@@ -40,7 +40,10 @@
     "callDeclined": "تماس رد شد",
     "callFailed": "تماس ناموفق بود",
     "encryptionReady": "رمزنگاری سرتاسری",
-    "encryptionSyncing": "در حال همگام‌سازی رمزنگاری…"
+    "encryptionSyncing": "در حال همگام‌سازی رمزنگاری…",
+    "messageEncryptedBadKey": "پیام رمزنگاری شده — کلید شما همگام نیست",
+    "resyncEncryption": "همگام‌سازی رمزنگاری",
+    "resyncingEncryption": "در حال همگام‌سازی…"
   },
   "GroupList": {
     "newGroup": "گروه جدید",

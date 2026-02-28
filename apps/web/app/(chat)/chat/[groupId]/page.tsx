@@ -54,7 +54,7 @@ export default function ConversationPage() {
   const client = getClient();
   const treekemManager = useChatClientStore((state) => state.treekemManager);
   const treeEpochs = useChatClientStore((state) => state.treeEpochs);
-  const { initGroupTree } = useTreeKEM();
+  const { initGroupTree, joinGroupTree } = useTreeKEM();
   const _playSfx = useSfx();
 
   // Server state with React Query
@@ -88,6 +88,8 @@ export default function ConversationPage() {
   const _removeHighlightedId = useChatStore(
     (state) => state.removeHighlightedId,
   );
+
+  const [encryptionSyncing, setEncryptionSyncing] = useState(false);
 
   // Call state from Zustand
   const activeSession = useCallStore((state) => state.activeSession);
@@ -506,6 +508,20 @@ export default function ConversationPage() {
     }
   }
 
+  async function handleResync() {
+    if (!groupId || encryptionSyncing) return;
+    setEncryptionSyncing(true);
+    try {
+      await treekemManager.deleteGroup(groupId as GroupId);
+      await joinGroupTree(groupId as GroupId);
+      await refetch();
+    } catch (err) {
+      console.error('[TreeKEM] Resync failed:', err);
+    } finally {
+      setEncryptionSyncing(false);
+    }
+  }
+
   function isOwnMessage(message: MessageListItem): boolean {
     if (!currentUser) return false;
     // Check both actual user ID and optimistic 'me' placeholder
@@ -763,6 +779,8 @@ export default function ConversationPage() {
                               ? onlineUsers?.has(message.senderId)
                               : false
                           }
+                          onResync={handleResync}
+                          encryptionSyncing={encryptionSyncing}
                         />
                       </motion.div>
                     );
@@ -805,6 +823,8 @@ interface MessageBubbleProps {
   isHighlighted: boolean;
   onToggleHighlight: () => void;
   isSenderOnline?: boolean;
+  onResync: () => void;
+  encryptionSyncing: boolean;
 }
 
 function MessageBubble({
@@ -819,6 +839,8 @@ function MessageBubble({
   isHighlighted,
   onToggleHighlight,
   isSenderOnline,
+  onResync,
+  encryptionSyncing,
 }: MessageBubbleProps) {
   const t = useTranslations('GroupChat');
   const isSystem = message.senderId === ('system' as UserId);
@@ -904,6 +926,49 @@ function MessageBubble({
   }
 
   const decoded = decodeContent(message.encryptedContent);
+
+  // Encrypted message that couldn't be decrypted — nonce+epoch present but content is still ciphertext
+  const isUndecrypted =
+    !!message.nonce && message.epoch !== undefined && typeof decoded === 'string';
+
+  if (isUndecrypted) {
+    return (
+      <div className={`flex items-end gap-2 ${isOwn ? 'justify-end' : 'justify-start'}`}>
+        {!isOwn && (
+          <div
+            className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-xs font-bold text-white select-none"
+            style={{ background: avatarColor(message.senderName ?? t('anonymous')) }}
+            aria-hidden="true"
+          >
+            {(message.senderName ?? '?').charAt(0).toUpperCase()}
+          </div>
+        )}
+        <div className={`flex flex-col gap-1.5 ${isOwn ? 'items-end' : 'items-start'}`}>
+          {!isOwn && (
+            <span
+              className="text-xs font-semibold px-1"
+              style={{ color: avatarColor(message.senderName ?? t('anonymous')) }}
+            >
+              {message.senderName ?? t('anonymous')}
+            </span>
+          )}
+          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-(--surface-muted) border border-(--border-color) text-sm text-(--text-muted)">
+            <LockIcon className="w-3.5 h-3.5 shrink-0 text-amber-500" aria-hidden="true" />
+            <span>{t('messageEncryptedBadKey')}</span>
+            <button
+              type="button"
+              onClick={onResync}
+              disabled={encryptionSyncing}
+              className="ml-1 text-xs font-medium text-(--accent) hover:underline disabled:opacity-50"
+            >
+              {encryptionSyncing ? t('resyncingEncryption') : t('resyncEncryption')}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const isObject = typeof decoded === 'object' && decoded !== null;
   const isAudio = isObject && (decoded as MessagePayload).type === 'audio';
   const isImage = isObject && (decoded as MessagePayload).type === 'image';

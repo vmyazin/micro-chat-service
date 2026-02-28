@@ -40,7 +40,10 @@
     "callDeclined": "Звонок отклонён",
     "callFailed": "Ошибка звонка",
     "encryptionReady": "Сквозное шифрование",
-    "encryptionSyncing": "Синхронизация шифрования…"
+    "encryptionSyncing": "Синхронизация шифрования…",
+    "messageEncryptedBadKey": "Сообщение зашифровано — ваш ключ устарел",
+    "resyncEncryption": "Синхронизировать ключи",
+    "resyncingEncryption": "Синхронизация…"
   },
   "GroupList": {
     "newGroup": "Новая группа",

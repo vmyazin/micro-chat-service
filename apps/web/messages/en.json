@@ -40,7 +40,10 @@
     "callDeclined": "Call declined",
     "callFailed": "Call failed",
     "encryptionReady": "End-to-end encrypted",
-    "encryptionSyncing": "Syncing encryption…"
+    "encryptionSyncing": "Syncing encryption…",
+    "messageEncryptedBadKey": "Message encrypted — your key is out of sync",
+    "resyncEncryption": "Resync encryption",
+    "resyncingEncryption": "Resyncing…"
   },
   "GroupList": {
     "newGroup": "New Group",
