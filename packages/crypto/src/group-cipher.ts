@@ -180,6 +180,15 @@ export class GroupCipher {
     const stored = await this.keyStore.getKey(groupId, epoch);
     return stored ? new Uint8Array(stored.key) : null;
   }
+
+  /**
+   * Delete all stored epoch keys for a group.
+   * Returns the count of deleted keys.
+   * Called by TreeKEMManager.deleteGroup to clear stale state before re-joining.
+   */
+  async deleteAllGroupKeys(groupId: GroupId): Promise<number> {
+    return this.keyStore.deleteAllGroupKeys(groupId);
+  }
 }
 
 export class GroupCipherError extends Error {

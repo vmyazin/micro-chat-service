@@ -215,7 +215,13 @@ export class MicroChatClient {
   // TreeKEM methods
   async getTreeState(
     groupId: GroupId,
-  ): Promise<{ epoch: number; treeData: string; welcome?: string } | null> {
+  ): Promise<{
+    epoch: number;
+    treeData: string;
+    welcome?: string;
+    commitJson?: string;   // Full MLS Commit JSON for real Welcome reconstruction
+    leafIndex?: number;    // Member's ratchet tree leaf position; 0 for owner/legacy
+  } | null> {
     const response = await fetch(
       `${this.baseUrl}/api/groups/${groupId}/tree-state`,
       { method: 'GET', credentials: 'include' },
