@@ -613,8 +613,7 @@ export default function ConversationPage() {
                   </span>
                 </>
               )}
-            </div>
-            <div className="flex items-center gap-1 text-xs text-(--text-muted) select-none mt-0.5">
+              <span aria-hidden="true">·</span>
               {encryptionEpoch > 0 ? (
                 <>
                   <LockIcon className="w-3 h-3 shrink-0 text-emerald-500" aria-hidden="true" />
