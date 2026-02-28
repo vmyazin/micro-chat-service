@@ -58,6 +58,12 @@ export class GroupCipher {
     epoch: number,
     sharedSecret: Uint8Array,
   ): Promise<Uint8Array> {
+    if (epoch === 0) {
+      throw new GroupCipherError(
+        'Cannot derive key at epoch 0: epoch 0 is the uninitialised state. ' +
+        'Check that MLSGroup.create() or joinFromWelcome() is called with epoch >= 1.',
+      );
+    }
     const encoder = new TextEncoder();
     const info = encoder.encode(`microchat-group-${groupId}-epoch-${epoch}`);
     const salt = new Uint8Array(SALT_LENGTH);
