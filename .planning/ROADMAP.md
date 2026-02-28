@@ -30,6 +30,13 @@
 - REQ-5.5: `joinGroupTree` uses server-supplied `leafIndex` instead of hardcoded 0
 - REQ-5.6: `TreeKEMManager.deleteGroup(groupId)` method added for use by a future "Resync encryption" UI button
 
+**Plans:** 3 plans
+
+Plans:
+- [ ] 05-01-PLAN.md — DB migration + schema.ts type interfaces (REQ-5.1)
+- [ ] 05-02-PLAN.md — Server endpoint changes: invite-accept, tree-update, getTreeState (REQ-5.2, REQ-5.3)
+- [ ] 05-03-PLAN.md — Client changes: getTreeState type, joinGroup commitJson path, joinGroupTree, deleteGroup (REQ-5.4, REQ-5.5, REQ-5.6)
+
 ## Progress
 
 | Phase                             | Milestone | Status   | Completed  |
