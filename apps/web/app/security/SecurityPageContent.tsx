@@ -328,9 +328,9 @@ function NerdContent() {
               </h3>
             </div>
             <p className="text-slate-600 font-light mb-4">
-              We store only bcrypt-hashed credentials and session tokens. No
-              plaintext passwords, no biometric data, no recovery questions.
-              Your authentication keys never leave your device.
+              Authentication uses WebAuthn (FIDO2) — your credentials are
+              hardware-bound passkeys that never leave your device. No passwords,
+              no biometric data stored server-side, no recovery questions.
             </p>
             <p className="text-slate-500 text-sm font-mono">
               Retention: Account lifetime only

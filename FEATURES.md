@@ -451,7 +451,9 @@ Security page references a Trail of Bits audit, SOC 2 Type II, GDPR, and CCPA co
 
 ## Update Security Page: Authentication Description
 
-**Status:** not done. Security page describes bcrypt-hashed credentials; actual auth is WebAuthn (FIDO2) via `@simplewebauthn/server`. Copy needs to reflect the real auth mechanism.
+**Status:** Completed (Feb 28, 2026) ✅
+
+Security page now describes WebAuthn (FIDO2) passkeys instead of bcrypt-hashed credentials, reflecting the actual `@simplewebauthn/server` implementation.
 
 ## Full MLS Protocol Conformance
 
