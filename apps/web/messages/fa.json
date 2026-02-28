@@ -43,7 +43,8 @@
     "encryptionSyncing": "در حال همگام‌سازی رمزنگاری…",
     "messageEncryptedBadKey": "پیام رمزنگاری شده — کلید شما همگام نیست",
     "resyncEncryption": "همگام‌سازی رمزنگاری",
-    "resyncingEncryption": "در حال همگام‌سازی…"
+    "resyncingEncryption": "در حال همگام‌سازی…",
+    "resyncFailedHint": "همگام‌سازی ناموفق بود — از کسی بخواهید دوباره شما را دعوت کند"
   },
   "GroupList": {
     "newGroup": "گروه جدید",

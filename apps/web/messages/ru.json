@@ -43,7 +43,8 @@
     "encryptionSyncing": "Синхронизация шифрования…",
     "messageEncryptedBadKey": "Сообщение зашифровано — ваш ключ устарел",
     "resyncEncryption": "Синхронизировать ключи",
-    "resyncingEncryption": "Синхронизация…"
+    "resyncingEncryption": "Синхронизация…",
+    "resyncFailedHint": "Синхронизация не удалась — попросите кого-то повторно пригласить вас"
   },
   "GroupList": {
     "newGroup": "Новая группа",

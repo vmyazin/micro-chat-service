@@ -90,6 +90,7 @@ export default function ConversationPage() {
   );
 
   const [encryptionSyncing, setEncryptionSyncing] = useState(false);
+  const [resyncFailed, setResyncFailed] = useState(false);
 
   // Call state from Zustand
   const activeSession = useCallStore((state) => state.activeSession);
@@ -511,12 +512,14 @@ export default function ConversationPage() {
   async function handleResync() {
     if (!groupId || encryptionSyncing) return;
     setEncryptionSyncing(true);
+    setResyncFailed(false);
     try {
       await treekemManager.deleteGroup(groupId as GroupId);
       await joinGroupTree(groupId as GroupId);
       await refetch();
     } catch (err) {
       console.error('[TreeKEM] Resync failed:', err);
+      setResyncFailed(true);
     } finally {
       setEncryptionSyncing(false);
     }
@@ -782,6 +785,7 @@ export default function ConversationPage() {
                           }
                           onResync={handleResync}
                           encryptionSyncing={encryptionSyncing}
+                          resyncFailed={resyncFailed}
                         />
                       </motion.div>
                     );
@@ -826,6 +830,7 @@ interface MessageBubbleProps {
   isSenderOnline?: boolean;
   onResync: () => void;
   encryptionSyncing: boolean;
+  resyncFailed: boolean;
 }
 
 function MessageBubble({
@@ -842,6 +847,7 @@ function MessageBubble({
   isSenderOnline,
   onResync,
   encryptionSyncing,
+  resyncFailed,
 }: MessageBubbleProps) {
   const t = useTranslations('GroupChat');
   const isSystem = message.senderId === ('system' as UserId);
@@ -955,15 +961,17 @@ function MessageBubble({
           )}
           <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-(--surface-muted) border border-(--border-color) text-sm text-(--text-muted)">
             <LockIcon className="w-3.5 h-3.5 shrink-0 text-amber-500" aria-hidden="true" />
-            <span>{t('messageEncryptedBadKey')}</span>
-            <button
-              type="button"
-              onClick={onResync}
-              disabled={encryptionSyncing}
-              className="ml-1 text-xs font-medium text-(--accent) hover:underline disabled:opacity-50"
-            >
-              {encryptionSyncing ? t('resyncingEncryption') : t('resyncEncryption')}
-            </button>
+            <span>{resyncFailed ? t('resyncFailedHint') : t('messageEncryptedBadKey')}</span>
+            {!resyncFailed && (
+              <button
+                type="button"
+                onClick={onResync}
+                disabled={encryptionSyncing}
+                className="ml-1 text-xs font-medium text-(--accent) hover:underline disabled:opacity-50"
+              >
+                {encryptionSyncing ? t('resyncingEncryption') : t('resyncEncryption')}
+              </button>
+            )}
           </div>
         </div>
       </div>
