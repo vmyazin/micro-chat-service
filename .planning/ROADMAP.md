@@ -37,6 +37,25 @@ Plans:
 - [ ] 05-02-PLAN.md — Server endpoint changes: invite-accept, tree-update, getTreeState (REQ-5.2, REQ-5.3)
 - [ ] 05-03-PLAN.md — Client changes: getTreeState type, joinGroup commitJson path, joinGroupTree, deleteGroup (REQ-5.4, REQ-5.5, REQ-5.6)
 
+## Phase 6: Encryption Reliability Fixes
+
+- [ ] Phase 6: Encryption Reliability Fixes — Fix remaining crypto bugs: UpdatePath decryption failure on resync, 403 on members/messages after invite-accept, epoch-0 key guard
+
+**Goal:** Encrypted message exchange works reliably end-to-end: resync succeeds after page reload, newly invited members can read/send messages without re-invite, and no crash at epoch 0.
+
+**Requirements:**
+- REQ-6.1: `processUpdatePath` succeeds for the second member (Simon-2 scenario) — root cause of `leafIndex` calculation or commit_json staleness identified and fixed
+- REQ-6.2: Members who accepted an invite can access `/api/groups/:id/members` and `/api/groups/:id/messages` (no spurious 403)
+- REQ-6.3: Guard against epoch-0 key storage/retrieval in GroupCipher and key store — epoch 0 is the uninitialised state and must never attempt to derive/store a message key
+- REQ-6.4: `joinGroupTree` handles 404 tree-state gracefully (group has no server tree) without throwing and without leaving the UI in a broken state
+- REQ-6.5: After a successful resync, the chat window shows messages and allows sending without requiring a page reload
+
+**Plans:** 2 plans
+
+Plans:
+- [ ] 06-01-PLAN.md — Crypto/client bug fixes: epoch-0 guard in GroupCipher, remove try/catch from joinGroup commitJson path (REQ-6.1, REQ-6.3)
+- [ ] 06-02-PLAN.md — Web/UI fixes: 403 retry in useMessages + useMembers, post-resync Zustand sync, confirm 404 grace (REQ-6.2, REQ-6.4, REQ-6.5)
+
 ## Progress
 
 | Phase                             | Milestone | Status   | Completed  |
@@ -46,3 +65,4 @@ Plans:
 | 3. TreeKEM Crypto + Server Wiring | v1.0      | Complete | —          |
 | 4. TreeKEM UI Integration         | v1.0      | Complete | 2026-02-28 |
 | 5. TreeKEM State Recovery         | v1.1      | Planned  | —          |
+| 6. Encryption Reliability Fixes   | v1.1      | Planned  | —          |
