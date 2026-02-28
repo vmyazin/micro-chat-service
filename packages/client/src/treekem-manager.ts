@@ -76,7 +76,8 @@ export class TreeKEMManager {
    * Join an existing group using the current tree state (legacy path).
    * Used when no Welcome message is available (e.g., reconnecting).
    * When commitJson is provided, reconstructs a real Welcome from the server-persisted
-   * Commit instead of falling back to the synthetic epoch-0 path.
+   * Commit. Errors propagate directly to the caller (joinGroupTree → handleResync)
+   * so the user receives actionable feedback instead of a silent fallback.
    */
   async joinGroup(
     groupId: GroupId,
@@ -87,31 +88,26 @@ export class TreeKEMManager {
   ): Promise<void> {
     if (commitJson) {
       // Real recovery path: reconstruct Welcome from server-persisted Commit.
-      // Falls through to synthetic path if the commit's update path doesn't include
-      // this member (e.g. the server's latest commit was for a different member, or
-      // the user regenerated their identity key).
-      try {
-        const commit: Commit = JSON.parse(commitJson);
-        const welcome: Welcome = {
+      // No catch — if processUpdatePath cannot decrypt with our current identity key,
+      // the error propagates to joinGroupTree → handleResync, which shows user feedback.
+      // "Cannot find decryption point in UpdatePath" means re-invite is required.
+      const commit: Commit = JSON.parse(commitJson);
+      const welcome: Welcome = {
+        groupId,
+        epoch: commit.newEpoch,
+        treeData: treeDataJson,
+        commit,
+        leafIndex: myLeafIndex,
+        groupContext: {
           groupId,
           epoch: commit.newEpoch,
-          treeData: treeDataJson,
-          commit,
-          leafIndex: myLeafIndex,
-          groupContext: {
-            groupId,
-            epoch: commit.newEpoch,
-            treeHash: '',
-            transcriptHash: commit.transcriptHash,
-          },
-        };
-        const group = await MLSGroup.joinFromWelcome(welcome, myKeyPair, this.cipher);
-        this.groups.set(groupId, group);
-        return;
-      } catch {
-        // Commit reconstruction failed — fall through to synthetic epoch-0 join.
-        // The caller can detect this via getEpoch() === 0 and prompt for re-invite.
-      }
+          treeHash: '',
+          transcriptHash: commit.transcriptHash,
+        },
+      };
+      const group = await MLSGroup.joinFromWelcome(welcome, myKeyPair, this.cipher);
+      this.groups.set(groupId, group);
+      return;
     }
 
     // Build a synthetic Welcome for backward compatibility
