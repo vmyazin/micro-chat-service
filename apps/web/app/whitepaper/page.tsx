@@ -7,6 +7,7 @@ import {
 } from '@phosphor-icons/react/ssr';
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { Eyebrow } from '@/components/Eyebrow';
 import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
 
@@ -29,12 +30,13 @@ export default function WhitepaperPage() {
 
       {/* Hero */}
       <header className="pt-40 pb-16 px-6 text-center max-w-3xl mx-auto">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-100 border border-slate-200 mb-8">
-          <FileTextIcon className="w-4 h-4 text-slate-600" />
-          <span className="text-xs font-bold text-slate-600 uppercase tracking-widest">
-            Technical Whitepaper · Draft
-          </span>
-        </div>
+        <Eyebrow
+          animate={false}
+          icon={<FileTextIcon className="w-4 h-4 text-slate-600" />}
+          className="mb-8"
+        >
+          Technical Whitepaper · Draft
+        </Eyebrow>
 
         <h1
           className="text-5xl md:text-7xl mb-6 font-semibold italic text-slate-900 leading-tight"

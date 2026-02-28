@@ -12,6 +12,7 @@ import {
   XCircleIcon,
 } from '@phosphor-icons/react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { Eyebrow } from '@/components/Eyebrow';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
@@ -48,15 +49,7 @@ export function SecurityPageContent({
 
       {/* Hero */}
       <header className="security-hero pt-40 pb-24 px-6 text-center max-w-4xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="security-badge inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-100 border border-slate-200 mb-8"
-        >
-          <span className="security-badge-text text-xs font-bold text-slate-600 uppercase tracking-widest">
-            Zero Trust • End-to-End
-          </span>
-        </motion.div>
+        <Eyebrow className="mb-8">Zero Trust • End-to-End</Eyebrow>
 
         <h1
           className="security-title text-5xl md:text-7xl mb-8 font-semibold italic text-slate-900 leading-tight"

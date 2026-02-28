@@ -5,6 +5,7 @@ import { ClockCounterClockwiseIcon } from '@phosphor-icons/react/ssr';
 import yaml from 'js-yaml';
 import type { Metadata } from 'next';
 import { ChangelogList } from '@/components/ChangelogList';
+import { Eyebrow } from '@/components/Eyebrow';
 import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
 
@@ -47,12 +48,13 @@ export default function ChangelogPage() {
       <SiteHeader />
 
       <header className="pt-40 pb-20 px-6 text-center max-w-4xl mx-auto">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-100 border border-slate-200 mb-8">
-          <ClockCounterClockwiseIcon className="w-4 h-4 text-slate-600" />
-          <span className="text-xs font-bold text-slate-600 uppercase tracking-widest">
-            Always Improving
-          </span>
-        </div>
+        <Eyebrow
+          animate={false}
+          icon={<ClockCounterClockwiseIcon className="w-4 h-4 text-slate-600" />}
+          className="mb-8"
+        >
+          Always Improving
+        </Eyebrow>
 
         <h1
           className="text-5xl md:text-7xl mb-6 font-semibold italic text-slate-900 leading-tight"

@@ -18,6 +18,7 @@ import {
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { Button } from '@/components/Button';
+import { Eyebrow } from '@/components/Eyebrow';
 import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
 
@@ -93,16 +94,9 @@ export default function Home() {
         {/* Hero Section */}
         <section className="pt-40 pb-24 px-6 relative overflow-hidden">
           <div className="max-w-7xl mx-auto text-center relative z-10">
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 border border-blue-100 mb-8"
-            >
-              <span className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></span>
-              <span className="text-xs font-bold text-blue-600 uppercase tracking-widest">
-                Built on MLS Protocol
-              </span>
-            </motion.div>
+            <Eyebrow color="blue" pulse className="mb-8">
+              Built on MLS Protocol
+            </Eyebrow>
 
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
@@ -160,16 +154,9 @@ export default function Home() {
         >
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-16">
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 border border-blue-100 mb-6"
-              >
-                <span className="text-xs font-bold text-blue-600 uppercase tracking-widest">
-                  Message Flow
-                </span>
-              </motion.div>
+              <Eyebrow color="blue" animate="inView" className="mb-6">
+                Message Flow
+              </Eyebrow>
               <h2
                 className="text-4xl md:text-5xl mb-6 font-semibold italic text-slate-900"
                 style={{ fontFamily: 'Bodoni Moda, serif' }}
@@ -289,16 +276,9 @@ export default function Home() {
         <section className="py-24 px-6">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-16">
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-teal-50 border border-teal-100 mb-6"
-              >
-                <span className="text-xs font-bold text-teal-600 uppercase tracking-widest">
-                  Voice Calls
-                </span>
-              </motion.div>
+              <Eyebrow color="teal" animate="inView" className="mb-6">
+                Voice Calls
+              </Eyebrow>
               <h2
                 className="text-4xl md:text-5xl mb-6 font-semibold italic text-slate-900"
                 style={{ fontFamily: 'Bodoni Moda, serif' }}

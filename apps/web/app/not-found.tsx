@@ -3,6 +3,7 @@
 import { GhostIcon } from '@phosphor-icons/react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { Eyebrow } from '@/components/Eyebrow';
 import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
 
@@ -24,16 +25,7 @@ export default function NotFound() {
           </motion.div>
 
           {/* Error badge */}
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-100 border border-slate-200 mb-8"
-          >
-            <span className="font-mono text-xs font-bold text-slate-500 uppercase tracking-widest">
-              Error 404
-            </span>
-          </motion.div>
+          <Eyebrow mono className="mb-8">Error 404</Eyebrow>
 
           {/* Headline */}
           <motion.h1
