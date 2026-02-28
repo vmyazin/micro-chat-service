@@ -20,7 +20,8 @@
 }
 
 :root {
-  --border-color: #E2E8F0;
+  --border-color: #E5E7EB;
+  --border-base-color: var(--border-color);
   --border-thick: 1px;
   --shadow-subtle: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
 
@@ -47,7 +48,8 @@
     --background: #1a1a1a;
     --sidebar-background: #171717;
     --foreground: #e5e5e5;
-    --border-color: #334155;
+    --border-color: #333333;
+    --border-base-color: #333333;
 
     --accent: #29a256;
     --accent-hover: #22c55e;
@@ -68,7 +70,8 @@ html.dark {
   --background: #1a1a1a;
   --sidebar-background: #171717;
   --foreground: #e5e5e5;
-  --border-color: #334155;
+  --border-color: #333333;
+  --border-base-color: #333333;
 
   --accent: #29a256;
   --accent-hover: #22c55e;
@@ -102,7 +105,7 @@ body {
 }
 
 .border-base {
-  border: var(--border-thick) solid var(--border-color);
+  border: var(--border-thick) solid var(--border-base-color);
   border-radius: var(--radius-md);
 }
 
