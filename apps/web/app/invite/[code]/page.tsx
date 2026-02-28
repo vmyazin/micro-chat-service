@@ -40,7 +40,7 @@ export default function InvitePage() {
 
       const timeout = new Promise<void>((resolve) => setTimeout(resolve, 5000));
       await Promise.race([
-        joinGroupTree(result.groupId, result.leafIndex ?? 0),
+        joinGroupTree(result.groupId),
         timeout,
       ]).catch((err) => {
         if (process.env.NODE_ENV !== 'production') {

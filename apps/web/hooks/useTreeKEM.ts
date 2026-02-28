@@ -125,9 +125,10 @@ export function useTreeKEM() {
   /**
    * Fetch existing tree state and join a group's TreeKEM session.
    * Uses Welcome message if available, falls back to tree state fetch.
+   * leafIndex and commitJson are read from the server response — callers no longer pass leafIndex.
    */
   const joinGroupTree = useCallback(
-    async (groupId: GroupId, leafIndex: number, welcomeJson?: string) => {
+    async (groupId: GroupId, welcomeJson?: string) => {
       if (treekemManager.hasTree(groupId)) return;
 
       const keyPair = await getIdentityKey();
@@ -152,8 +153,9 @@ export function useTreeKEM() {
       await treekemManager.joinGroup(
         groupId,
         treeState.treeData,
-        leafIndex,
+        treeState.leafIndex ?? 0,    // Server-supplied; 0 for owner/pre-migration groups
         keyPair,
+        treeState.commitJson,        // undefined when server has no commit yet → synthetic fallback
       );
     },
     [treekemManager, getClient, getIdentityKey],

@@ -20,7 +20,7 @@ export function useTreeKEMAutoInit() {
 
     for (const group of groups) {
       if (!treekemManager.hasTree(group.groupId)) {
-        joinGroupTree(group.groupId, 0).catch((err) => {
+        joinGroupTree(group.groupId).catch((err) => {
           if (process.env.NODE_ENV !== 'production') {
             console.warn(
               `[TreeKEM] Auto-init failed for group ${group.groupId}:`,

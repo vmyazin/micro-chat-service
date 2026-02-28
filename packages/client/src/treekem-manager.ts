@@ -75,13 +75,38 @@ export class TreeKEMManager {
   /**
    * Join an existing group using the current tree state (legacy path).
    * Used when no Welcome message is available (e.g., reconnecting).
+   * When commitJson is provided, reconstructs a real Welcome from the server-persisted
+   * Commit instead of falling back to the synthetic epoch-0 path.
    */
   async joinGroup(
     groupId: GroupId,
     treeDataJson: string,
     myLeafIndex: LeafIndex,
     myKeyPair: ECKeyPair,
+    commitJson?: string,   // When present: use real Welcome reconstruction instead of synthetic path
   ): Promise<void> {
+    if (commitJson) {
+      // Real recovery path: reconstruct Welcome from server-persisted Commit.
+      // The member's private key at myLeafIndex can decrypt the path secret encrypted for them.
+      const commit: Commit = JSON.parse(commitJson);
+      const welcome: Welcome = {
+        groupId,
+        epoch: commit.newEpoch,
+        treeData: treeDataJson,
+        commit,
+        leafIndex: myLeafIndex,
+        groupContext: {
+          groupId,
+          epoch: commit.newEpoch,
+          treeHash: '',                        // Lazily computed inside MLSGroup; '' is acceptable
+          transcriptHash: commit.transcriptHash,
+        },
+      };
+      const group = await MLSGroup.joinFromWelcome(welcome, myKeyPair, this.cipher);
+      this.groups.set(groupId, group);
+      return;
+    }
+
     // Build a synthetic Welcome for backward compatibility
     const welcome: Welcome = {
       groupId,
@@ -268,6 +293,17 @@ export class TreeKEMManager {
    */
   hasTree(groupId: GroupId): boolean {
     return this.groups.has(groupId);
+  }
+
+  /**
+   * Remove all local tree state for a group.
+   * Clears the in-memory MLSGroup entry and all derived epoch keys from the key store.
+   * Call before re-joining via joinGroupTree to reset diverged local state.
+   * Must be awaited — key deletion is async (IndexedDB).
+   */
+  async deleteGroup(groupId: GroupId): Promise<void> {
+    this.groups.delete(groupId);              // Synchronous: hasTree() returns false immediately
+    await this.cipher.deleteAllGroupKeys(groupId);
   }
 
   /**
