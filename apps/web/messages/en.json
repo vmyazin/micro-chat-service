@@ -38,7 +38,9 @@
     "callMissed": "Missed call",
     "callCompleted": "Call ended",
     "callDeclined": "Call declined",
-    "callFailed": "Call failed"
+    "callFailed": "Call failed",
+    "encryptionReady": "End-to-end encrypted",
+    "encryptionSyncing": "Syncing encryption…"
   },
   "GroupList": {
     "newGroup": "New Group",

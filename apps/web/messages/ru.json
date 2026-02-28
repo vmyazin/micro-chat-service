@@ -38,7 +38,9 @@
     "callMissed": "Пропущенный звонок",
     "callCompleted": "Звонок завершён",
     "callDeclined": "Звонок отклонён",
-    "callFailed": "Ошибка звонка"
+    "callFailed": "Ошибка звонка",
+    "encryptionReady": "Сквозное шифрование",
+    "encryptionSyncing": "Синхронизация шифрования…"
   },
   "GroupList": {
     "newGroup": "Новая группа",

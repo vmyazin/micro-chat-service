@@ -617,12 +617,12 @@ export default function ConversationPage() {
               {encryptionEpoch > 0 ? (
                 <>
                   <LockIcon className="w-3 h-3 shrink-0 text-emerald-500" aria-hidden="true" />
-                  <span className="text-emerald-600 dark:text-emerald-400">End-to-end encrypted</span>
+                  <span className="text-emerald-600 dark:text-emerald-400">{t('encryptionReady')}</span>
                 </>
               ) : (
                 <>
                   <SpinnerGapIcon className="w-3 h-3 shrink-0 animate-spin" aria-hidden="true" />
-                  <span>Syncing encryption…</span>
+                  <span>{t('encryptionSyncing')}</span>
                 </>
               )}
             </div>
